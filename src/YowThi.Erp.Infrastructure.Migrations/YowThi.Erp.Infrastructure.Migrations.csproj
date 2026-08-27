@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>YowThi.Erp.Infrastructure.Migrations</RootNamespace>
+    <AssemblyName>YowThi.Erp.Infrastructure.Migrations</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../YowThi.Erp.Infrastructure/YowThi.Erp.Infrastructure.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,2 +1,21 @@
-﻿yowthi-erp-v2-design-checkpoint-*.zip
+yowthi-erp-v2-design-checkpoint-*.zip
 _tool-safety-probe*.txt
+
+# .NET
+**/bin/
+**/obj/
+artifacts/
+TestResults/
+*.user
+*.suo
+*.nupkg
+*.snupkg
+
+# IDE
+.vs/
+.idea/
+
+# Local environment
+.env
+.env.*
+!.env.example

@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <RootNamespace>YowThi.Erp.Api</RootNamespace>
+    <AssemblyName>YowThi.Erp.Api</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../YowThi.Erp.Application/YowThi.Erp.Application.csproj" />
+    <ProjectReference Include="../YowThi.Erp.Infrastructure/YowThi.Erp.Infrastructure.csproj" />
+  </ItemGroup>
+</Project>

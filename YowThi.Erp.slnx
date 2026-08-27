@@ -1,0 +1,11 @@
+<Solution>
+  <Project Path="src/YowThi.Erp.Domain/YowThi.Erp.Domain.csproj" />
+  <Project Path="src/YowThi.Erp.Application/YowThi.Erp.Application.csproj" />
+  <Project Path="src/YowThi.Erp.Infrastructure/YowThi.Erp.Infrastructure.csproj" />
+  <Project Path="src/YowThi.Erp.Infrastructure.Migrations/YowThi.Erp.Infrastructure.Migrations.csproj" />
+  <Project Path="src/YowThi.Erp.Api/YowThi.Erp.Api.csproj" />
+  <Project Path="tests/YowThi.Erp.Domain.Tests/YowThi.Erp.Domain.Tests.csproj" />
+  <Project Path="tests/YowThi.Erp.ArchitectureTests/YowThi.Erp.ArchitectureTests.csproj" />
+  <Project Path="tests/YowThi.Erp.Api.ContractTests/YowThi.Erp.Api.ContractTests.csproj" />
+  <Project Path="tests/YowThi.Erp.IntegrationTests/YowThi.Erp.IntegrationTests.csproj" />
+</Solution>

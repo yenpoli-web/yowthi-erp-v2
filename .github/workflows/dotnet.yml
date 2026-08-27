@@ -1,0 +1,40 @@
+name: dotnet
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+      DOTNET_NOLOGO: "1"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: "10.0.400"
+
+      - name: Restore local tools
+        run: dotnet tool restore
+
+      - name: Restore
+        run: dotnet restore YowThi.Erp.slnx
+
+      - name: Build
+        run: dotnet build YowThi.Erp.slnx --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test YowThi.Erp.slnx --configuration Release --no-build

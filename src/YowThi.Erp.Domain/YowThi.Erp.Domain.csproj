@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>YowThi.Erp.Domain</RootNamespace>
+    <AssemblyName>YowThi.Erp.Domain</AssemblyName>
+  </PropertyGroup>
+</Project>
