@@ -1135,9 +1135,17 @@ Body concept:
   "supplierId": "...",
   "netQuantity": 125.5,
   "unitPrice": 18.25,
-  "companyPickup": true
+  "companyPickup": true,
+  "receiptStorageLocationId": null
 }
 ```
+
+`receiptStorageLocationId` is optional and implements the existing PROC-002 safe v0.1 control:
+- when supplied, the command validates and uses that Storage Location
+- when omitted, the command uses the unique applicable default if one can be resolved
+- when omitted and no unique applicable default can be resolved, confirmation is blocked and the client must explicitly choose a Receipt Storage Location
+
+The Procurement UI/query contract therefore needs a location-selection query for ambiguous receipt-location cases.
 
 The client does not supply server-owned derived/created facts such as:
 - Procurement amount THB
@@ -1169,6 +1177,7 @@ Before an endpoint slice is considered implemented, tests must cover the applica
 - correction endpoints only where owning command exists
 - no sensitive technical detail in `500`
 - OpenAPI semantic contract
+- Procurement receipt-location default/explicit/ambiguous behavior when that endpoint is implemented
 
 Production integration testing later adds HTTPS/proxy/CORS/rate-limit/security-hosting checks according to deployment topology.
 
@@ -1186,6 +1195,8 @@ Technical controls such as:
 
 are ERP Control Governance / operational controls, not assertions about YowThi business operations.
 
+The optional Procurement `receiptStorageLocationId` is the HTTP representation of existing PROC-002 safe handling and does not add a new Business Rule.
+
 Existing unresolved Business Rule gaps remain governed by `docs/06-business-rule-gap-register-v0.1.md`.
 
 ## 55. Architecture chain status
@@ -1201,27 +1212,17 @@ The v0.1 design chain now covers:
 - EF Core Mapping Architecture
 - REST/API Architecture
 
-The next stage is implementation planning rather than another persistence/API architecture layer.
+Implementation sequencing is defined separately in `docs/13-implementation-sequencing-build-plan-v0.1.md`.
 
 ## 56. Next step
 
-Continue with:
+Continue with the confirmed implementation sequence in:
 
-**Implementation Sequencing / Build Plan v0.1**
+**`docs/13-implementation-sequencing-build-plan-v0.1.md`**
 
-Expected scope:
-- solution/project scaffolding order
-- package/dependency setup
-- shared technical primitives
-- Domain/Application module implementation order
-- Infrastructure/EF mapping implementation sequence
-- API slice sequence
-- architecture/model tests
-- first vertical command slices
-- `InitialV01` migration readiness gate
-- PostgreSQL 18 integration/concurrency test sequencing
-- Docker Desktop activation point
-- CI/build/test gates
+Immediate next action:
 
-Docker Desktop may remain stopped during planning/scaffolding that does not execute PostgreSQL.
-It becomes required when actual EF migrations/PostgreSQL integration and concurrency tests begin.
+**Implementation P0 — scaffold the .NET solution.**
+
+Docker Desktop may remain stopped during P0/P1/P2/P3/P4 work that does not execute PostgreSQL.
+It becomes required when the approved `InitialV01` is first applied to PostgreSQL 18 and integration/concurrency testing begins.

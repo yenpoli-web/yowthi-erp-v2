@@ -14,6 +14,7 @@ Precedence for implementation recovery:
 - relational implementation: `docs/10-relational-model-consolidation-v0.1.md`
 - EF Core/Npgsql implementation architecture: `docs/11-ef-core-mapping-architecture-v0.1.md`
 - HTTP/REST implementation architecture: `docs/12-rest-api-architecture-v0.1.md`
+- implementation order/readiness gates: `docs/13-implementation-sequencing-build-plan-v0.1.md`
 
 Earlier Part 1–6 schema notes remain design history, but `docs/10` is the later consolidated relational baseline when relational implementation details conflict.
 
@@ -49,8 +50,9 @@ Completed to v0.1:
 - Full Relational Model Consolidation v0.1
 - EF Core Mapping Architecture v0.1
 - REST/API Architecture v0.1
+- Implementation Sequencing / Build Plan v0.1
 
-The core v0.1 architecture chain now reaches the public HTTP/API boundary.
+The core v0.1 architecture chain and implementation readiness plan are now complete through the public HTTP/API boundary and first-code sequencing.
 
 ## 4. Core domain modules
 
@@ -136,6 +138,14 @@ No globally unrestricted negative inventory.
 
 Allocation correction inventory effects use signed `SALES_ALLOCATION_ADJUSTMENT` movements under a `SALES_ALLOCATION_REVISION` operation.
 Prior Inventory Movements are never rewritten.
+
+Procurement receipt location safe handling under PROC-002:
+- `ConfirmProcurementEntry` accepts optional Receipt Storage Location / API `receiptStorageLocationId`
+- explicit location is validated and used
+- omitted location uses the unique applicable default when one can be resolved
+- omitted location with no unique applicable default blocks confirmation and requires explicit choice
+
+This is an existing safe v0.1 control, not a new Business Rule.
 
 ## 9. Sales
 
@@ -525,7 +535,43 @@ OpenAPI/testing:
 - semantic generated OpenAPI tests
 - business-write tests cover idempotency, replay ordering, concurrency, Problem Details, lifecycle, locale, and authorization contracts
 
-## 19. Important unresolved business gaps
+## 19. Implementation Sequencing / Build Plan v0.1
+
+Formal implementation phases:
+
+```text
+P0  Repository / solution scaffolding
+P1  Shared technical foundation
+P2  Full 55-relation Domain + EF model
+P3  API technical shell
+P3.5 AuthN/AuthZ implementation architecture hard gate
+P4  InitialV01 generation/static review
+P5  PostgreSQL 18 persistence acceptance
+P6  Business vertical slices
+P7  React UI vertical slices
+P8  CI / production hardening
+```
+
+55-relation mapping batches:
+- M1 system + party = 8
+- M2 infrastructure + product + processing_config = cumulative 20
+- M3 procurement + processing = cumulative 25
+- M4 outsourced + sales + inventory = cumulative 35
+- M5 sales_handling + labor = cumulative 41
+- M6 finance = cumulative 52
+- M7 audit = 55
+
+Rules:
+- each mapping batch must build and pass model metadata tests before the next batch
+- no formal migration until all planned relations and AuthN/AuthZ hard gate are complete
+- AuthN/AuthZ design occurs before `InitialV01`; if it needs new persistence, formally revise the relational baseline first
+- `InitialV01` gets a focused commit and static/model-drift review before PostgreSQL runtime execution
+- Docker Desktop activates locally only at P5 first real PostgreSQL 18 apply/integration testing
+- first full Business Command vertical slice is `ConfirmProcurementEntry`
+- Procurement slice includes PROC-002 optional `receiptStorageLocationId` handling and concurrent Batch resolution testing
+- subsequent UI slices follow stable backend vertical slices rather than a long-lived mock API
+
+## 20. Important unresolved business gaps
 
 Must be confirmed before affected functionality goes live:
 - Completed Procurement Batch late entry policy
@@ -551,32 +597,27 @@ Safe/deferred items retained in Gap Register include:
 - closed batch reopen
 - multi-active route selection
 
-Relational consolidation, EF Core Mapping Architecture, and REST/API Architecture introduce no new Business Rule gaps.
+Relational consolidation, EF Core Mapping Architecture, REST/API Architecture, and Build Plan introduce no new Business Rule gaps.
 
-## 20. Next step
+## 21. Next step
+
+Architecture/planning review is complete for implementation start.
 
 Continue with:
 
-**Implementation Sequencing / Build Plan v0.1**
+**Implementation P0 — first code commit: scaffold the .NET solution.**
 
-Expected scope:
-- solution/project scaffolding order
-- package/dependency setup
-- shared technical primitives
-- Domain/Application implementation sequence
-- persistence mapping sequence for all 55 relations
-- API vertical-slice sequence
-- architecture/model/contract test sequence
-- initial Business Command slices
-- `InitialV01` migration readiness gate
-- PostgreSQL 18 integration/concurrency testing sequence
-- CI/build/test gates
-- Docker Desktop activation point
+Initial scope:
+- `YowThi.Erp.slnx`
+- `global.json`
+- `Directory.Build.props`
+- `Directory.Packages.props`
+- repository-local .NET tool manifest
+- Domain/Application/Infrastructure/Migrations/Api projects
+- Domain/Architecture/API Contract/Integration test projects
+- project references and dependency architecture guard
+- README/current-phase update as needed
+- basic CI .NET restore/build/test gate
 
-After implementation planning:
-- scaffold actual .NET/React solution as scheduled
-- implement EF Core entities/configurations
-- generate/review `InitialV01`
-- start PostgreSQL 18 via Docker Desktop for real migration/integration/concurrency tests
-
-Docker Desktop may remain stopped until the implementation/migration testing stage actually requires PostgreSQL runtime.
+Do not add Business Rules or PostgreSQL-dependent implementation to the first code commit.
+Docker Desktop remains stopped through P0–P4 work that does not execute PostgreSQL and becomes required at P5 first real PostgreSQL 18 apply/integration/concurrency testing.
