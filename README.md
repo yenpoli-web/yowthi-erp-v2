@@ -14,7 +14,7 @@ P0 is complete:
 - React + TypeScript + Vite web scaffold
 - React Router + TanStack Query wiring
 - locked pnpm dependency graph
-- .NET and web CI gates
+- local validation gates; GitHub-hosted automatic CI is disabled by cost governance
 
 The architecture and implementation-order baseline is complete through:
 
@@ -28,6 +28,17 @@ The recovery baseline remains:
 
 - `docs/09-current-design-checkpoint.md`
 - `docs/13-implementation-sequencing-build-plan-v0.1.md`
+- `docs/14-github-cost-governance-v0.1.md`
+
+## GitHub cost governance
+
+GitHub usage must remain on a no-unapproved-cost path. Do not depend on services that can continue into paid metered usage after a free quota is exhausted.
+
+Routine CI on GitHub-hosted runners is disabled. The repository's workflow files are manual-only and require a matching self-hosted runner label (`self-hosted`, `yowthi-erp-v2`). Until a self-hosted runner is deliberately configured, validation is local-first.
+
+Do not reintroduce `ubuntu-latest`, `windows-latest`, `macos-latest`, paid/larger runners, Codespaces, or other metered GitHub infrastructure without first verifying zero-cost behavior and explicitly revising the governance decision.
+
+See `docs/14-github-cost-governance-v0.1.md`.
 
 ## .NET solution
 
