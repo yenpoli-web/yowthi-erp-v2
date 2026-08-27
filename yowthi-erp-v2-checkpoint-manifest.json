@@ -1,0 +1,92 @@
+[
+  {
+    "file": "README.md",
+    "bytes": 881,
+    "sha256": "70b3653cd29e6e1f5a7f3af5b737ea3bfe146cdcbbecab32ae8d036cc4ae066d"
+  },
+  {
+    "file": "docs/00-project-charter.md",
+    "bytes": 1745,
+    "sha256": "1c6c8193ec72442e45c7b2ca2a76345db5b55289ef8e9d124474bb4ca04818c7"
+  },
+  {
+    "file": "docs/01-business-discovery.md",
+    "bytes": 8008,
+    "sha256": "3733107467f5b79f04122a6d8610558b666bab8453b4d53e584fd4a506756994"
+  },
+  {
+    "file": "docs/02-ubiquitous-language.md",
+    "bytes": 2706,
+    "sha256": "58096cbd94f6f21c6f76722c123bfad66f200daf2bbd8a7b44aacc0c72ffc0ec"
+  },
+  {
+    "file": "docs/03-domain-map.md",
+    "bytes": 1147,
+    "sha256": "bd61a7633b10f2a5a25fab365bb864da1f7a6bf4b2311973ee00a188249521ac"
+  },
+  {
+    "file": "docs/04-domain-model-v0.1.md",
+    "bytes": 1766,
+    "sha256": "5374527e1b77da71d134a0b0fa118d47ffafb65c70d5c85cb3f42e760e610738"
+  },
+  {
+    "file": "docs/05-command-contracts-v0.1.md",
+    "bytes": 4062,
+    "sha256": "da9a736f77eabbee2e5298eb8a865c9c04a18c61f515c91b1cbd84f8581853c1"
+  },
+  {
+    "file": "docs/06-business-rule-gap-register-v0.1.md",
+    "bytes": 2491,
+    "sha256": "3bc99bca7bec8c490170d5425df2900aa41ce9974db29f7254cc8d92e455789e"
+  },
+  {
+    "file": "docs/07-persistence-architecture-v0.1.md",
+    "bytes": 2576,
+    "sha256": "7f03f4a6e820aa29d04c6d5813c1a21a8a47085095de8aba709510f0f65fc27a"
+  },
+  {
+    "file": "docs/08-postgresql-schema-v0.1/01-party-product-infrastructure-processing-config.md",
+    "bytes": 2363,
+    "sha256": "c7dd2b883b4e896ada0a375019417f8358f1852ac2fdc1e90530b88324516502"
+  },
+  {
+    "file": "docs/08-postgresql-schema-v0.1/02-procurement.md",
+    "bytes": 1426,
+    "sha256": "c05a611eef5e7ae5663c3bbcb58f19df2967f294f2c2972cc8271f403b900192"
+  },
+  {
+    "file": "docs/08-postgresql-schema-v0.1/03-processing-inventory.md",
+    "bytes": 3118,
+    "sha256": "b70d1c356b6cdfd8f093678f11f480dca3d4581e3b13285fa50be1d942e06642"
+  },
+  {
+    "file": "docs/08-postgresql-schema-v0.1/04-outsourced-sales.md",
+    "bytes": 2218,
+    "sha256": "16f4dccfcac48209f8ed108e396b78b91550103dc85962df297a6f34b705e340"
+  },
+  {
+    "file": "docs/09-current-design-checkpoint.md",
+    "bytes": 7581,
+    "sha256": "080e6508d496a838f84a6d28aff18361e126def039a7ba7049c6f20a980d56a4"
+  },
+  {
+    "file": "docs/adr/ADR-001-modular-monolith.md",
+    "bytes": 695,
+    "sha256": "ad017e7143a6ebcab9312a6e8cca75925b1286bea334dfe75d0a4644edebe280"
+  },
+  {
+    "file": "docs/adr/ADR-002-single-postgresql-database.md",
+    "bytes": 462,
+    "sha256": "a015539e8c9eba2af346d299f0a64a9ee04d2588648ef0676ff1507e7bdc8267"
+  },
+  {
+    "file": "docs/adr/ADR-003-single-write-dbcontext.md",
+    "bytes": 491,
+    "sha256": "0ad58fb7bb38b07ddb1ee810bf2c8aabaed9e6dcadc6531314bd4662fe106459"
+  },
+  {
+    "file": "docs/adr/ADR-004-inventory-ledger-and-position.md",
+    "bytes": 779,
+    "sha256": "c7dde917ae2a267f7430378dcd70fe8e221989b94fa5f97eb43e95d12ec47aef"
+  }
+]

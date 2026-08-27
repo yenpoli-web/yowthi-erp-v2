@@ -1,0 +1,36 @@
+# Business Rule Gap Register v0.1
+
+## Categories
+
+- A — must be confirmed before affected function goes live
+- B — safe v0.1 control can be used without pretending it is a Business Rule
+- C — deferred extension; do not implement until real need appears
+
+| ID | Gap | Class | Safe v0.1 handling |
+|---|---|---|---|
+| PROC-001 | Procurement Batch COMPLETED then late entry | A | Block normal entry |
+| PROC-002 | Procurement receipt location default vs override | B | use unique default; otherwise require explicit choice |
+| PROCESS-001 | Input spread across multiple locations | A | require explicit source if ambiguous |
+| PROCESS-002 | Processing output location | B | unique default or explicit choice |
+| PROCESS-003 | Multi-input Processing Module | C | not implemented |
+| PROCESS-004 | Negative inventory for modes other than Final Packaging | C | disallow unless explicitly configured/confirmed |
+| OUT-001 | Outsourced receipt location | B | unique default or explicit choice |
+| SALES-001 | Sales issue location when stock spans locations | A | require explicit resolution if ambiguous |
+| SALES-002 | Sales Product negative inventory / presales | C | not implemented |
+| BATCH-001 | Automatic vs user-confirmed batch close | A | sold-out detection separate from Close command |
+| INV-001 | Inventory count UI enters absolute or delta | B | ledger always stores delta |
+| INV-002 | Fixed adjustment reason codes | C | store context first |
+| HANDLING-001 | Sales lifecycle state required before handling work | A | block states not explicitly allowed |
+| HANDLING-002 | Multiple same day-rate entries per sale/date/employee/item | B | no business unique constraint yet |
+| LABOR-001 | Late work after Daily Wage confirmed | A | block normal late work |
+| FIN-001 | Payment > Outstanding | A | block |
+| FIN-002 | Receipt > Outstanding | A | block |
+| FIN-003 | Confirmed Payment/Receipt correction method | A | no generic edit/delete |
+| FIN-004 | Deduction causing negative Payable Outstanding | A | block |
+| FIN-005 | Adjustment correction/reversal method | A | no generic edit |
+| FIN-006 | Adjustment types other than supplier deduction | C | not implemented |
+| LIFE-001 | Reopen Closed Batch | C | not implemented |
+| CONFIG-001 | Multiple simultaneously selectable active routes per Procurement Product | C | not implemented |
+
+These gaps do not currently block persistence architecture design.
+They must not be silently encoded as permanent database Business Rules.
