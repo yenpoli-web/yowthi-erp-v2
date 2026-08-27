@@ -6,7 +6,7 @@ YowThi ERP V2 is the clean-slate replacement architecture and implementation for
 
 ## Current phase
 
-Implementation P2 / M3 is complete: 25 of 55 formal relations are mapped. Next: P2 / M4 — `outsourced + sales + inventory`, cumulative 35 of 55 relations.
+Implementation P2 / M4 is complete: 35 of 55 formal relations are mapped. Next: P2 / M5 — `sales_handling + labor`, cumulative 41 of 55 relations.
 
 P0 is complete:
 - .NET 10 solution/project scaffold
@@ -103,22 +103,22 @@ Completed:
 M1  system + party                                  8 / 55
 M2  infrastructure + product + processing_config  20 / 55
 M3  procurement + processing                      25 / 55
+M4  outsourced + sales + inventory                35 / 55
 ```
 
-M3 includes:
-- Procurement Batch date + Procurement Product business identity
-- OPEN / COMPLETED procurement state and ACTIVE / CLOSED lifecycle metadata
-- optional Processing Route + Route Version pair with same-Route composite integrity
-- confirmed Procurement Entry Supplier/Farmer typed-source shape and row-local THB amount formula
-- Processing Execution route-version/module membership without the deliberately rejected Batch route-version composite FK
-- SOURCE_TRACKED / POOLED_OUTPUT / FINAL_PACKAGING source-shape snapshots
-- one input row per Processing Execution
-- processing measurement max-one-decimal checks on execution quantity/scale fields
-- Process Material output measurement shape and Sales Product completion shape
-- Final Packaging source-consumption formula
-- unique Execution + Module Output identity and one Sales Product output per execution
+M4 includes:
+- Outsourced Supply Batch identity = Supply Date + Outsourced Vendor; Product is not part of batch identity
+- Outsourced detail pricing snapshots and row-local THB amount formula
+- Sales DRAFT / CONFIRMED state with confirmation metadata
+- Sales Detail line identity and same-Sale alternate key
+- immutable Sales Allocation Revision / Revision Item historical truth
+- Revision Item typed Origin + source-batch shape and same-Sale composite FKs
+- pointer-only current `sales_allocations` with explicit row-version concurrency
+- Inventory Operation typed owning-source FKs and partial one-to-one source indexes
+- append-oriented Inventory Movement typed identity, sign vocabulary, and immutable allocation-revision lineage
+- Inventory Position full typed identity with PostgreSQL `UNIQUE NULLS NOT DISTINCT`
 
-Only formally confirmed closed vocabularies are mapped as CLR enums to PostgreSQL text. `negative_inventory_policy` remains required nonblank text and is snapshotted on Processing Execution; implementation does not invent policy enum members.
+Only formally confirmed closed vocabularies are mapped as CLR enums to PostgreSQL text. Cross-row aggregate invariants such as allocation sum = Sales Detail quantity remain owning-command transactional validation rather than row-level triggers.
 
 No `InitialV01` migration is generated until all M1–M7 mappings reach 55 / 55.
 
