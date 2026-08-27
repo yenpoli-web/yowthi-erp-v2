@@ -6,7 +6,7 @@ YowThi ERP V2 is the clean-slate replacement architecture and implementation for
 
 ## Current phase
 
-Implementation P0 — .NET solution scaffolding.
+Implementation P0 — .NET solution + React web scaffolding.
 
 The architecture and implementation-order baseline is complete through:
 
@@ -23,7 +23,7 @@ The recovery baseline remains:
 
 ## .NET solution
 
-The first implementation baseline contains:
+The implementation baseline contains:
 
 ```text
 src/
@@ -32,6 +32,7 @@ src/
   YowThi.Erp.Infrastructure
   YowThi.Erp.Infrastructure.Migrations
   YowThi.Erp.Api
+  YowThi.Erp.Web
 
 tests/
   YowThi.Erp.Domain.Tests
@@ -40,7 +41,7 @@ tests/
   YowThi.Erp.IntegrationTests
 ```
 
-Project dependency direction is guarded by architecture tests.
+Project dependency direction is guarded by architecture tests. The React web application is a separate Vite application and communicates with the backend only through the HTTP API contract.
 
 ## Local .NET validation
 
@@ -52,6 +53,34 @@ dotnet test YowThi.Erp.slnx
 ```
 
 The repository pins .NET SDK `10.0.400` in `global.json` and uses Microsoft Testing Platform through xUnit v3.
+
+## React web baseline
+
+Frontend baseline:
+
+- Node 24 LTS
+- pnpm 11.23.0
+- React 19.2.8
+- Vite 8.2.2
+- React Router 8.3.0
+- TanStack Query 5.102.7
+- TypeScript 6.0.3
+
+TypeScript remains on the latest stable compiler version currently supported by the selected `typescript-eslint` toolchain rather than moving to an unsupported parser/compiler combination.
+
+The pnpm lockfile is committed. pnpm 11's default 24-hour minimum release-age protection remains enabled; the workspace file contains only the exact version exceptions generated for the selected TanStack Query release.
+
+Local validation:
+
+```powershell
+cd src/YowThi.Erp.Web
+pnpm install --frozen-lockfile
+pnpm lint
+pnpm typecheck
+pnpm build
+```
+
+The P0 web shell wires React Router and TanStack Query only. It does not contain mock ERP entities, fake Business Rules, or a temporary replacement API model.
 
 Docker Desktop / PostgreSQL are not required for this P0 scaffold. They become required at the Build Plan P5 gate when `InitialV01` is first applied to PostgreSQL 18 and persistence integration/concurrency tests begin.
 

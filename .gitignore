@@ -11,6 +11,12 @@ TestResults/
 *.nupkg
 *.snupkg
 
+# Frontend
+**/node_modules/
+**/dist/
+**/.vite/
+*.tsbuildinfo
+
 # IDE
 .vs/
 .idea/
