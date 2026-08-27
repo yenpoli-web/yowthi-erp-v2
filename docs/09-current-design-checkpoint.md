@@ -36,6 +36,8 @@ Completed to v0.1:
 - PostgreSQL Schema Part 3: Processing + Inventory
 - PostgreSQL Schema Part 4: Outsourced + Sales
 - PostgreSQL Schema Part 5: Sales Handling + Labor + Finance
+- PostgreSQL Schema Part 6: Audit + System
+- ADR-005 Audit Reference Boundary
 
 ## 4. Core domain modules
 
@@ -226,7 +228,7 @@ Outsourced Batch:
 
 Whether close is automatic after sold-out or manually confirmed remains TO VERIFY.
 
-## 14. Data lifecycle / correction
+## 14. Data lifecycle / correction / audit
 
 Edit / Soft Delete / Restore / Hard Delete are not generic CRUD.
 
@@ -241,9 +243,17 @@ Confirmed transaction correction:
 
 Hard Delete:
 - highest authority only
-- dependency checked
+- owning-domain dependency checked
 - no silent cascade
-- hard-delete audit retained
+- explicit physical delete
+- hard-delete audit retained in the same transaction
+- audit does not automatically retain a full deleted-row copy
+
+Audit:
+- append-oriented and business-command-oriented
+- not a generic EF/database row mirror
+- rebuildable projections are not normally separate audit truth
+- correction audit lineage uses `audit.correction_links`
 
 ## 15. Persistence baseline
 
@@ -258,10 +268,17 @@ Hard Delete:
 - exact numeric prices/rates
 - integer THB amounts where confirmed
 - typed real foreign keys instead of unconstrained type+id
-- row_version optimistic concurrency
-- persistent idempotency
-- transactional outbox
+- row_version optimistic concurrency where the row owns an invariant
+- `system.accounts` is a minimal actor identity FK anchor; AuthN/AuthZ persistence remains separate
+- persistent idempotency through `system.command_executions`
+- CommandId PK is duplicate-command concurrency boundary
+- transactional outbox with at-least-once delivery
+- outbox worker concurrency uses PostgreSQL row locks + lease, not row_version
 - append-oriented audit
+- Audit subject locator is immutable historical non-FK metadata, not a domain relationship
+- Audit locator must not become a generic entity resolver
+- Audit/Outbox CommandId values are correlation snapshots and do not FK to CommandExecution
+- idempotency, outbox, and audit retention lifecycles are decoupled
 - RESTRICT/NO ACTION core FKs
 
 ## 16. PostgreSQL schema completed so far
@@ -316,6 +333,19 @@ Part 5:
 - Payable/Receivable Outstanding transactional projections
 - Finance concurrency boundary
 
+Part 6:
+- `system.accounts` actor identity anchor
+- persistent `system.command_executions` idempotency
+- transactional `system.outbox_messages`
+- append-oriented `audit.audit_events`
+- `audit.audit_event_subjects` historical locator boundary
+- `audit.correction_links`
+- Hard Delete audit transaction pattern
+- system-level concurrency boundary consolidation
+- audit/idempotency/outbox retention decoupling
+
+PostgreSQL Schema Parts 1–6 now cover the planned v0.1 module persistence baseline.
+
 ## 17. Important unresolved business gaps
 
 Must be confirmed before relevant go-live:
@@ -342,21 +372,26 @@ Safe/deferred items retained in Gap Register include:
 - closed batch reopen
 - multi-active route selection
 
+Part 6 introduces no new Business Rule gaps; its decisions are persistence architecture / control governance.
+
 ## 18. Next step
 
 Continue with:
 
-**Audit/System persistence**
+**Full relational-model consolidation**
 
 Expected scope:
-- audit persistence / append-oriented audit facts
-- Data Deletion Protection persistence support
-- persistent command idempotency
-- transactional outbox
-- system-level concurrency/support tables
-- any required correction/audit lineage support
+- reconcile Parts 1–6 into one complete table/relationship catalogue
+- normalize table/column naming and lifecycle metadata patterns
+- verify every FK target, delete behavior, unique constraint, CHECK constraint, and required index
+- consolidate typed discriminator + nullable-real-FK shapes
+- consolidate numeric precision/scale and quantity conventions
+- verify UUID v7 / date / timestamptz / bigint usage consistently
+- verify all `*_by_account_id` relationships target `system.accounts`
+- verify command/audit/outbox correlation and retention boundaries
+- identify DDL-ready ordering and cross-schema dependency order
+- surface any schema contradictions before EF Core mapping
 
-After Audit/System persistence:
-- full relational-model consolidation
+After relational-model consolidation:
 - EF Core mapping architecture
 - REST/API architecture
