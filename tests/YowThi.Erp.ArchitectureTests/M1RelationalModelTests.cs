@@ -8,7 +8,7 @@ namespace YowThi.Erp.ArchitectureTests;
 public sealed class M1RelationalModelTests
 {
     [Fact]
-    public void M1_maps_exactly_the_expected_system_and_party_tables()
+    public void M1_system_and_party_subset_remains_exactly_the_expected_eight_tables()
     {
         using var context = CreateContext();
         var model = GetDesignTimeModel(context);
@@ -26,6 +26,7 @@ public sealed class M1RelationalModelTests
         };
 
         var actual = model.GetEntityTypes()
+            .Where(entityType => entityType.GetSchema() is "party" or "system")
             .Select(entityType => $"{entityType.GetSchema()}.{entityType.GetTableName()}")
             .OrderBy(value => value, StringComparer.Ordinal)
             .ToArray();

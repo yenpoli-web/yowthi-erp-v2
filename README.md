@@ -6,7 +6,7 @@ YowThi ERP V2 is the clean-slate replacement architecture and implementation for
 
 ## Current phase
 
-Implementation P2 / M1 is complete — `system + party`, 8 of 55 formal relations. Next: P2 / M2 relational mapping — `infrastructure + product + processing_config`, cumulative 20 of 55 formal relations.
+Implementation P2 / M2 is complete: 20 of 55 formal relations are mapped. Next: P2 / M3 — `procurement + processing`, cumulative 25 of 55 relations.
 
 P0 is complete:
 - .NET 10 solution/project scaffold
@@ -15,13 +15,6 @@ P0 is complete:
 - React Router + TanStack Query wiring
 - locked pnpm dependency graph
 - .NET and web CI gates
-
-P1 is complete:
-- Domain/Application technical primitives
-- EF Core / Npgsql persistence foundation
-- PostgreSQL 18 provider configuration
-- command transaction / idempotency / Outbox / Audit technical contracts
-- one-shot explicit READ COMMITTED transaction runner
 
 The architecture and implementation-order baseline is complete through:
 
@@ -91,36 +84,29 @@ Infrastructure foundation:
 
 ## Relational mapping progress
 
-P2 / M1 maps exactly eight formal relations:
+P2 mappings are implemented in dependency order and validated through EF design-time metadata tests.
+
+Completed:
 
 ```text
-system.accounts
-system.command_executions
-system.outbox_messages
-
-party.suppliers
-party.farmers
-party.employees
-party.customers
-party.outsourced_vendors
+M1  system + party                                  8 / 55
+M2  infrastructure + product + processing_config  20 / 55
 ```
 
-M1 mapping guards include:
+M2 includes:
+- Infrastructure masters and Storage Location ownership
+- Procurement Product / Sales Product Group / Sales Product
+- pricing-basis and Packaging/Sales Weight structural checks
+- Processing Route and historical Route Version
+- one ACTIVE Route Version per Route using a partial unique index
+- Route Version / Process Material / Processing Module alternate keys required by composite FKs
+- Route input and Process Material container configuration
+- same-Route-Version material/module integrity
+- typed Module Output shape and configured wage-rate storage
 
-- explicit schema/table/column names
-- UUID IDs with `ValueGeneratedNever()`
-- explicit `row_version bigint` concurrency for mutable M1 owners only
-- real `system.accounts` actor FKs with `RESTRICT`
-- bilingual-name and lifecycle-pair CHECK constraints for Party masters
-- CommandExecution SHA-256/status/execution-state CHECK constraints
-- Outbox `command_id` correlation without an FK
-- no Party name/phone/bank uniqueness that has not been confirmed
-- no global soft-delete query filters
-- no PostgreSQL `xmin` concurrency
+Only formally confirmed closed vocabularies are mapped as CLR enums to PostgreSQL text. `negative_inventory_policy` remains required nonblank text until its code vocabulary is formally confirmed; implementation does not invent enum members.
 
-Architecture tests inspect the EF design-time model so relational metadata such as CHECK constraints is validated before migration generation.
-
-No formal migration has been generated. `InitialV01` remains blocked until all M1–M7 mappings reach 55 of 55 relations.
+No `InitialV01` migration is generated until all M1–M7 mappings reach 55 / 55.
 
 ## Local .NET validation
 

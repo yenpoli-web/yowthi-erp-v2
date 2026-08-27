@@ -15,12 +15,12 @@ public sealed class PersistenceFoundationTests
     }
 
     [Fact]
-    public void ErpDbContext_contains_exactly_M1_relations()
+    public void ErpDbContext_contains_exactly_M2_relations()
     {
         using var context = CreateContext();
 
         Assert.Equal("Npgsql.EntityFrameworkCore.PostgreSQL", context.Database.ProviderName);
-        Assert.Equal(8, context.Model.GetEntityTypes().Count());
+        Assert.Equal(20, context.Model.GetEntityTypes().Count());
     }
 
     private static ErpDbContext CreateContext()
