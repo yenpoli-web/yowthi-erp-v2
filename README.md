@@ -6,7 +6,7 @@ YowThi ERP V2 is the clean-slate replacement architecture and implementation for
 
 ## Current phase
 
-Implementation P2 / M4 is complete: 35 of 55 formal relations are mapped. Next: P2 / M5 — `sales_handling + labor`, cumulative 41 of 55 relations.
+Implementation P2 / M5 is complete: 41 of 55 formal relations are mapped. Next: P2 / M6 — `finance`, cumulative 52 of 55 relations.
 
 P0 is complete:
 - .NET 10 solution/project scaffold
@@ -104,21 +104,20 @@ M1  system + party                                  8 / 55
 M2  infrastructure + product + processing_config  20 / 55
 M3  procurement + processing                      25 / 55
 M4  outsourced + sales + inventory                35 / 55
+M5  sales_handling + labor                        41 / 55
 ```
 
-M4 includes:
-- Outsourced Supply Batch identity = Supply Date + Outsourced Vendor; Product is not part of batch identity
-- Outsourced detail pricing snapshots and row-local THB amount formula
-- Sales DRAFT / CONFIRMED state with confirmation metadata
-- Sales Detail line identity and same-Sale alternate key
-- immutable Sales Allocation Revision / Revision Item historical truth
-- Revision Item typed Origin + source-batch shape and same-Sale composite FKs
-- pointer-only current `sales_allocations` with explicit row-version concurrency
-- Inventory Operation typed owning-source FKs and partial one-to-one source indexes
-- append-oriented Inventory Movement typed identity, sign vocabulary, and immutable allocation-revision lineage
-- Inventory Position full typed identity with PostgreSQL `UNIQUE NULLS NOT DISTINCT`
+M5 includes:
+- bilingual Sales Packaging Item master with no wage-rate field
+- Sales Packaging Work Record day-rate fact with no quantity/weight/box/hour/unit-rate fields
+- no unconfirmed HANDLING-002 uniqueness on `(sales, work date, employee, item)`
+- Employee Daily Wage identity = Work Date + Employee with explicit row-version concurrency
+- Daily Wage row-local total formula = Processing total + Sales Packaging total
+- Processing Wage Component configured/applied rate snapshots and aggregate-before-multiply THB floor formula
+- Processing Wage source lineage with one Processing Execution Output usable only once
+- Sales Packaging Wage Component with one confirmed Work Record usable only once
 
-Only formally confirmed closed vocabularies are mapped as CLR enums to PostgreSQL text. Cross-row aggregate invariants such as allocation sum = Sales Detail quantity remain owning-command transactional validation rather than row-level triggers.
+Cross-row component sums into Daily Wage totals remain owning-command transactional validation rather than generic database triggers.
 
 No `InitialV01` migration is generated until all M1–M7 mappings reach 55 / 55.
 
