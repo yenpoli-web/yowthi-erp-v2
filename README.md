@@ -53,7 +53,7 @@ Project dependency direction is guarded by architecture tests. The React web app
 
 ## Shared technical foundation
 
-P1 starts with Domain/Application technical primitives that do not encode YowThi Business Rules:
+P1 currently includes Domain/Application technical primitives that do not encode YowThi Business Rules:
 
 - UUID v7 technical ID generation
 - non-empty CommandId value semantics
@@ -63,7 +63,18 @@ P1 starts with Domain/Application technical primitives that do not encode YowThi
 - application command/handler/executor contracts
 - cancellation-aware async command signatures
 
-Persistence-specific CommandExecution/Audit/Outbox stores and the `ErpDbContext` shell are intentionally deferred to the next focused P1 persistence-foundation commit so Application does not depend on JSON/SQL/EF implementation details.
+The persistence foundation now includes:
+
+- EF Core 10.0.11
+- Npgsql EF provider 10.0.3
+- PostgreSQL 18 provider target
+- one write `ErpDbContext` skeleton
+- explicit `system.__ef_migrations_history` configuration
+- `row_version` SaveChanges interceptor foundation using an explicit `long` marker, not PostgreSQL `xmin`
+- runtime DI registration using the same provider configuration as design-time tooling
+- separate migrations-project `IDesignTimeDbContextFactory<ErpDbContext>`
+
+The `ErpDbContext` intentionally contains zero mapped relations until P2/M1 begins. CommandExecution/Audit/Outbox concrete persistence stores and transaction orchestration remain separate P1 technical work so this commit does not prematurely map any of the 55 formal relations.
 
 ## Local .NET validation
 

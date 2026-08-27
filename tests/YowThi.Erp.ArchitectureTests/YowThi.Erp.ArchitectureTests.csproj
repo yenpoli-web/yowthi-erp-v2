@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../../src/YowThi.Erp.Application/YowThi.Erp.Application.csproj" />
+    <ProjectReference Include="../../src/YowThi.Erp.Infrastructure/YowThi.Erp.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>
