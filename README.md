@@ -6,7 +6,7 @@ YowThi ERP V2 is the clean-slate replacement architecture and implementation for
 
 ## Current phase
 
-Implementation P2 / M2 is complete: 20 of 55 formal relations are mapped. Next: P2 / M3 — `procurement + processing`, cumulative 25 of 55 relations.
+Implementation P2 / M3 is complete: 25 of 55 formal relations are mapped. Next: P2 / M4 — `outsourced + sales + inventory`, cumulative 35 of 55 relations.
 
 P0 is complete:
 - .NET 10 solution/project scaffold
@@ -91,20 +91,23 @@ Completed:
 ```text
 M1  system + party                                  8 / 55
 M2  infrastructure + product + processing_config  20 / 55
+M3  procurement + processing                      25 / 55
 ```
 
-M2 includes:
-- Infrastructure masters and Storage Location ownership
-- Procurement Product / Sales Product Group / Sales Product
-- pricing-basis and Packaging/Sales Weight structural checks
-- Processing Route and historical Route Version
-- one ACTIVE Route Version per Route using a partial unique index
-- Route Version / Process Material / Processing Module alternate keys required by composite FKs
-- Route input and Process Material container configuration
-- same-Route-Version material/module integrity
-- typed Module Output shape and configured wage-rate storage
+M3 includes:
+- Procurement Batch date + Procurement Product business identity
+- OPEN / COMPLETED procurement state and ACTIVE / CLOSED lifecycle metadata
+- optional Processing Route + Route Version pair with same-Route composite integrity
+- confirmed Procurement Entry Supplier/Farmer typed-source shape and row-local THB amount formula
+- Processing Execution route-version/module membership without the deliberately rejected Batch route-version composite FK
+- SOURCE_TRACKED / POOLED_OUTPUT / FINAL_PACKAGING source-shape snapshots
+- one input row per Processing Execution
+- processing measurement max-one-decimal checks on execution quantity/scale fields
+- Process Material output measurement shape and Sales Product completion shape
+- Final Packaging source-consumption formula
+- unique Execution + Module Output identity and one Sales Product output per execution
 
-Only formally confirmed closed vocabularies are mapped as CLR enums to PostgreSQL text. `negative_inventory_policy` remains required nonblank text until its code vocabulary is formally confirmed; implementation does not invent enum members.
+Only formally confirmed closed vocabularies are mapped as CLR enums to PostgreSQL text. `negative_inventory_policy` remains required nonblank text and is snapshotted on Processing Execution; implementation does not invent policy enum members.
 
 No `InitialV01` migration is generated until all M1–M7 mappings reach 55 / 55.
 

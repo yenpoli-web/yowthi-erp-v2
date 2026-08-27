@@ -10,7 +10,7 @@ namespace YowThi.Erp.ArchitectureTests;
 public sealed class M2RelationalModelTests
 {
     [Fact]
-    public void M2_maps_exactly_twenty_relations()
+    public void M2_foundation_schemas_remain_exactly_twenty_relations()
     {
         using var context = CreateContext();
         var model = GetDesignTimeModel(context);
@@ -40,6 +40,7 @@ public sealed class M2RelationalModelTests
         };
 
         var actual = model.GetEntityTypes()
+            .Where(entityType => entityType.GetSchema() is "system" or "party" or "infrastructure" or "product" or "processing_config")
             .Select(entityType => $"{entityType.GetSchema()}.{entityType.GetTableName()}")
             .OrderBy(value => value, StringComparer.Ordinal)
             .ToArray();

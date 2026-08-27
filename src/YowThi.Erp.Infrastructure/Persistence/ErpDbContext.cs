@@ -1,7 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using YowThi.Erp.Infrastructure.Persistence.Mapping.Infrastructure;
 using YowThi.Erp.Infrastructure.Persistence.Mapping.Party;
+using YowThi.Erp.Infrastructure.Persistence.Mapping.Processing;
 using YowThi.Erp.Infrastructure.Persistence.Mapping.ProcessingConfig;
+using YowThi.Erp.Infrastructure.Persistence.Mapping.Procurement;
 using YowThi.Erp.Infrastructure.Persistence.Mapping.Product;
 using YowThi.Erp.Infrastructure.Persistence.Mapping.System;
 
@@ -19,5 +21,7 @@ public sealed class ErpDbContext(DbContextOptions<ErpDbContext> options) : DbCon
         modelBuilder.ApplyInfrastructureMappings();
         modelBuilder.ApplyProductMappings();
         modelBuilder.ApplyProcessingConfigMappings();
+        modelBuilder.ApplyProcurementMappings();
+        modelBuilder.ApplyProcessingMappings();
     }
 }
