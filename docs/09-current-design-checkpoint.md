@@ -13,6 +13,7 @@ Precedence for implementation recovery:
 - Business Facts / Business Rules: Business Discovery, Command Contracts, Gap Register, owning-domain documents
 - relational implementation: `docs/10-relational-model-consolidation-v0.1.md`
 - EF Core/Npgsql implementation architecture: `docs/11-ef-core-mapping-architecture-v0.1.md`
+- HTTP/REST implementation architecture: `docs/12-rest-api-architecture-v0.1.md`
 
 Earlier Part 1–6 schema notes remain design history, but `docs/10` is the later consolidated relational baseline when relational implementation details conflict.
 
@@ -29,7 +30,7 @@ Completed to v0.1:
 - Business Discovery
 - Ubiquitous Language
 - Core Domain Map
-- End-to-end business chains
+- end-to-end business chains
 - Aggregate Boundaries
 - Transaction Boundaries
 - Domain Events baseline
@@ -47,6 +48,9 @@ Completed to v0.1:
 - ADR-005 Audit Reference Boundary
 - Full Relational Model Consolidation v0.1
 - EF Core Mapping Architecture v0.1
+- REST/API Architecture v0.1
+
+The core v0.1 architecture chain now reaches the public HTTP/API boundary.
 
 ## 4. Core domain modules
 
@@ -62,7 +66,7 @@ Completed to v0.1:
 - Receivable / Payable
 - Data Deletion Protection / Audit
 
-Costing/margin and reporting remain DEFERRED until architecture is complete.
+Costing/margin and reporting remain DEFERRED until explicitly scheduled by later planning.
 
 ## 5. Core source-batch identities
 
@@ -102,11 +106,11 @@ SOURCE_TRACKED:
 POOLED_OUTPUT:
 - no Supplier/Farmer
 - no input picked quantity
-- output quantity is source deduction quantity
+- source consumption = output quantity
 
 FINAL_PACKAGING:
 - completed Sales Product quantity
-- source deduction = qty × Packaging Weight
+- source deduction = completed quantity × Packaging Weight
 - source may go negative
 - Packaging Weight and Sales Weight are distinct
 
@@ -136,7 +140,7 @@ Prior Inventory Movements are never rewritten.
 ## 9. Sales
 
 Sales:
-- Date + Customer header
+- Sales Date + Customer header
 - 1..N Sales Details
 
 Pricing:
@@ -160,11 +164,12 @@ Allocation persistence:
 - `sales_allocation_revision_items` = immutable historical allocation truth
 - `sales_allocations` = pointer-only current official projection
 - Inventory Movement allocation lineage points to immutable Revision Items
-- correction appends a new Revision + Items, writes compensating inventory movements, and replaces current pointers
+- correction appends new Revision + Items, creates compensating Inventory Movements, and replaces current pointers
 
 ## 10. Outsourced
 
 Outsourced Vendor is separate from Supplier.
+
 Confirmed detail immediately creates:
 - OUTSOURCED sellable inventory
 - Vendor Payable obligation
@@ -436,12 +441,93 @@ InitialV01 acceptance requires:
 - Inventory concurrency/identity tests
 - Outbox `SKIP LOCKED` tests
 
-Docker Desktop / PostgreSQL runtime is not required during architecture-document work.
-It becomes required when actual EF mappings/migrations are implemented/executed and PostgreSQL integration/concurrency testing begins.
+## 18. REST/API Architecture v0.1
 
-## 18. Important unresolved business gaps
+HTTP baseline:
+- ASP.NET Core 10 Minimal APIs
+- module `MapGroup` composition
+- `/api/v1`
+- `TypedResults`
+- first-party validation / Problem Details / OpenAPI
+- HTTP DTOs are separate from Application Commands, Domain entities, and EF entities
+- explicit business-intent command endpoints; no generic command/entity mutation API
 
-Must be confirmed before relevant go-live:
+Idempotency:
+- all Business Writes require `Idempotency-Key` UUID
+- canonical hash includes Command Type, route business IDs, semantic body fields, and expected concurrency tokens
+- Authorization, locale, trace metadata do not affect request hash
+- replay check occurs before current-state/row-version lookup
+- same actor + same type + same hash returns stored committed result
+- different actor/type/hash with same key returns `409 idempotency.key-reused`
+- persisted command results are locale-neutral
+- a new semantic attempt/version requires a new Idempotency Key
+
+Concurrency:
+- versioned target mutations use explicit `expectedRowVersion`
+- Finance settlement uses `expectedOutstandingVersion`
+- no ETag/If-Match concurrency contract in v0.1
+- internal Inventory concurrency remains internal to owning commands
+- stale/current-state concurrency failures use stable `409` Problem Details codes
+
+Errors/validation:
+- consistent Problem Details with stable machine `code`
+- `400` = request/JSON/transport contract invalid
+- `409` = current state/concurrency/idempotency conflict
+- `422` = structurally valid but semantically invalid command input
+- `429` = rate limit
+- `500` = unexpected server failure; no SQL/stack details to client
+- write DTOs reject unknown fields rather than silently ignoring them
+
+Lifecycle/correction:
+- explicit Soft Delete / Restore command routes
+- explicit target-specific Data Protection Hard Delete routes
+- no generic `(type,id)` hard-delete resolver
+- confirmed transaction correction only through owning-domain correction commands
+- no generic JSON Patch / Undo / reversal endpoint
+- unresolved FIN-003/FIN-005 do not receive invented APIs
+
+Queries/localization:
+- read endpoints return dedicated projections
+- opaque cursor pagination + endpoint-defined filter/sort allowlists
+- no OData/generic expression DSL in v0.1
+- `Accept-Language` supports `zh-TW` and `th-TH` operational display resolution
+- missing requested localized name falls back to the other existing name
+- deployment-configured default locale handles unsupported/absent preference
+- master/edit DTOs expose both bilingual source fields where needed
+
+Security/authorization:
+- `/api/v1` business endpoints require authentication by default
+- actor is resolved server-side to `system.accounts`; clients never select persisted actor identity
+- operation capability policies such as `sales.confirm` / `finance.pay` / `data-protection.hard-delete`
+- Role/Permission persistence and JWT/Cookie/IdP choice remain deferred to AuthN/AuthZ implementation architecture
+- development-only no-password access is forbidden in staging/production
+
+Transactions/cancellation:
+- endpoint does not own PostgreSQL transaction
+- Application Command Executor owns new-command transaction flow
+- external side effects occur only after commit through Outbox
+- client disconnect is not proof of rollback
+- unknown commit result -> dispose context and replay whole command with same Idempotency Key
+
+Production controls:
+- no plaintext HTTP Business API
+- trusted forwarded headers only from configured proxy/network
+- CORS disabled unless deployment requires it; then explicit origin allowlist
+- rate-limiting infrastructure enabled with deployment/load-tested thresholds
+- finite request-body limit
+- production request/response body logging off by default
+- OpenAPI not publicly exposed in production by default
+- health endpoints expose minimum liveness/readiness only
+
+OpenAPI/testing:
+- stable explicit endpoint OperationIds
+- endpoint metadata tests
+- semantic generated OpenAPI tests
+- business-write tests cover idempotency, replay ordering, concurrency, Problem Details, lifecycle, locale, and authorization contracts
+
+## 19. Important unresolved business gaps
+
+Must be confirmed before affected functionality goes live:
 - Completed Procurement Batch late entry policy
 - Processing input location selection when multiple locations exist
 - Sales issue location selection when stock spans locations
@@ -465,31 +551,32 @@ Safe/deferred items retained in Gap Register include:
 - closed batch reopen
 - multi-active route selection
 
-Relational consolidation and EF Core Mapping Architecture introduce no new Business Rule gaps.
+Relational consolidation, EF Core Mapping Architecture, and REST/API Architecture introduce no new Business Rule gaps.
 
-## 19. Next step
+## 20. Next step
 
 Continue with:
 
-**REST/API Architecture v0.1**
+**Implementation Sequencing / Build Plan v0.1**
 
 Expected scope:
-- module/route conventions
-- command/query HTTP boundaries
-- request/response DTO rules
-- CommandId/idempotency HTTP contract
-- row-version/concurrency HTTP contract
-- validation/error/Problem Details conventions
-- authorization boundary without inventing AuthN/AuthZ persistence
-- pagination/filter/sort conventions
-- localization contract
-- correction/data-lifecycle endpoints
-- transaction-safe command orchestration
+- solution/project scaffolding order
+- package/dependency setup
+- shared technical primitives
+- Domain/Application implementation sequence
+- persistence mapping sequence for all 55 relations
+- API vertical-slice sequence
+- architecture/model/contract test sequence
+- initial Business Command slices
+- `InitialV01` migration readiness gate
+- PostgreSQL 18 integration/concurrency testing sequence
+- CI/build/test gates
+- Docker Desktop activation point
 
-After REST/API Architecture:
-- implementation sequencing
-- actual EF Core entity/configuration code
-- `InitialV01` migration generation/execution
-- PostgreSQL 18 integration/concurrency testing
+After implementation planning:
+- scaffold actual .NET/React solution as scheduled
+- implement EF Core entities/configurations
+- generate/review `InitialV01`
+- start PostgreSQL 18 via Docker Desktop for real migration/integration/concurrency tests
 
-Docker Desktop may remain stopped until the implementation/migration testing stage.
+Docker Desktop may remain stopped until the implementation/migration testing stage actually requires PostgreSQL runtime.
