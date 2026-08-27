@@ -6,7 +6,7 @@ YowThi ERP V2 is the clean-slate replacement architecture and implementation for
 
 ## Current phase
 
-Implementation P1 — shared technical foundation.
+Implementation P1 is complete. Next: P2 / M1 relational mapping — `system + party`, 8 of 55 formal relations.
 
 P0 is complete:
 - .NET 10 solution/project scaffold
@@ -53,17 +53,23 @@ Project dependency direction is guarded by architecture tests. The React web app
 
 ## Shared technical foundation
 
-P1 currently includes Domain/Application technical primitives that do not encode YowThi Business Rules:
+P1 contains only cross-cutting technical foundations and does not encode YowThi Business Rules.
+
+Application/Domain foundation:
 
 - UUID v7 technical ID generation
-- non-empty CommandId value semantics
-- non-empty persistent actor-account identity semantics
+- non-empty CommandId and persistent actor-account identity semantics
 - actor-context contract
 - locale-neutral application error/result primitives
 - application command/handler/executor contracts
-- cancellation-aware async command signatures
+- stable command-type and SHA-256 request-hash value semantics
+- opaque validated JSON payload primitives for technical persistence contracts
+- CommandExecution acquire/replay/conflict store boundary
+- Outbox writer and command-oriented Audit writer draft contracts
+- explicit commit/rollback command-transaction decision contract
+- cancellation-aware async signatures
 
-The persistence foundation now includes:
+Infrastructure foundation:
 
 - EF Core 10.0.11
 - Npgsql EF provider 10.0.3
@@ -73,8 +79,10 @@ The persistence foundation now includes:
 - `row_version` SaveChanges interceptor foundation using an explicit `long` marker, not PostgreSQL `xmin`
 - runtime DI registration using the same provider configuration as design-time tooling
 - separate migrations-project `IDesignTimeDbContextFactory<ErpDbContext>`
+- SHA-256 canonical command-payload hasher
+- one-shot explicit READ COMMITTED transaction runner; rollback/exception requires a fresh service scope and fresh `ErpDbContext`
 
-The `ErpDbContext` intentionally contains zero mapped relations until P2/M1 begins. CommandExecution/Audit/Outbox concrete persistence stores and transaction orchestration remain separate P1 technical work so this commit does not prematurely map any of the 55 formal relations.
+The `ErpDbContext` intentionally contains zero mapped relations at the end of P1. Concrete `system.command_executions` / `system.outbox_messages` persistence arrives with P2/M1; Audit persistence remains deferred to the formal Audit mapping batch. No relation is mapped early merely to support a technical shell.
 
 ## Local .NET validation
 
@@ -115,7 +123,7 @@ pnpm build
 
 The P0 web shell wires React Router and TanStack Query only. It does not contain mock ERP entities, fake Business Rules, or a temporary replacement API model.
 
-Docker Desktop / PostgreSQL are not required for P1 technical foundation work. They become required at the Build Plan P5 gate when `InitialV01` is first applied to PostgreSQL 18 and persistence integration/concurrency tests begin.
+Docker Desktop / PostgreSQL are not required for P2 relational model mapping and metadata tests. They become required at the Build Plan P5 gate when `InitialV01` is first applied to PostgreSQL 18 and persistence integration/concurrency tests begin.
 
 ## Information labels
 

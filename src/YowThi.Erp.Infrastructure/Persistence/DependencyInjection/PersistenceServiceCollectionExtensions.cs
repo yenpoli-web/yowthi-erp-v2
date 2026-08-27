@@ -1,6 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using YowThi.Erp.Application.Common.Idempotency;
+using YowThi.Erp.Application.Common.Transactions;
 using YowThi.Erp.Infrastructure.Persistence.Concurrency;
+using YowThi.Erp.Infrastructure.Persistence.Idempotency;
+using YowThi.Erp.Infrastructure.Persistence.Transactions;
 
 namespace YowThi.Erp.Infrastructure.Persistence.DependencyInjection;
 
@@ -13,7 +17,11 @@ public static class PersistenceServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(services);
         ArgumentException.ThrowIfNullOrWhiteSpace(connectionString);
 
+        services.AddSingleton(TimeProvider.System);
+        services.AddSingleton<ICommandRequestHasher, Sha256CommandRequestHasher>();
+        services.AddScoped<ICommandTransactionRunner, EfCommandTransactionRunner>();
         services.AddSingleton<RowVersionSaveChangesInterceptor>();
+
         services.AddDbContext<ErpDbContext>((serviceProvider, options) =>
         {
             options.UseNpgsql(connectionString, PostgreSqlProviderOptions.Configure);
