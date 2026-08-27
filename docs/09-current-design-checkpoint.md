@@ -9,7 +9,12 @@ Business Rules come from real YowThi operations.
 ERP Control Governance is separate from Business Rules.
 AI/developers must not invent Business Rules for technical convenience.
 
-For relational implementation details, `docs/10-relational-model-consolidation-v0.1.md` is the integrated DDL/EF mapping baseline after Parts 1–6. Earlier domain/business documents remain authoritative for Business Facts.
+Precedence for implementation recovery:
+- Business Facts / Business Rules: Business Discovery, Command Contracts, Gap Register, owning-domain documents
+- relational implementation: `docs/10-relational-model-consolidation-v0.1.md`
+- EF Core/Npgsql implementation architecture: `docs/11-ef-core-mapping-architecture-v0.1.md`
+
+Earlier Part 1–6 schema notes remain design history, but `docs/10` is the later consolidated relational baseline when relational implementation details conflict.
 
 ## 2. Legacy safety
 
@@ -41,6 +46,7 @@ Completed to v0.1:
 - PostgreSQL Schema Part 6: Audit + System
 - ADR-005 Audit Reference Boundary
 - Full Relational Model Consolidation v0.1
+- EF Core Mapping Architecture v0.1
 
 ## 4. Core domain modules
 
@@ -104,7 +110,8 @@ FINAL_PACKAGING:
 - source may go negative
 - Packaging Weight and Sales Weight are distinct
 
-Processing Route/Version/Material structural membership uses selected high-value composite FK integrity, but Batch bound Route Version equality at Processing confirmation remains a transaction invariant because Batch route binding is nullable before processing.
+Processing Route/Version/Material structural membership uses selected high-value composite FK integrity.
+Batch bound Route Version equality at Processing confirmation remains a transaction invariant because Batch route binding is nullable before processing.
 
 ## 8. Inventory
 
@@ -118,12 +125,13 @@ Inventory identity:
 Inventory Movement = append-oriented ledger truth.
 Inventory Position = transactional rebuildable current projection.
 
-The full nullable typed Inventory Position identity uses PostgreSQL `UNIQUE NULLS NOT DISTINCT` so null typed dimensions do not permit duplicate logical positions.
+The complete nullable typed Inventory Position identity uses PostgreSQL `UNIQUE NULLS NOT DISTINCT` so null typed dimensions cannot create duplicate logical positions.
 
 No separate raw/semi/finished inventory systems.
 No globally unrestricted negative inventory.
 
-Allocation correction inventory effects use signed `SALES_ALLOCATION_ADJUSTMENT` movements under a `SALES_ALLOCATION_REVISION` operation. Prior Inventory Movements are never rewritten.
+Allocation correction inventory effects use signed `SALES_ALLOCATION_ADJUSTMENT` movements under a `SALES_ALLOCATION_REVISION` operation.
+Prior Inventory Movements are never rewritten.
 
 ## 9. Sales
 
@@ -141,13 +149,14 @@ Allocation priority:
 3. authorized manual override
 
 Allocation total must equal Sales Detail quantity.
+
 Confirmed Sales atomically creates:
 - Allocation Revision 0 + immutable Revision Items
 - current official Sales Allocation pointers
 - SALES_ISSUE
 - Receivable
 
-Allocation persistence after consolidation:
+Allocation persistence:
 - `sales_allocation_revision_items` = immutable historical allocation truth
 - `sales_allocations` = pointer-only current official projection
 - Inventory Movement allocation lineage points to immutable Revision Items
@@ -215,10 +224,11 @@ Supplier/Farmer procurement payable:
 - confirmed Procurement Entries append obligation items
 
 Relational consolidation:
-- `finance.payable_obligation_items` is one flat typed-FK relation rather than one subtype table per source
-- local source shape / source existence / source uniqueness / Payable-kind compatibility are DB structural constraints
+- `finance.payable_obligation_items` is one flat typed-FK relation
+- source shape / source existence / source uniqueness / Payable-kind compatibility are DB structural constraints
 - cross-row semantic alignment between source facts and Payable owner is revalidated by owning command transaction
-- original obligation amount is `>= 0`; Payment/Receipt settlement amounts remain `> 0`
+- original obligation amount is `>= 0`
+- Payment/Receipt amounts remain `> 0`
 
 Supplier quality/weight deduction:
 - Payable Adjustment
@@ -236,7 +246,7 @@ Partial settlements are supported.
 Payment / Receipt / Adjustment concurrency uses the applicable Outstanding Position `row_version` boundary.
 Confirmed finance facts do not expose generic edit/delete.
 
-Outstanding row formula may be constrained, but no permanent `outstanding >= 0` CHECK is introduced while FIN-001, FIN-002, and FIN-004 remain unresolved Business Rules.
+Outstanding row formula may be constrained, but no permanent `outstanding >= 0` CHECK exists while FIN-001, FIN-002, and FIN-004 remain unresolved Business Rules.
 
 ## 13. Batch close
 
@@ -279,94 +289,38 @@ Audit:
 - not a generic EF/database row mirror
 - rebuildable projections are not normally separate audit truth
 - correction audit lineage uses `audit.correction_links`
-- Audit subject locator is immutable historical non-FK metadata under ADR-005 and must not become a generic entity resolver
+- Audit subject locator is immutable historical non-FK metadata under ADR-005
+- Audit locator must not become a generic entity resolver
 
-## 15. Persistence baseline
+## 15. Relational persistence baseline
 
 - PostgreSQL 18
 - single database
 - module schemas
-- one write `ErpDbContext` v0.1
-- UUID v7 technical IDs; internal generation can use PostgreSQL 18 UUID v7 support
 - 55 relations in consolidated v0.1 relational baseline
+- UUID v7 technical IDs
 - business unique constraints only where confirmed
 - `date` for business dates
 - `timestamptz` for system timestamps
-- exact `numeric` prices/rates/quantities; do not invent precision/scale where unconfirmed
-- processing max-one-decimal measurements are validated without silent DB rounding
+- exact `numeric` prices/rates/quantities; no invented precision/scale
+- processing max-one-decimal measurements validated without silent DB rounding
 - integer THB (`bigint`) amounts where confirmed
 - typed real foreign keys instead of unconstrained type+id
 - selected stable composite FKs for high-value membership integrity
 - cross-row/lifecycle aggregate invariants remain owning-command transaction responsibility
-- `row_version bigint` optimistic concurrency only where row owns a mutable invariant
-- `system.accounts` is minimal actor identity FK anchor; AuthN/AuthZ persistence remains separate
+- explicit `row_version bigint` where a row owns a mutable invariant
+- `system.accounts` = minimal actor identity FK anchor; AuthN/AuthZ persistence remains separate
 - persistent idempotency through `system.command_executions`
-- CommandId PK is duplicate-command concurrency boundary
+- CommandId PK = duplicate-command concurrency boundary
 - transactional outbox with at-least-once delivery
-- outbox worker concurrency uses PostgreSQL row locks + lease, not row_version
+- outbox worker concurrency = PostgreSQL row locks + lease
 - append-oriented audit
-- Audit/Outbox CommandId values are correlation snapshots and do not FK to CommandExecution
-- idempotency, outbox, and audit retention lifecycles are decoupled
-- core FKs default to RESTRICT/NO ACTION
-- core operational referencing FKs require appropriate indexes
+- Audit/Outbox CommandId = correlation snapshots, no FK to CommandExecution
+- idempotency/outbox/audit retention lifecycles decoupled
+- core FKs default RESTRICT/NO ACTION
+- operational/core referencing FKs require appropriate indexes
 
-## 16. PostgreSQL schema Parts 1–6
-
-Part 1:
-- party masters
-- containers / warehouses / locations
-- Procurement Product
-- Sales Product Group / Sales Product
-- Processing Route / Version / Module / Process Material / Outputs
-
-Part 2:
-- Procurement Batch
-- Procurement Entry
-- typed Supplier/Farmer source
-- route version binding
-- amount/unit snapshots
-- company pickup fact
-
-Part 3:
-- Processing Execution
-- input/output measurement facts
-- container snapshots
-- wage snapshots
-- Inventory Operation
-- Inventory Movement
-- Inventory Position
-
-Part 4:
-- Outsourced Supply Batch / Detail
-- Sales / Details
-- Sales Allocation
-- Allocation Revision boundary
-- OUTSOURCED_RECEIPT
-- SALES_ISSUE integration
-
-Part 5:
-- Sales Packaging Item / Work Record
-- Employee Daily Wage
-- Processing Wage Component + source lineage
-- Sales Packaging Wage Component
-- typed Payable / obligation items
-- Company Pickup Transport Basis + obligation lineage
-- Payable Adjustment / Payment
-- Receivable / obligation items / Receipt
-- Payable/Receivable Outstanding projections
-- Finance concurrency boundary
-
-Part 6:
-- `system.accounts`
-- `system.command_executions`
-- `system.outbox_messages`
-- `audit.audit_events`
-- `audit.audit_event_subjects`
-- `audit.correction_links`
-- Hard Delete audit transaction pattern
-- system concurrency/retention boundaries
-
-## 17. Full relational consolidation v0.1
+## 16. Full relational consolidation v0.1
 
 Integrated relation count: **55**.
 
@@ -396,8 +350,6 @@ Formal persistence corrections adopted during consolidation:
 7. `sales_allocations` is pointer-only current official projection.
 8. Do not use nullable Batch Route-Version as composite principal key; validate batch/execution Route Version equality transactionally.
 
-These are persistence/relational consistency corrections, not new Business Rules.
-
 DDL dependency order:
 - schemas
 - system
@@ -418,12 +370,81 @@ DDL dependency order:
 
 No circular aggregate ownership currently requires a special two-phase FK workaround.
 
+## 17. EF Core Mapping Architecture v0.1
+
+Write persistence:
+- one scoped write `ErpDbContext`
+- EF Core/Npgsql only in Infrastructure
+- Fluent API mapping only
+- mapping organized per module/relation
+- explicit PostgreSQL snake_case table/column names
+- no automatic naming-convention dependency
+
+Value generation/types:
+- internal ERP IDs generated application-side with UUID v7 before persistence
+- externally supplied CommandId is not regenerated
+- `Guid`/`DateOnly`/`DateTimeOffset`/`long`/`decimal` map to the relational baseline
+- technical JSON payloads use `jsonb` with a technical CLR JSON representation
+
+Concurrency:
+- `row_version bigint` maps with `.IsConcurrencyToken()`
+- do not use Npgsql `xmin` / `.IsRowVersion()`
+- technical interceptor may increment row_version only
+- business commands use tracked-first mutation
+- detached graph `DbContext.Update()` is not a business update interface
+- any write persistence failure invalidates the current `ErpDbContext` for retry
+- whole-command retry uses fresh context + same CommandId
+
+Relationships/query behavior:
+- core relationships use Restrict/No Action
+- high-value alternate/composite keys only where structurally useful
+- no lazy loading
+- no global soft-delete query filter
+- no generic soft-delete interceptor
+- no Generic Repository
+- query services may use EF `AsNoTracking` projection, Dapper, or native SQL
+
+PostgreSQL-specific operations allowed where the atomic primitive matters:
+- CommandId acquisition: `ON CONFLICT DO NOTHING`
+- Finance monetary CAS: expected row_version + current Outstanding predicate
+- Outbox dequeue: row locking / `FOR UPDATE SKIP LOCKED` + lease
+
+Transactions/retry:
+- one explicit PostgreSQL transaction per persisted Business Command
+- normally READ COMMITTED unless an owning design requires otherwise
+- multiple successful SaveChanges within that transaction are allowed
+- automatic write `EnableRetryOnFailure()` is OFF in v0.1
+
+Migrations:
+- dedicated `YowThi.Erp.Infrastructure.Migrations` project
+- `IDesignTimeDbContextFactory<ErpDbContext>` for tooling
+- one migration stream for one write context
+- migration history at `system.__ef_migrations_history`
+- initial implementation migration = `InitialV01` after all 55 relations are mapped
+- production API does not call `Database.Migrate()` at startup
+- no operational business master seeding through `HasData()`
+
+InitialV01 acceptance requires:
+- EF model metadata tests
+- generated migration static review against `docs/10`
+- no pending model/migration drift
+- clean PostgreSQL 18 apply/schema inspection
+- typed constraint tests
+- row-version conflict tests
+- Finance CAS concurrency test
+- CommandId race test
+- Inventory concurrency/identity tests
+- Outbox `SKIP LOCKED` tests
+
+Docker Desktop / PostgreSQL runtime is not required during architecture-document work.
+It becomes required when actual EF mappings/migrations are implemented/executed and PostgreSQL integration/concurrency testing begins.
+
 ## 18. Important unresolved business gaps
 
 Must be confirmed before relevant go-live:
 - Completed Procurement Batch late entry policy
 - Processing input location selection when multiple locations exist
-- Sales issue location selection when multiple locations exist
+- Sales issue location selection when stock spans locations
 - automatic vs manual batch close
 - Sales Handling allowed Sales lifecycle state
 - late work after Employee Daily Wage confirmation
@@ -444,31 +465,31 @@ Safe/deferred items retained in Gap Register include:
 - closed batch reopen
 - multi-active route selection
 
-Relational consolidation introduces no new Business Rule gaps.
+Relational consolidation and EF Core Mapping Architecture introduce no new Business Rule gaps.
 
 ## 19. Next step
 
 Continue with:
 
-**EF Core Mapping Architecture v0.1**
+**REST/API Architecture v0.1**
 
 Expected scope:
-- solution/project persistence boundaries
-- one write `ErpDbContext`
-- module schema/table mappings
-- UUID v7 value generation strategy
-- explicit `row_version` concurrency token mappings
-- alternate/composite keys and composite FKs
-- CHECK constraint / unique / partial-index migration strategy
-- PostgreSQL-specific `UNIQUE NULLS NOT DISTINCT` migration support
-- typed discriminator mapping/validation
-- per-module `IEntityTypeConfiguration` structure
-- query filters vs historical-reference requirements
-- transaction / execution-strategy boundaries
-- migration ordering for all 55 relations
+- module/route conventions
+- command/query HTTP boundaries
+- request/response DTO rules
+- CommandId/idempotency HTTP contract
+- row-version/concurrency HTTP contract
+- validation/error/Problem Details conventions
+- authorization boundary without inventing AuthN/AuthZ persistence
+- pagination/filter/sort conventions
+- localization contract
+- correction/data-lifecycle endpoints
+- transaction-safe command orchestration
 
-Docker Desktop / PostgreSQL runtime is not required during this architecture-document phase. It becomes necessary when the first real EF Core migrations are implemented/executed and PostgreSQL integration/concurrency tests begin.
+After REST/API Architecture:
+- implementation sequencing
+- actual EF Core entity/configuration code
+- `InitialV01` migration generation/execution
+- PostgreSQL 18 integration/concurrency testing
 
-After EF Core Mapping Architecture:
-- REST/API architecture
-- then implementation/migrations/integration testing according to the approved architecture sequence
+Docker Desktop may remain stopped until the implementation/migration testing stage.
