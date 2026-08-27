@@ -35,6 +35,7 @@ Completed to v0.1:
 - PostgreSQL Schema Part 2: Procurement
 - PostgreSQL Schema Part 3: Processing + Inventory
 - PostgreSQL Schema Part 4: Outsourced + Sales
+- PostgreSQL Schema Part 5: Sales Handling + Labor + Finance
 
 ## 4. Core domain modules
 
@@ -154,11 +155,18 @@ Processing wage:
 - use configured wage snapshot
 - Applied Wage Rate may be overridden at Daily Wage confirmation
 - floor final THB amount
+- Processing Wage Component keeps Processing Execution Output lineage
 
 Sales Packaging/Handling:
 - Sales + Work Date + Employee + Work Item + Wage
 - day-rate
-- no quantity/kg/box fields in v0.1
+- no quantity/kg/box/hour fields in v0.1
+- one confirmed Work Record can enter only one Employee Daily Wage
+
+Employee Daily Wage identity:
+- Work Date + Employee
+
+Late work after confirmed Daily Wage remains TO VERIFY.
 
 ## 12. Finance
 
@@ -167,11 +175,41 @@ Original Obligation
 - Settlements
 = Outstanding
 
+Finance truth:
+- obligation items
+- adjustments
+- payments / receipts
+
+Outstanding is only a rebuildable transactional projection.
+Source transactions do not store paid/outstanding state.
+
+Payable kinds:
+- Procurement Supplier
+- Procurement Farmer
+- Company Pickup Transport
+- Outsourced Vendor
+- Employee Daily Wage
+
+Supplier/Farmer procurement payable:
+- Supplier aggregates by Procurement Batch + Supplier
+- Farmer aggregates by Procurement Batch + Farmer
+- confirmed Procurement Entries append obligation items
+
 Supplier quality/weight deduction:
 - Payable Adjustment
 - never rewrite Procurement
 
+Company Pickup Transport:
+- confirmed Company Pickup Procurement Entry creates per-entry transport obligation basis
+- no Driver Master
+- no Transport Charge aggregate in v0.1
+- no Transport Rate Master is assumed
+- applied THB/kg rate is stored as the confirmed historical fact
+- final amount, grouping/confirmation boundary, and payee semantics remain TO VERIFY through FIN-007/008/009
+
 Partial settlements are supported.
+Payment / Receipt / Adjustment concurrency uses the applicable Outstanding Position `row_version` boundary.
+Confirmed finance facts do not expose generic edit/delete.
 
 ## 13. Batch close
 
@@ -217,7 +255,7 @@ Hard Delete:
 - business unique constraints
 - date for business dates
 - timestamptz for system timestamps
-- exact numeric prices
+- exact numeric prices/rates
 - integer THB amounts where confirmed
 - typed real foreign keys instead of unconstrained type+id
 - row_version optimistic concurrency
@@ -261,6 +299,23 @@ Part 4:
 - OUTSOURCED_RECEIPT
 - SALES_ISSUE integration
 
+Part 5:
+- Sales Packaging Item / Work Record
+- Employee Daily Wage
+- Processing Wage Component + source lineage
+- Sales Packaging Wage Component
+- typed Payable / obligation items
+- Procurement Supplier/Farmer obligation lineage
+- Outsourced Vendor obligation lineage
+- Employee Wage obligation lineage
+- Company Pickup Transport Basis + obligation lineage
+- Payable Adjustment
+- Payment
+- Receivable / Receivable obligation items
+- Receipt
+- Payable/Receivable Outstanding transactional projections
+- Finance concurrency boundary
+
 ## 17. Important unresolved business gaps
 
 Must be confirmed before relevant go-live:
@@ -275,39 +330,33 @@ Must be confirmed before relevant go-live:
 - settlement correction/reversal
 - payable deduction causing negative Outstanding
 - payable adjustment correction/reversal
+- Company Pickup Transport final THB rounding rule
+- Company Pickup Transport payable grouping / confirmation boundary
+- Company Pickup Transport payee recording semantics
 
-Deferred until real need:
+Safe/deferred items retained in Gap Register include:
+- multiple same day-rate Handling records with no business unique constraint yet
+- additional finance adjustment types
 - Multi-input Processing Module
 - Sales negative inventory/presales
 - closed batch reopen
 - multi-active route selection
-- additional finance adjustment types
 
 ## 18. Next step
 
 Continue with:
 
-**PostgreSQL Schema / Table Design v0.1 — Part 5: `sales_handling` + `labor` + `finance`**
+**Audit/System persistence**
 
 Expected scope:
-- Sales Packaging Item
-- Sales Packaging Work records
-- Employee Daily Wage
-- Processing Wage Components
-- Payable source typing
-- Supplier/Farmer procurement payable
-- Company pickup transport payable
-- Outsourced Vendor payable
-- Employee Wage payable
-- Payable Adjustment
-- Payment
-- Receivable
-- Receipt
-- Outstanding transactional cache
-- finance concurrency and settlement lineage
+- audit persistence / append-oriented audit facts
+- Data Deletion Protection persistence support
+- persistent command idempotency
+- transactional outbox
+- system-level concurrency/support tables
+- any required correction/audit lineage support
 
-After Part 5:
-- Audit/System persistence
+After Audit/System persistence:
 - full relational-model consolidation
 - EF Core mapping architecture
 - REST/API architecture

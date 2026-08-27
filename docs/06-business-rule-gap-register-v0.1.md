@@ -29,6 +29,9 @@
 | FIN-004 | Deduction causing negative Payable Outstanding | A | block |
 | FIN-005 | Adjustment correction/reversal method | A | no generic edit |
 | FIN-006 | Adjustment types other than supplier deduction | C | not implemented |
+| FIN-007 | Company Pickup Transport final THB rounding rule | A | persist applicable quantity, applied THB/kg rate, and confirmed final THB amount; do not assume floor/round; confirm before transport payable goes live |
+| FIN-008 | Company Pickup Transport payable grouping / confirmation boundary | A | persist per-entry transport basis; do not impose a business unique grouping or automatically decide which basis records form one Payable; confirm before transport payable goes live |
+| FIN-009 | Company Pickup Transport payee recording semantics | A | no Driver Master; do not persist payee on Procurement/transport basis; confirm whether payee belongs to Payable, Payment, or both before transport settlement goes live |
 | LIFE-001 | Reopen Closed Batch | C | not implemented |
 | CONFIG-001 | Multiple simultaneously selectable active routes per Procurement Product | C | not implemented |
 
