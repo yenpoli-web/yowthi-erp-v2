@@ -9,6 +9,8 @@ Business Rules come from real YowThi operations.
 ERP Control Governance is separate from Business Rules.
 AI/developers must not invent Business Rules for technical convenience.
 
+For relational implementation details, `docs/10-relational-model-consolidation-v0.1.md` is the integrated DDL/EF mapping baseline after Parts 1–6. Earlier domain/business documents remain authoritative for Business Facts.
+
 ## 2. Legacy safety
 
 `C:\yowthi-erp` is protected Legacy ERP and is read-only.
@@ -38,6 +40,7 @@ Completed to v0.1:
 - PostgreSQL Schema Part 5: Sales Handling + Labor + Finance
 - PostgreSQL Schema Part 6: Audit + System
 - ADR-005 Audit Reference Boundary
+- Full Relational Model Consolidation v0.1
 
 ## 4. Core domain modules
 
@@ -101,6 +104,8 @@ FINAL_PACKAGING:
 - source may go negative
 - Packaging Weight and Sales Weight are distinct
 
+Processing Route/Version/Material structural membership uses selected high-value composite FK integrity, but Batch bound Route Version equality at Processing confirmation remains a transaction invariant because Batch route binding is nullable before processing.
+
 ## 8. Inventory
 
 Inventory identity:
@@ -110,11 +115,15 @@ Inventory identity:
 - Storage Location
 - optional Raw Source Segment
 
-Inventory Movement = truth.
-Inventory Position = current projection.
+Inventory Movement = append-oriented ledger truth.
+Inventory Position = transactional rebuildable current projection.
+
+The full nullable typed Inventory Position identity uses PostgreSQL `UNIQUE NULLS NOT DISTINCT` so null typed dimensions do not permit duplicate logical positions.
 
 No separate raw/semi/finished inventory systems.
 No globally unrestricted negative inventory.
+
+Allocation correction inventory effects use signed `SALES_ALLOCATION_ADJUSTMENT` movements under a `SALES_ALLOCATION_REVISION` operation. Prior Inventory Movements are never rewritten.
 
 ## 9. Sales
 
@@ -126,24 +135,32 @@ Pricing:
 - WEIGHT_BASED_UNIT
 - UNIT_BASED
 
-Allocation:
+Allocation priority:
 1. OUTSOURCED oldest → newest
 2. IN_HOUSE oldest → newest
 3. authorized manual override
 
-Final allocation is official.
 Allocation total must equal Sales Detail quantity.
 Confirmed Sales atomically creates:
-- final allocation
+- Allocation Revision 0 + immutable Revision Items
+- current official Sales Allocation pointers
 - SALES_ISSUE
 - Receivable
+
+Allocation persistence after consolidation:
+- `sales_allocation_revision_items` = immutable historical allocation truth
+- `sales_allocations` = pointer-only current official projection
+- Inventory Movement allocation lineage points to immutable Revision Items
+- correction appends a new Revision + Items, writes compensating inventory movements, and replaces current pointers
 
 ## 10. Outsourced
 
 Outsourced Vendor is separate from Supplier.
 Confirmed detail immediately creates:
 - OUTSOURCED sellable inventory
-- Vendor Payable
+- Vendor Payable obligation
+
+Outsourced Batch identity remains Supply Date + Outsourced Vendor.
 
 ## 11. Labor
 
@@ -197,6 +214,12 @@ Supplier/Farmer procurement payable:
 - Farmer aggregates by Procurement Batch + Farmer
 - confirmed Procurement Entries append obligation items
 
+Relational consolidation:
+- `finance.payable_obligation_items` is one flat typed-FK relation rather than one subtype table per source
+- local source shape / source existence / source uniqueness / Payable-kind compatibility are DB structural constraints
+- cross-row semantic alignment between source facts and Payable owner is revalidated by owning command transaction
+- original obligation amount is `>= 0`; Payment/Receipt settlement amounts remain `> 0`
+
 Supplier quality/weight deduction:
 - Payable Adjustment
 - never rewrite Procurement
@@ -206,12 +229,14 @@ Company Pickup Transport:
 - no Driver Master
 - no Transport Charge aggregate in v0.1
 - no Transport Rate Master is assumed
-- applied THB/kg rate is stored as the confirmed historical fact
-- final amount, grouping/confirmation boundary, and payee semantics remain TO VERIFY through FIN-007/008/009
+- applied THB/kg rate is stored as confirmed historical fact
+- final amount rounding, grouping/confirmation boundary, and payee semantics remain TO VERIFY through FIN-007/008/009
 
 Partial settlements are supported.
 Payment / Receipt / Adjustment concurrency uses the applicable Outstanding Position `row_version` boundary.
 Confirmed finance facts do not expose generic edit/delete.
+
+Outstanding row formula may be constrained, but no permanent `outstanding >= 0` CHECK is introduced while FIN-001, FIN-002, and FIN-004 remain unresolved Business Rules.
 
 ## 13. Batch close
 
@@ -246,7 +271,7 @@ Hard Delete:
 - owning-domain dependency checked
 - no silent cascade
 - explicit physical delete
-- hard-delete audit retained in the same transaction
+- hard-delete audit retained in same transaction
 - audit does not automatically retain a full deleted-row copy
 
 Audit:
@@ -254,39 +279,42 @@ Audit:
 - not a generic EF/database row mirror
 - rebuildable projections are not normally separate audit truth
 - correction audit lineage uses `audit.correction_links`
+- Audit subject locator is immutable historical non-FK metadata under ADR-005 and must not become a generic entity resolver
 
 ## 15. Persistence baseline
 
 - PostgreSQL 18
 - single database
 - module schemas
-- one write ErpDbContext v0.1
-- UUID v7 technical IDs
-- business unique constraints
-- date for business dates
-- timestamptz for system timestamps
-- exact numeric prices/rates
-- integer THB amounts where confirmed
+- one write `ErpDbContext` v0.1
+- UUID v7 technical IDs; internal generation can use PostgreSQL 18 UUID v7 support
+- 55 relations in consolidated v0.1 relational baseline
+- business unique constraints only where confirmed
+- `date` for business dates
+- `timestamptz` for system timestamps
+- exact `numeric` prices/rates/quantities; do not invent precision/scale where unconfirmed
+- processing max-one-decimal measurements are validated without silent DB rounding
+- integer THB (`bigint`) amounts where confirmed
 - typed real foreign keys instead of unconstrained type+id
-- row_version optimistic concurrency where the row owns an invariant
-- `system.accounts` is a minimal actor identity FK anchor; AuthN/AuthZ persistence remains separate
+- selected stable composite FKs for high-value membership integrity
+- cross-row/lifecycle aggregate invariants remain owning-command transaction responsibility
+- `row_version bigint` optimistic concurrency only where row owns a mutable invariant
+- `system.accounts` is minimal actor identity FK anchor; AuthN/AuthZ persistence remains separate
 - persistent idempotency through `system.command_executions`
 - CommandId PK is duplicate-command concurrency boundary
 - transactional outbox with at-least-once delivery
 - outbox worker concurrency uses PostgreSQL row locks + lease, not row_version
 - append-oriented audit
-- Audit subject locator is immutable historical non-FK metadata, not a domain relationship
-- Audit locator must not become a generic entity resolver
 - Audit/Outbox CommandId values are correlation snapshots and do not FK to CommandExecution
 - idempotency, outbox, and audit retention lifecycles are decoupled
-- RESTRICT/NO ACTION core FKs
+- core FKs default to RESTRICT/NO ACTION
+- core operational referencing FKs require appropriate indexes
 
-## 16. PostgreSQL schema completed so far
+## 16. PostgreSQL schema Parts 1–6
 
 Part 1:
 - party masters
-- containers
-- warehouses / locations
+- containers / warehouses / locations
 - Procurement Product
 - Sales Product Group / Sales Product
 - Processing Route / Version / Module / Process Material / Outputs
@@ -322,31 +350,75 @@ Part 5:
 - Processing Wage Component + source lineage
 - Sales Packaging Wage Component
 - typed Payable / obligation items
-- Procurement Supplier/Farmer obligation lineage
-- Outsourced Vendor obligation lineage
-- Employee Wage obligation lineage
 - Company Pickup Transport Basis + obligation lineage
-- Payable Adjustment
-- Payment
-- Receivable / Receivable obligation items
-- Receipt
-- Payable/Receivable Outstanding transactional projections
+- Payable Adjustment / Payment
+- Receivable / obligation items / Receipt
+- Payable/Receivable Outstanding projections
 - Finance concurrency boundary
 
 Part 6:
-- `system.accounts` actor identity anchor
-- persistent `system.command_executions` idempotency
-- transactional `system.outbox_messages`
-- append-oriented `audit.audit_events`
-- `audit.audit_event_subjects` historical locator boundary
+- `system.accounts`
+- `system.command_executions`
+- `system.outbox_messages`
+- `audit.audit_events`
+- `audit.audit_event_subjects`
 - `audit.correction_links`
 - Hard Delete audit transaction pattern
-- system-level concurrency boundary consolidation
-- audit/idempotency/outbox retention decoupling
+- system concurrency/retention boundaries
 
-PostgreSQL Schema Parts 1–6 now cover the planned v0.1 module persistence baseline.
+## 17. Full relational consolidation v0.1
 
-## 17. Important unresolved business gaps
+Integrated relation count: **55**.
+
+Schemas / relation counts:
+- system 3
+- party 5
+- infrastructure 3
+- product 3
+- processing_config 6
+- procurement 2
+- processing 3
+- outsourced 2
+- sales 5
+- inventory 3
+- sales_handling 2
+- labor 4
+- finance 11
+- audit 3
+
+Formal persistence corrections adopted during consolidation:
+1. Finance original obligation `> 0` → `>= 0`.
+2. Payable obligation source subtype tables collapse into flat typed-FK `payable_obligation_items`.
+3. Sales Allocation Revision Items are immutable historical allocation truth.
+4. Inventory Position typed identity uses `UNIQUE NULLS NOT DISTINCT`.
+5. Add signed non-zero `SALES_ALLOCATION_ADJUSTMENT` movement vocabulary.
+6. Use high-value stable Route/Version/Material composite FK membership integrity.
+7. `sales_allocations` is pointer-only current official projection.
+8. Do not use nullable Batch Route-Version as composite principal key; validate batch/execution Route Version equality transactionally.
+
+These are persistence/relational consistency corrections, not new Business Rules.
+
+DDL dependency order:
+- schemas
+- system
+- party
+- infrastructure
+- product
+- processing_config
+- procurement
+- processing
+- outsourced
+- sales
+- inventory
+- sales_handling
+- labor
+- finance
+- audit
+- secondary/partial indexes and final late constraints
+
+No circular aggregate ownership currently requires a special two-phase FK workaround.
+
+## 18. Important unresolved business gaps
 
 Must be confirmed before relevant go-live:
 - Completed Procurement Batch late entry policy
@@ -372,26 +444,31 @@ Safe/deferred items retained in Gap Register include:
 - closed batch reopen
 - multi-active route selection
 
-Part 6 introduces no new Business Rule gaps; its decisions are persistence architecture / control governance.
+Relational consolidation introduces no new Business Rule gaps.
 
-## 18. Next step
+## 19. Next step
 
 Continue with:
 
-**Full relational-model consolidation**
+**EF Core Mapping Architecture v0.1**
 
 Expected scope:
-- reconcile Parts 1–6 into one complete table/relationship catalogue
-- normalize table/column naming and lifecycle metadata patterns
-- verify every FK target, delete behavior, unique constraint, CHECK constraint, and required index
-- consolidate typed discriminator + nullable-real-FK shapes
-- consolidate numeric precision/scale and quantity conventions
-- verify UUID v7 / date / timestamptz / bigint usage consistently
-- verify all `*_by_account_id` relationships target `system.accounts`
-- verify command/audit/outbox correlation and retention boundaries
-- identify DDL-ready ordering and cross-schema dependency order
-- surface any schema contradictions before EF Core mapping
+- solution/project persistence boundaries
+- one write `ErpDbContext`
+- module schema/table mappings
+- UUID v7 value generation strategy
+- explicit `row_version` concurrency token mappings
+- alternate/composite keys and composite FKs
+- CHECK constraint / unique / partial-index migration strategy
+- PostgreSQL-specific `UNIQUE NULLS NOT DISTINCT` migration support
+- typed discriminator mapping/validation
+- per-module `IEntityTypeConfiguration` structure
+- query filters vs historical-reference requirements
+- transaction / execution-strategy boundaries
+- migration ordering for all 55 relations
 
-After relational-model consolidation:
-- EF Core mapping architecture
+Docker Desktop / PostgreSQL runtime is not required during this architecture-document phase. It becomes necessary when the first real EF Core migrations are implemented/executed and PostgreSQL integration/concurrency tests begin.
+
+After EF Core Mapping Architecture:
 - REST/API architecture
+- then implementation/migrations/integration testing according to the approved architecture sequence
