@@ -6,7 +6,15 @@ YowThi ERP V2 is the clean-slate replacement architecture and implementation for
 
 ## Current phase
 
-Implementation P0 — .NET solution + React web scaffolding.
+Implementation P1 — shared technical foundation.
+
+P0 is complete:
+- .NET 10 solution/project scaffold
+- architecture dependency guard
+- React + TypeScript + Vite web scaffold
+- React Router + TanStack Query wiring
+- locked pnpm dependency graph
+- .NET and web CI gates
 
 The architecture and implementation-order baseline is complete through:
 
@@ -42,6 +50,20 @@ tests/
 ```
 
 Project dependency direction is guarded by architecture tests. The React web application is a separate Vite application and communicates with the backend only through the HTTP API contract.
+
+## Shared technical foundation
+
+P1 starts with Domain/Application technical primitives that do not encode YowThi Business Rules:
+
+- UUID v7 technical ID generation
+- non-empty CommandId value semantics
+- non-empty persistent actor-account identity semantics
+- actor-context contract
+- locale-neutral application error/result primitives
+- application command/handler/executor contracts
+- cancellation-aware async command signatures
+
+Persistence-specific CommandExecution/Audit/Outbox stores and the `ErpDbContext` shell are intentionally deferred to the next focused P1 persistence-foundation commit so Application does not depend on JSON/SQL/EF implementation details.
 
 ## Local .NET validation
 
@@ -82,7 +104,7 @@ pnpm build
 
 The P0 web shell wires React Router and TanStack Query only. It does not contain mock ERP entities, fake Business Rules, or a temporary replacement API model.
 
-Docker Desktop / PostgreSQL are not required for this P0 scaffold. They become required at the Build Plan P5 gate when `InitialV01` is first applied to PostgreSQL 18 and persistence integration/concurrency tests begin.
+Docker Desktop / PostgreSQL are not required for P1 technical foundation work. They become required at the Build Plan P5 gate when `InitialV01` is first applied to PostgreSQL 18 and persistence integration/concurrency tests begin.
 
 ## Information labels
 
