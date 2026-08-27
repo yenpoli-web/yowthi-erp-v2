@@ -15,7 +15,15 @@ public sealed class PersistenceFoundationTests
     }
 
     [Fact]
-    public void ErpDbContext_has_no_mapped_relations_before_M1()
+    public void ErpDbContext_contains_exactly_M1_relations()
+    {
+        using var context = CreateContext();
+
+        Assert.Equal("Npgsql.EntityFrameworkCore.PostgreSQL", context.Database.ProviderName);
+        Assert.Equal(8, context.Model.GetEntityTypes().Count());
+    }
+
+    private static ErpDbContext CreateContext()
     {
         var options = new DbContextOptionsBuilder<ErpDbContext>()
             .UseNpgsql(
@@ -23,9 +31,6 @@ public sealed class PersistenceFoundationTests
                 PostgreSqlProviderOptions.Configure)
             .Options;
 
-        using var context = new ErpDbContext(options);
-
-        Assert.Equal("Npgsql.EntityFrameworkCore.PostgreSQL", context.Database.ProviderName);
-        Assert.Empty(context.Model.GetEntityTypes());
+        return new ErpDbContext(options);
     }
 }

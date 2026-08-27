@@ -6,7 +6,7 @@ YowThi ERP V2 is the clean-slate replacement architecture and implementation for
 
 ## Current phase
 
-Implementation P1 is complete. Next: P2 / M1 relational mapping — `system + party`, 8 of 55 formal relations.
+Implementation P2 / M1 is complete — `system + party`, 8 of 55 formal relations. Next: P2 / M2 relational mapping — `infrastructure + product + processing_config`, cumulative 20 of 55 formal relations.
 
 P0 is complete:
 - .NET 10 solution/project scaffold
@@ -15,6 +15,13 @@ P0 is complete:
 - React Router + TanStack Query wiring
 - locked pnpm dependency graph
 - .NET and web CI gates
+
+P1 is complete:
+- Domain/Application technical primitives
+- EF Core / Npgsql persistence foundation
+- PostgreSQL 18 provider configuration
+- command transaction / idempotency / Outbox / Audit technical contracts
+- one-shot explicit READ COMMITTED transaction runner
 
 The architecture and implementation-order baseline is complete through:
 
@@ -74,7 +81,7 @@ Infrastructure foundation:
 - EF Core 10.0.11
 - Npgsql EF provider 10.0.3
 - PostgreSQL 18 provider target
-- one write `ErpDbContext` skeleton
+- one write `ErpDbContext`
 - explicit `system.__ef_migrations_history` configuration
 - `row_version` SaveChanges interceptor foundation using an explicit `long` marker, not PostgreSQL `xmin`
 - runtime DI registration using the same provider configuration as design-time tooling
@@ -82,7 +89,38 @@ Infrastructure foundation:
 - SHA-256 canonical command-payload hasher
 - one-shot explicit READ COMMITTED transaction runner; rollback/exception requires a fresh service scope and fresh `ErpDbContext`
 
-The `ErpDbContext` intentionally contains zero mapped relations at the end of P1. Concrete `system.command_executions` / `system.outbox_messages` persistence arrives with P2/M1; Audit persistence remains deferred to the formal Audit mapping batch. No relation is mapped early merely to support a technical shell.
+## Relational mapping progress
+
+P2 / M1 maps exactly eight formal relations:
+
+```text
+system.accounts
+system.command_executions
+system.outbox_messages
+
+party.suppliers
+party.farmers
+party.employees
+party.customers
+party.outsourced_vendors
+```
+
+M1 mapping guards include:
+
+- explicit schema/table/column names
+- UUID IDs with `ValueGeneratedNever()`
+- explicit `row_version bigint` concurrency for mutable M1 owners only
+- real `system.accounts` actor FKs with `RESTRICT`
+- bilingual-name and lifecycle-pair CHECK constraints for Party masters
+- CommandExecution SHA-256/status/execution-state CHECK constraints
+- Outbox `command_id` correlation without an FK
+- no Party name/phone/bank uniqueness that has not been confirmed
+- no global soft-delete query filters
+- no PostgreSQL `xmin` concurrency
+
+Architecture tests inspect the EF design-time model so relational metadata such as CHECK constraints is validated before migration generation.
+
+No formal migration has been generated. `InitialV01` remains blocked until all M1–M7 mappings reach 55 of 55 relations.
 
 ## Local .NET validation
 
