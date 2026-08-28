@@ -19,10 +19,7 @@ function Replace-Regex([string]$text, [string]$pattern, [string]$replacement, [s
 
 $readmePath = 'README.md'
 $readme = [IO.File]::ReadAllText($readmePath)
-$readme = Replace-Exact $readme `
-    'Implementation P3 API technical shell and the P3.5 AuthN/AuthZ implementation architecture hard gate are complete. The next phase is **P4 — generate and statically review `InitialV01`**.' `
-    'Implementation P4 is complete: the formal `InitialV01` migration has been generated, statically reviewed, drift-checked, and validated. Next: **P5 — PostgreSQL 18 persistence acceptance**.' `
-    'README current phase'
+$readme = Replace-Regex $readme '(?m)^Implementation P3 API technical shell.*InitialV01.*$' 'Implementation P4 is complete: the formal `InitialV01` migration has been generated, statically reviewed, drift-checked, and validated. Next: **P5 - PostgreSQL 18 persistence acceptance**.' 'README current phase'
 
 $readmeMigrationSection = @'
 ## InitialV01 migration baseline
@@ -50,54 +47,37 @@ P5 now requires Docker Desktop / PostgreSQL 18:
 
 ```text
 approved InitialV01
-→ Docker Desktop ON
-→ PostgreSQL 18 clean database
-→ apply InitialV01
-→ schema / migration-history introspection
-→ PostgreSQL integration and concurrency acceptance
+-> Docker Desktop ON
+-> PostgreSQL 18 clean database
+-> apply InitialV01
+-> schema / migration-history introspection
+-> PostgreSQL integration and concurrency acceptance
 ```
 
 ## Local .NET validation
 '@
-$readme = Replace-Regex $readme '(?s)## InitialV01 readiness\r?\n.*?## Local \.NET validation\r?\n' $readmeMigrationSection 'README InitialV01 section'
+$readme = Replace-Regex $readme '## InitialV01 readiness\r?\n.*?## Local \.NET validation\r?\n' $readmeMigrationSection 'README InitialV01 section'
 [IO.File]::WriteAllText($readmePath, $readme, $utf8NoBom)
 
 $checkpointPath = 'docs/09-current-design-checkpoint.md'
 $checkpoint = [IO.File]::ReadAllText($checkpointPath)
-$checkpoint = Replace-Exact $checkpoint `
-    'Checkpoint status: **v0.1 implementation baseline through P3.5**' `
-    'Checkpoint status: **v0.1 implementation baseline through P4**' `
-    'checkpoint status'
-
-$checkpoint = Replace-Exact $checkpoint `
-    '- P3.5 AuthN/AuthZ architecture hard gate and auth-specific `system.accounts` mapping revision' `
-    "- P3.5 AuthN/AuthZ architecture hard gate and auth-specific `system.accounts` mapping revision`n- P4 `InitialV01` generation, static review, model-drift verification, and migration validation" `
-    'completed P4 phase'
+$checkpoint = Replace-Exact $checkpoint 'Checkpoint status: **v0.1 implementation baseline through P3.5**' 'Checkpoint status: **v0.1 implementation baseline through P4**' 'checkpoint status'
+$checkpoint = Replace-Exact $checkpoint '- P3.5 AuthN/AuthZ architecture hard gate and auth-specific `system.accounts` mapping revision' "- P3.5 AuthN/AuthZ architecture hard gate and auth-specific `system.accounts` mapping revision`n- P4 `InitialV01` generation, static review, model-drift verification, and migration validation" 'completed P4 phase'
 
 $checkpointNextPhase = @'
 Current next phase:
 
-**P5 — PostgreSQL 18 persistence acceptance.**
+**P5 - PostgreSQL 18 persistence acceptance.**
 
 P4 `InitialV01` generation/static review is complete. Docker Desktop is now required for the first real PostgreSQL 18 apply, schema introspection, and integration/concurrency acceptance.
 
 ## 4. Core domain modules
 '@
-$checkpoint = Replace-Regex $checkpoint '(?s)Current next phase:\r?\n\r?\n\*\*P4 — generate and statically review `InitialV01`\.\*\*\r?\n\r?\nDocker Desktop remains OFF through P4 migration generation/static review\. It is required at P5 first real PostgreSQL 18 apply/integration/concurrency acceptance\.\r?\n\r?\n## 4\. Core domain modules\r?\n' $checkpointNextPhase 'checkpoint current phase'
+$checkpoint = Replace-Regex $checkpoint 'Current next phase:\r?\n.*?## 4\. Core domain modules\r?\n' $checkpointNextPhase 'checkpoint current phase'
 
-$checkpoint = Replace-Exact $checkpoint `
-    '- migration history at `system.__ef_migrations_history`' `
-    "- migration history at `system.__ef_migrations_history``n- formal initial migration `InitialV01` generated and statically approved in P4`n- post-generation `dotnet ef migrations has-pending-model-changes` reports no model drift`n- `InitialV01` has not yet been applied to PostgreSQL" `
-    'checkpoint migration status'
-
-$checkpoint = Replace-Exact $checkpoint `
-    'P4  InitialV01 generation/static review               NEXT' `
-    'P4  InitialV01 generation/static review               COMPLETE' `
-    'phase table P4'
-$checkpoint = Replace-Exact $checkpoint `
-    'P5  PostgreSQL 18 persistence acceptance' `
-    'P5  PostgreSQL 18 persistence acceptance              NEXT' `
-    'phase table P5'
+$checkpoint = Replace-Exact $checkpoint '- migration history at `system.__ef_migrations_history`' "- migration history at `system.__ef_migrations_history``n- formal initial migration `InitialV01` generated and statically approved in P4`n- post-generation `dotnet ef migrations has-pending-model-changes` reports no model drift`n- `InitialV01` has not yet been applied to PostgreSQL" 'checkpoint migration status'
+$checkpoint = Replace-Exact $checkpoint 'P4  InitialV01 generation/static review               NEXT' 'P4  InitialV01 generation/static review               COMPLETE' 'phase table P4'
+$checkpoint = Replace-Exact $checkpoint 'P5  PostgreSQL 18 persistence acceptance' 'P5  PostgreSQL 18 persistence acceptance              NEXT' 'phase table P5'
 
 $p4Result = @'
 P4 result:
@@ -114,35 +94,35 @@ P4 result:
 
 P5 activation:
 '@
-$checkpoint = Replace-Regex $checkpoint '(?s)P4 rules:\r?\n.*?P5 activation:\r?\n' $p4Result 'checkpoint P4 result'
+$checkpoint = Replace-Regex $checkpoint 'P4 rules:\r?\n.*?P5 activation:\r?\n' $p4Result 'checkpoint P4 result'
 
 $nextStep = @'
 ## 23. Next step
 
 Proceed with:
 
-**P5 — PostgreSQL 18 persistence acceptance.**
+**P5 - PostgreSQL 18 persistence acceptance.**
 
 Required sequence:
 
 ```text
 P4 InitialV01 approved
-→ Docker Desktop ON
-→ PostgreSQL 18 clean database/container
-→ apply InitialV01
-→ verify system.__ef_migrations_history
-→ schema / constraint / index introspection
-→ row-version conflict acceptance
-→ Finance CAS concurrency acceptance
-→ CommandId race acceptance
-→ Inventory identity/concurrency acceptance
-→ Outbox SKIP LOCKED / lease acceptance
-→ self-hosted validation
+-> Docker Desktop ON
+-> PostgreSQL 18 clean database/container
+-> apply InitialV01
+-> verify system.__ef_migrations_history
+-> schema / constraint / index introspection
+-> row-version conflict acceptance
+-> Finance CAS concurrency acceptance
+-> CommandId race acceptance
+-> Inventory identity/concurrency acceptance
+-> Outbox SKIP LOCKED / lease acceptance
+-> self-hosted validation
 ```
 
 Do not start Business vertical slices until P5 persistence acceptance is green.
 '@
-$checkpoint = Replace-Regex $checkpoint '(?s)## 23\. Next step\r?\n.*\z' $nextStep 'checkpoint next step'
+$checkpoint = Replace-Regex $checkpoint '## 23\. Next step\r?\n.*\z' $nextStep 'checkpoint next step'
 [IO.File]::WriteAllText($checkpointPath, $checkpoint, $utf8NoBom)
 
 Write-Host 'P4 checkpoint documents updated.'
