@@ -1,7 +1,7 @@
 # Current Design Checkpoint — YowThi ERP V2
 
-Checkpoint status: **v0.1 design baseline**
-Purpose: recover the project design if conversational context is lost.
+Checkpoint status: **v0.1 implementation baseline through P3.5**
+Purpose: recover the project design and current implementation state if conversational context is lost.
 
 ## 1. Highest-level rule
 
@@ -15,8 +15,12 @@ Precedence for implementation recovery:
 - EF Core/Npgsql implementation architecture: `docs/11-ef-core-mapping-architecture-v0.1.md`
 - HTTP/REST implementation architecture: `docs/12-rest-api-architecture-v0.1.md`
 - implementation order/readiness gates: `docs/13-implementation-sequencing-build-plan-v0.1.md`
+- GitHub cost governance: `docs/14-github-cost-governance-v0.1.md`
+- AuthN/AuthZ implementation/security architecture and auth-specific `system.accounts` correction: `docs/15-authn-authz-implementation-architecture-v0.1.md`
 
-Earlier Part 1–6 schema notes remain design history, but `docs/10` is the later consolidated relational baseline when relational implementation details conflict.
+Earlier Part 1–6 schema notes remain design history. `docs/10` is the later consolidated relational baseline when relational details conflict.
+
+For the auth-specific external identity binding only, `docs/15` is a later confirmed correction to older wording in `docs/10` section 6 and PostgreSQL Schema Part 6 section 2 that external identity mapping was not yet defined. All other `docs/10` relational rules remain authoritative.
 
 ## 2. Legacy safety
 
@@ -24,9 +28,11 @@ Earlier Part 1–6 schema notes remain design history, but `docs/10` is the late
 Legacy H01/H02/H03 and old schema are references only.
 They do not drive the new Domain Model.
 
-## 3. Completed design stages
+Never modify, delete, move, reset, overwrite, or use Legacy schema as ERP V2 architecture.
 
-Completed to v0.1:
+## 3. Completed design and implementation stages
+
+Completed architecture/design to v0.1:
 - Project charter / technical baseline
 - Business Discovery
 - Ubiquitous Language
@@ -40,19 +46,27 @@ Completed to v0.1:
 - Correction Command Framework
 - Business Rule Gap Register
 - Persistence Architecture Principles
-- PostgreSQL Schema Part 1: Party + Product + Infrastructure + Processing Configuration
-- PostgreSQL Schema Part 2: Procurement
-- PostgreSQL Schema Part 3: Processing + Inventory
-- PostgreSQL Schema Part 4: Outsourced + Sales
-- PostgreSQL Schema Part 5: Sales Handling + Labor + Finance
-- PostgreSQL Schema Part 6: Audit + System
+- PostgreSQL Schema Parts 1–6
 - ADR-005 Audit Reference Boundary
 - Full Relational Model Consolidation v0.1
 - EF Core Mapping Architecture v0.1
 - REST/API Architecture v0.1
 - Implementation Sequencing / Build Plan v0.1
+- GitHub Cost Governance v0.1
+- AuthN/AuthZ Implementation Architecture v0.1
 
-The core v0.1 architecture chain and implementation readiness plan are now complete through the public HTTP/API boundary and first-code sequencing.
+Completed implementation phases:
+- P0 repository / .NET / React scaffolding
+- P1 shared technical foundation
+- P2 full 55-relation EF model through M7
+- P3 API technical shell
+- P3.5 AuthN/AuthZ architecture hard gate and auth-specific `system.accounts` mapping revision
+
+Current next phase:
+
+**P4 — generate and statically review `InitialV01`.**
+
+Docker Desktop remains OFF through P4 migration generation/static review. It is required at P5 first real PostgreSQL 18 apply/integration/concurrency acceptance.
 
 ## 4. Core domain modules
 
@@ -117,7 +131,7 @@ FINAL_PACKAGING:
 - Packaging Weight and Sales Weight are distinct
 
 Processing Route/Version/Material structural membership uses selected high-value composite FK integrity.
-Batch bound Route Version equality at Processing confirmation remains a transaction invariant because Batch route binding is nullable before processing.
+Batch-bound Route Version equality at Processing confirmation remains a transaction invariant because Batch route binding is nullable before processing.
 
 ## 8. Inventory
 
@@ -312,19 +326,17 @@ Audit:
 - PostgreSQL 18
 - single database
 - module schemas
-- 55 relations in consolidated v0.1 relational baseline
+- 55 relations / 14 schemas
 - UUID v7 technical IDs
 - business unique constraints only where confirmed
 - `date` for business dates
 - `timestamptz` for system timestamps
 - exact `numeric` prices/rates/quantities; no invented precision/scale
-- processing max-one-decimal measurements validated without silent DB rounding
 - integer THB (`bigint`) amounts where confirmed
 - typed real foreign keys instead of unconstrained type+id
 - selected stable composite FKs for high-value membership integrity
 - cross-row/lifecycle aggregate invariants remain owning-command transaction responsibility
 - explicit `row_version bigint` where a row owns a mutable invariant
-- `system.accounts` = minimal actor identity FK anchor; AuthN/AuthZ persistence remains separate
 - persistent idempotency through `system.command_executions`
 - CommandId PK = duplicate-command concurrency boundary
 - transactional outbox with at-least-once delivery
@@ -334,6 +346,15 @@ Audit:
 - idempotency/outbox/audit retention lifecycles decoupled
 - core FKs default RESTRICT/NO ACTION
 - operational/core referencing FKs require appropriate indexes
+
+`system.accounts` remains the actor identity FK anchor and now includes the confirmed P3.5 external authentication binding:
+- `identity_issuer text NULL`
+- `identity_subject text NULL`
+- both NULL or both present
+- present values nonblank
+- partial unique `(identity_issuer, identity_subject)` when identity is present
+
+This does not add relation 56+.
 
 ## 16. Full relational consolidation v0.1
 
@@ -364,6 +385,7 @@ Formal persistence corrections adopted during consolidation:
 6. Use high-value stable Route/Version/Material composite FK membership integrity.
 7. `sales_allocations` is pointer-only current official projection.
 8. Do not use nullable Batch Route-Version as composite principal key; validate batch/execution Route Version equality transactionally.
+9. P3.5 auth-specific correction: add optional paired/unique OIDC `(identity_issuer, identity_subject)` to existing `system.accounts`; relation count unchanged.
 
 DDL dependency order:
 - schemas
@@ -435,23 +457,10 @@ Migrations:
 - `IDesignTimeDbContextFactory<ErpDbContext>` for tooling
 - one migration stream for one write context
 - migration history at `system.__ef_migrations_history`
-- initial implementation migration = `InitialV01` after all 55 relations are mapped
 - production API does not call `Database.Migrate()` at startup
 - no operational business master seeding through `HasData()`
 
-InitialV01 acceptance requires:
-- EF model metadata tests
-- generated migration static review against `docs/10`
-- no pending model/migration drift
-- clean PostgreSQL 18 apply/schema inspection
-- typed constraint tests
-- row-version conflict tests
-- Finance CAS concurrency test
-- CommandId race test
-- Inventory concurrency/identity tests
-- Outbox `SKIP LOCKED` tests
-
-## 18. REST/API Architecture v0.1
+## 18. REST/API Architecture and P3 technical shell
 
 HTTP baseline:
 - ASP.NET Core 10 Minimal APIs
@@ -477,7 +486,6 @@ Concurrency:
 - Finance settlement uses `expectedOutstandingVersion`
 - no ETag/If-Match concurrency contract in v0.1
 - internal Inventory concurrency remains internal to owning commands
-- stale/current-state concurrency failures use stable `409` Problem Details codes
 
 Errors/validation:
 - consistent Problem Details with stable machine `code`
@@ -486,7 +494,7 @@ Errors/validation:
 - `422` = structurally valid but semantically invalid command input
 - `429` = rate limit
 - `500` = unexpected server failure; no SQL/stack details to client
-- write DTOs reject unknown fields rather than silently ignoring them
+- write DTOs reject unknown fields
 
 Lifecycle/correction:
 - explicit Soft Delete / Restore command routes
@@ -497,55 +505,85 @@ Lifecycle/correction:
 - unresolved FIN-003/FIN-005 do not receive invented APIs
 
 Queries/localization:
-- read endpoints return dedicated projections
+- dedicated read projections
 - opaque cursor pagination + endpoint-defined filter/sort allowlists
-- no OData/generic expression DSL in v0.1
-- `Accept-Language` supports `zh-TW` and `th-TH` operational display resolution
-- missing requested localized name falls back to the other existing name
+- no OData/generic expression DSL
+- `Accept-Language` supports `zh-TW` and `th-TH`
 - deployment-configured default locale handles unsupported/absent preference
-- master/edit DTOs expose both bilingual source fields where needed
 
-Security/authorization:
-- `/api/v1` business endpoints require authentication by default
-- actor is resolved server-side to `system.accounts`; clients never select persisted actor identity
-- operation capability policies such as `sales.confirm` / `finance.pay` / `data-protection.hard-delete`
-- Role/Permission persistence and JWT/Cookie/IdP choice remain deferred to AuthN/AuthZ implementation architecture
-- development-only no-password access is forbidden in staging/production
+P3 implemented:
+- Minimal API composition root
+- authenticated-by-default `/api/v1` metadata boundary
+- module route vocabulary
+- Problem Details
+- first-party OpenAPI / validation
+- strict camelCase JSON with unknown-property rejection
+- Idempotency-Key transport filter
+- locale resolver
+- capability policy-name constants
+- rate-limit/request-size infrastructure
+- minimal anonymous liveness endpoint
+- API contract tests
 
-Transactions/cancellation:
-- endpoint does not own PostgreSQL transaction
-- Application Command Executor owns new-command transaction flow
-- external side effects occur only after commit through Outbox
-- client disconnect is not proof of rollback
-- unknown commit result -> dispose context and replay whole command with same Idempotency Key
+## 19. AuthN/AuthZ Implementation Architecture v0.1
 
-Production controls:
-- no plaintext HTTP Business API
-- trusted forwarded headers only from configured proxy/network
-- CORS disabled unless deployment requires it; then explicit origin allowlist
-- rate-limiting infrastructure enabled with deployment/load-tested thresholds
-- finite request-body limit
-- production request/response body logging off by default
-- OpenAPI not publicly exposed in production by default
-- health endpoints expose minimum liveness/readiness only
+P3.5 is formally confirmed.
 
-OpenAPI/testing:
-- stable explicit endpoint OperationIds
-- endpoint metadata tests
-- semantic generated OpenAPI tests
-- business-write tests cover idempotency, replay ordering, concurrency, Problem Details, lifecycle, locale, and authorization contracts
+Authentication:
+- provider-neutral external OpenID Connect
+- interactive Authorization Code + PKCE
+- ASP.NET Core encrypted Cookie session
+- provider/authority/client configuration is deployment-specific
+- ERP does not store passwords
+- React does not store access/refresh tokens
+- no `offline_access` / refresh-token persistence for ordinary ERP login
 
-## 19. Implementation Sequencing / Build Plan v0.1
+API behavior:
+- unauthenticated `/api/v1` request returns 401 rather than redirecting the business request
+- interactive login uses explicit auth route such as `/auth/login`
+- OIDC callback remains protocol infrastructure
+
+Persistent identity:
+- validated exact `(issuer, subject)` maps to `system.accounts(identity_issuer, identity_subject)`
+- email/display name/phone/Employee are not authentication keys
+- clients never supply authoritative actor account IDs
+- account must exist and remain `active = true`
+
+Provisioning:
+- pre-provision only in v0.1
+- first successful OIDC login does not auto-create ERP accounts
+- initial account uses explicit host-side maintenance/bootstrap mechanism, never an anonymous deployed HTTP bypass
+
+Authorization:
+- explicit capability policies, e.g. `sales.confirm`, `finance.pay`, `inventory.adjust`, `data-protection.hard-delete`
+- v0.1 grants are deployment-configured by persistent Account UUID
+- no `Admin`, `Manager`, `SuperAdmin` business-role invention
+- no roles/permissions/account-role tables in v0.1
+
+CSRF:
+- cookie-authenticated unsafe browser requests require ASP.NET Core antiforgery
+- React request header: `X-CSRF-TOKEN`
+- `Idempotency-Key` does not replace antiforgery
+
+Test auth:
+- test-only scheme allowed in contract/integration test composition
+- never staging/production no-password authentication
+
+Tailscale remains network transport only, not ERP authentication.
+
+See `docs/15-authn-authz-implementation-architecture-v0.1.md`.
+
+## 20. Implementation Sequencing / Build Plan v0.1
 
 Formal implementation phases:
 
 ```text
-P0  Repository / solution scaffolding
-P1  Shared technical foundation
-P2  Full 55-relation Domain + EF model
-P3  API technical shell
-P3.5 AuthN/AuthZ implementation architecture hard gate
-P4  InitialV01 generation/static review
+P0  Repository / solution scaffolding                 COMPLETE
+P1  Shared technical foundation                       COMPLETE
+P2  Full 55-relation Domain + EF model               COMPLETE
+P3  API technical shell                               COMPLETE
+P3.5 AuthN/AuthZ implementation architecture hard gate COMPLETE
+P4  InitialV01 generation/static review               NEXT
 P5  PostgreSQL 18 persistence acceptance
 P6  Business vertical slices
 P7  React UI vertical slices
@@ -561,17 +599,28 @@ P8  CI / production hardening
 - M6 finance = cumulative 52
 - M7 audit = 55
 
-Rules:
-- each mapping batch must build and pass model metadata tests before the next batch
-- no formal migration until all planned relations and AuthN/AuthZ hard gate are complete
-- AuthN/AuthZ design occurs before `InitialV01`; if it needs new persistence, formally revise the relational baseline first
-- `InitialV01` gets a focused commit and static/model-drift review before PostgreSQL runtime execution
-- Docker Desktop activates locally only at P5 first real PostgreSQL 18 apply/integration testing
-- first full Business Command vertical slice is `ConfirmProcurementEntry`
-- Procurement slice includes PROC-002 optional `receiptStorageLocationId` handling and concurrent Batch resolution testing
-- subsequent UI slices follow stable backend vertical slices rather than a long-lived mock API
+P4 rules:
+- generate one formal migration named `InitialV01`
+- dedicated `YowThi.Erp.Infrastructure.Migrations` project
+- static review generated migration against `docs/10` plus auth-specific `docs/15` correction
+- verify no pending EF model changes
+- keep migration as focused commit
+- do not execute it against PostgreSQL until P5
 
-## 20. Important unresolved business gaps
+P5 activation:
+- Docker Desktop ON only after P4 static/model-drift gate passes
+- PostgreSQL 18 clean apply
+- schema introspection
+- typed constraint tests
+- row-version tests
+- Finance CAS concurrency
+- CommandId race
+- Inventory identity/concurrency
+- Outbox SKIP LOCKED/lease tests
+
+First full Business Command vertical slice after persistence acceptance remains `ConfirmProcurementEntry`.
+
+## 21. Important unresolved business gaps
 
 Must be confirmed before affected functionality goes live:
 - Completed Procurement Batch late entry policy
@@ -597,27 +646,46 @@ Safe/deferred items retained in Gap Register include:
 - closed batch reopen
 - multi-active route selection
 
-Relational consolidation, EF Core Mapping Architecture, REST/API Architecture, and Build Plan introduce no new Business Rule gaps.
+AuthN/AuthZ P3.5 introduces no new Business Rule gaps; its decisions are technical/security architecture.
 
-## 21. Next step
+## 22. GitHub validation / cost governance
 
-Architecture/planning review is complete for implementation start.
+Routine GitHub-hosted runners are disabled.
 
-Continue with:
+Validation branches matching:
 
-**Implementation P0 — first code commit: scaffold the .NET solution.**
+```text
+m*-validation
+```
 
-Initial scope:
-- `YowThi.Erp.slnx`
-- `global.json`
-- `Directory.Build.props`
-- `Directory.Packages.props`
-- repository-local .NET tool manifest
-- Domain/Application/Infrastructure/Migrations/Api projects
-- Domain/Architecture/API Contract/Integration test projects
-- project references and dependency architecture guard
-- README/current-phase update as needed
-- basic CI .NET restore/build/test gate
+run automatically only on:
 
-Do not add Business Rules or PostgreSQL-dependent implementation to the first code commit.
-Docker Desktop remains stopped through P0–P4 work that does not execute PostgreSQL and becomes required at P5 first real PostgreSQL 18 apply/integration/concurrency testing.
+```text
+self-hosted
+yowthi-erp-v2
+```
+
+Formal `main` advances only after actual restore/build/test success.
+
+Do not require GitHub-hosted runners, paid/larger runners, Codespaces, or other metered services that may create cost after quota exhaustion.
+
+## 23. Next step
+
+Proceed with:
+
+**P4 — generate `InitialV01` and perform static migration/model-drift review.**
+
+Required sequence:
+
+```text
+P3.5 validated
+→ generate InitialV01
+→ inspect migration against docs/10 + docs/15
+→ verify 55 relations / 14 schemas and expected constraints/indexes
+→ verify no pending model changes
+→ self-hosted restore/build/test
+→ fast-forward main
+```
+
+Do not start PostgreSQL runtime acceptance yet.
+Docker Desktop remains stopped until P5.
