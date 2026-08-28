@@ -1,6 +1,6 @@
 # Current Design Checkpoint — YowThi ERP V2
 
-Checkpoint status: **v0.1 implementation baseline through P3.5**
+Checkpoint status: **v0.1 implementation baseline through P4**
 Purpose: recover the project design and current implementation state if conversational context is lost.
 
 ## 1. Highest-level rule
@@ -61,13 +61,13 @@ Completed implementation phases:
 - P2 full 55-relation EF model through M7
 - P3 API technical shell
 - P3.5 AuthN/AuthZ architecture hard gate and auth-specific `system.accounts` mapping revision
+- P4 `InitialV01` generation, static review, model-drift verification, and migration validation
 
 Current next phase:
 
-**P4 — generate and statically review `InitialV01`.**
+**P5 - PostgreSQL 18 persistence acceptance.**
 
-Docker Desktop remains OFF through P4 migration generation/static review. It is required at P5 first real PostgreSQL 18 apply/integration/concurrency acceptance.
-
+P4 `InitialV01` generation/static review is complete. Docker Desktop is now required for the first real PostgreSQL 18 apply, schema introspection, and integration/concurrency acceptance.
 ## 4. Core domain modules
 
 - Product & Processing Configuration
@@ -457,6 +457,9 @@ Migrations:
 - `IDesignTimeDbContextFactory<ErpDbContext>` for tooling
 - one migration stream for one write context
 - migration history at `system.__ef_migrations_history`
+- formal initial migration `InitialV01` generated and statically approved in P4
+- post-generation `dotnet ef migrations has-pending-model-changes` reports no model drift
+- `InitialV01` has not yet been applied to PostgreSQL
 - production API does not call `Database.Migrate()` at startup
 - no operational business master seeding through `HasData()`
 
@@ -583,8 +586,8 @@ P1  Shared technical foundation                       COMPLETE
 P2  Full 55-relation Domain + EF model               COMPLETE
 P3  API technical shell                               COMPLETE
 P3.5 AuthN/AuthZ implementation architecture hard gate COMPLETE
-P4  InitialV01 generation/static review               NEXT
-P5  PostgreSQL 18 persistence acceptance
+P4  InitialV01 generation/static review               COMPLETE
+P5  PostgreSQL 18 persistence acceptance              NEXT
 P6  Business vertical slices
 P7  React UI vertical slices
 P8  CI / production hardening
@@ -599,14 +602,17 @@ P8  CI / production hardening
 - M6 finance = cumulative 52
 - M7 audit = 55
 
-P4 rules:
-- generate one formal migration named `InitialV01`
-- dedicated `YowThi.Erp.Infrastructure.Migrations` project
-- static review generated migration against `docs/10` plus auth-specific `docs/15` correction
-- verify no pending EF model changes
-- keep migration as focused commit
-- do not execute it against PostgreSQL until P5
-
+P4 result:
+- one formal migration named `InitialV01` generated in the dedicated migrations project
+- static review against `docs/10` plus auth-specific `docs/15` correction passed
+- exactly 55 `CreateTable` operations across 14 PostgreSQL schemas
+- generated migration contains the approved P3.5 `system.accounts` external OIDC identity mapping
+- Inventory Position `NULLS NOT DISTINCT`, Finance Outstanding formula, and Audit/Outbox boundaries are preserved
+- EF convention-generated/truncated database index names discovered during the first static review were corrected in the model before final migration generation
+- all database index names are now guarded by a full-model explicit lower-snake-case metadata test
+- `dotnet ef migrations has-pending-model-changes` reports no drift after generation
+- self-hosted restore/build/test passed
+- migration has not yet been applied to PostgreSQL
 P5 activation:
 - Docker Desktop ON only after P4 static/model-drift gate passes
 - PostgreSQL 18 clean apply
@@ -673,19 +679,23 @@ Do not require GitHub-hosted runners, paid/larger runners, Codespaces, or other 
 
 Proceed with:
 
-**P4 — generate `InitialV01` and perform static migration/model-drift review.**
+**P5 - PostgreSQL 18 persistence acceptance.**
 
 Required sequence:
 
 ```text
-P3.5 validated
-→ generate InitialV01
-→ inspect migration against docs/10 + docs/15
-→ verify 55 relations / 14 schemas and expected constraints/indexes
-→ verify no pending model changes
-→ self-hosted restore/build/test
-→ fast-forward main
+P4 InitialV01 approved
+-> Docker Desktop ON
+-> PostgreSQL 18 clean database/container
+-> apply InitialV01
+-> verify system.__ef_migrations_history
+-> schema / constraint / index introspection
+-> row-version conflict acceptance
+-> Finance CAS concurrency acceptance
+-> CommandId race acceptance
+-> Inventory identity/concurrency acceptance
+-> Outbox SKIP LOCKED / lease acceptance
+-> self-hosted validation
 ```
 
-Do not start PostgreSQL runtime acceptance yet.
-Docker Desktop remains stopped until P5.
+Do not start Business vertical slices until P5 persistence acceptance is green.
