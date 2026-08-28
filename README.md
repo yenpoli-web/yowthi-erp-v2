@@ -34,7 +34,7 @@ The recovery baseline remains:
 
 GitHub usage must remain on a no-unapproved-cost path. Do not depend on services that can continue into paid metered usage after a free quota is exhausted.
 
-Routine CI on GitHub-hosted runners is disabled. The repository's workflow files are manual-only and require a matching self-hosted runner label (`self-hosted`, `yowthi-erp-v2`). Until a self-hosted runner is deliberately configured, validation is local-first.
+Routine CI on GitHub-hosted runners is disabled. Backend candidate branches matching `m*-validation` may validate automatically only on a matching self-hosted runner (`self-hosted`, `yowthi-erp-v2`); `main` does not trigger that workflow. Until a self-hosted runner is deliberately configured, validation remains local-first.
 
 Do not reintroduce `ubuntu-latest`, `windows-latest`, `macos-latest`, paid/larger runners, Codespaces, or other metered GitHub infrastructure without first verifying zero-cost behavior and explicitly revising the governance decision.
 
@@ -108,16 +108,16 @@ M5  sales_handling + labor                        41 / 55
 ```
 
 M5 includes:
-- bilingual Sales Packaging Item master with no wage-rate field
-- Sales Packaging Work Record day-rate fact with no quantity/weight/box/hour/unit-rate fields
-- no unconfirmed HANDLING-002 uniqueness on `(sales, work date, employee, item)`
-- Employee Daily Wage identity = Work Date + Employee with explicit row-version concurrency
-- Daily Wage row-local total formula = Processing total + Sales Packaging total
-- Processing Wage Component configured/applied rate snapshots and aggregate-before-multiply THB floor formula
-- Processing Wage source lineage with one Processing Execution Output usable only once
-- Sales Packaging Wage Component with one confirmed Work Record usable only once
+- Sales Packaging Item bilingual lifecycle master with no wage rate on the master
+- Sales Packaging Work Record confirmed day-rate wage facts with no quantity/weight/box/hour/unit-rate fields
+- no unconfirmed `(sales, work_date, employee, item)` business uniqueness while HANDLING-002 remains unresolved
+- Employee Daily Wage identity = Work Date + Employee
+- Daily Wage total row formula
+- Processing Wage aggregation, override snapshots, aggregate-first multiplication and final THB floor
+- Processing Execution Output lineage with one-output-to-one-confirmed-wage-component uniqueness
+- Sales Packaging Work Record to one Daily Wage uniqueness
 
-Cross-row component sums into Daily Wage totals remain owning-command transactional validation rather than generic database triggers.
+Only formally confirmed closed vocabularies are mapped as CLR enums to PostgreSQL text. Cross-row lifecycle/business eligibility remains owning-command transactional validation rather than being invented as database constraints.
 
 No `InitialV01` migration is generated until all M1–M7 mappings reach 55 / 55.
 

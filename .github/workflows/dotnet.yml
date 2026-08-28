@@ -1,6 +1,9 @@
 name: dotnet-self-hosted
 
 on:
+  push:
+    branches:
+      - "m*-validation"
   workflow_dispatch:
 
 permissions:

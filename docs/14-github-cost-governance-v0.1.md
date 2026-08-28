@@ -25,12 +25,18 @@ GitHub remains approved for:
 
 Routine CI must not use GitHub-hosted runners for this private repository.
 
-Repository workflows are therefore configured as:
-- manual `workflow_dispatch` only
+The backend validation workflow is configured as:
+- automatic `push` execution only for `m*-validation` branches
+- optional manual `workflow_dispatch` fallback
 - `runs-on: [self-hosted, yowthi-erp-v2]`
-- no automatic `push` or `pull_request` execution
+- no automatic execution for `main`
+- no GitHub-hosted runner labels
 
-Until a matching self-hosted runner is deliberately configured, validation is local-first.
+This allows candidate mapping branches such as `m6-validation` and `m7-validation` to validate automatically once a matching self-hosted runner is online, without consuming GitHub-hosted runner minutes.
+
+The web workflow remains manual self-hosted until a later UI validation-branch convention is deliberately defined.
+
+Until a matching self-hosted runner is deliberately configured, validation remains local-first.
 
 A self-hosted runner may be used only on project-owned/user-owned compute where GitHub does not bill hosted-runner minutes. Any hardware, electricity, operating-system, network, or cloud cost of that machine is outside GitHub and must separately remain within the project's no-unapproved-cost rule.
 
@@ -71,7 +77,9 @@ A feature may be reconsidered only after verifying that the intended usage canno
 
 No future implementation commit may reintroduce `runs-on: ubuntu-latest`, `windows-latest`, `macos-latest`, or another GitHub-hosted runner label for routine CI without first revising this decision.
 
-No future workflow may re-enable automatic push/PR execution on a GitHub-hosted runner.
+Automatic validation-branch execution is permitted only when every matching job is explicitly self-hosted.
+
+No future workflow may enable automatic push/PR execution on a GitHub-hosted runner.
 
 ## Billing safety
 
