@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using YowThi.Erp.Infrastructure.Persistence.Mapping.Finance;
 using YowThi.Erp.Infrastructure.Persistence.Mapping.Infrastructure;
 using YowThi.Erp.Infrastructure.Persistence.Mapping.Inventory;
 using YowThi.Erp.Infrastructure.Persistence.Mapping.Labor;
@@ -33,5 +34,6 @@ public sealed class ErpDbContext(DbContextOptions<ErpDbContext> options) : DbCon
         modelBuilder.ApplyInventoryMappings();
         modelBuilder.ApplySalesHandlingMappings();
         modelBuilder.ApplyLaborMappings();
+        modelBuilder.ApplyFinanceMappings();
     }
 }
