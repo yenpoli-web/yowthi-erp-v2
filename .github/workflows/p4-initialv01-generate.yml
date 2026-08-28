@@ -1,0 +1,98 @@
+name: p4-initialv01-generate
+
+on:
+  push:
+    branches:
+      - p4-initialv01-generate
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: [self-hosted, yowthi-erp-v2]
+    timeout-minutes: 30
+
+    defaults:
+      run:
+        shell: cmd
+
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+      DOTNET_NOLOGO: "1"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Verify .NET SDK
+        run: |
+          dotnet --version
+          for /f "delims=" %%V in ('dotnet --version') do if not "%%V"=="10.0.400" exit /b 1
+
+      - name: Restore local tools
+        run: dotnet tool restore
+
+      - name: Restore
+        run: dotnet restore YowThi.Erp.slnx
+
+      - name: Build before migration generation
+        run: dotnet build YowThi.Erp.slnx --configuration Release --no-restore
+
+      - name: Generate InitialV01
+        run: >-
+          dotnet ef migrations add InitialV01
+          --project src/YowThi.Erp.Infrastructure.Migrations/YowThi.Erp.Infrastructure.Migrations.csproj
+          --startup-project src/YowThi.Erp.Infrastructure.Migrations/YowThi.Erp.Infrastructure.Migrations.csproj
+          --context ErpDbContext
+          --output-dir Migrations
+          --configuration Release
+          --no-build
+
+      - name: Verify no pending model changes
+        run: >-
+          dotnet ef migrations has-pending-model-changes
+          --project src/YowThi.Erp.Infrastructure.Migrations/YowThi.Erp.Infrastructure.Migrations.csproj
+          --startup-project src/YowThi.Erp.Infrastructure.Migrations/YowThi.Erp.Infrastructure.Migrations.csproj
+          --context ErpDbContext
+          --configuration Release
+          --no-build
+
+      - name: Generate static SQL review script
+        run: >-
+          dotnet ef migrations script 0 InitialV01
+          --idempotent
+          --project src/YowThi.Erp.Infrastructure.Migrations/YowThi.Erp.Infrastructure.Migrations.csproj
+          --startup-project src/YowThi.Erp.Infrastructure.Migrations/YowThi.Erp.Infrastructure.Migrations.csproj
+          --context ErpDbContext
+          --configuration Release
+          --no-build
+          --output P4-InitialV01-review.sql
+
+      - name: Migration structural counts
+        run: |
+          for %%F in (src\YowThi.Erp.Infrastructure.Migrations\Migrations\*InitialV01.cs) do find /c "CreateTable(" "%%F"
+          for %%F in (src\YowThi.Erp.Infrastructure.Migrations\Migrations\*InitialV01.cs) do find /c "EnsureSchema(" "%%F"
+          find /c "identity_issuer" P4-InitialV01-review.sql
+          find /c "identity_subject" P4-InitialV01-review.sql
+          find /c "__ef_migrations_history" P4-InitialV01-review.sql
+
+      - name: Build generated migration
+        run: dotnet build YowThi.Erp.slnx --configuration Release --no-restore
+
+      - name: Test generated migration model
+        run: dotnet test YowThi.Erp.slnx --configuration Release --no-build
+
+      - name: Commit generated migration to candidate branch
+        run: |
+          del /q P4-InitialV01-review.sql
+          git add src/YowThi.Erp.Infrastructure.Migrations/Migrations
+          git diff --cached --quiet
+          if %ERRORLEVEL% EQU 0 exit /b 1
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "build: generate InitialV01 migration"
+          git push origin HEAD:p4-initialv01-generate
