@@ -15,12 +15,12 @@ public sealed class PersistenceFoundationTests
     }
 
     [Fact]
-    public void ErpDbContext_contains_exactly_M6_relations()
+    public void ErpDbContext_contains_exactly_all_fifty_five_relations()
     {
         using var context = CreateContext();
 
         Assert.Equal("Npgsql.EntityFrameworkCore.PostgreSQL", context.Database.ProviderName);
-        Assert.Equal(52, context.Model.GetEntityTypes().Count());
+        Assert.Equal(55, context.Model.GetEntityTypes().Count());
     }
 
     private static ErpDbContext CreateContext()

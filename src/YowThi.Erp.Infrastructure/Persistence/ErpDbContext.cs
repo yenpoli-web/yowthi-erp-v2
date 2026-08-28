@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using YowThi.Erp.Infrastructure.Persistence.Mapping.Audit;
 using YowThi.Erp.Infrastructure.Persistence.Mapping.Finance;
 using YowThi.Erp.Infrastructure.Persistence.Mapping.Infrastructure;
 using YowThi.Erp.Infrastructure.Persistence.Mapping.Inventory;
@@ -35,5 +36,6 @@ public sealed class ErpDbContext(DbContextOptions<ErpDbContext> options) : DbCon
         modelBuilder.ApplySalesHandlingMappings();
         modelBuilder.ApplyLaborMappings();
         modelBuilder.ApplyFinanceMappings();
+        modelBuilder.ApplyAuditMappings();
     }
 }

@@ -6,7 +6,7 @@ YowThi ERP V2 is the clean-slate replacement architecture and implementation for
 
 ## Current phase
 
-Implementation P2 / M6 is complete: 52 of 55 formal relations are mapped. Next: P2 / M7 — `audit`, cumulative 55 of 55 relations.
+Implementation P2 relational mapping is complete: all 55 formal relations are mapped through M7. Next: P3 — API technical shell, followed by the P3.5 AuthN/AuthZ hard gate before `InitialV01`.
 
 P0 is complete:
 - .NET 10 solution/project scaffold
@@ -95,7 +95,7 @@ Infrastructure foundation:
 
 ## Relational mapping progress
 
-P2 mappings are implemented in dependency order and validated through EF design-time metadata tests.
+P2 mappings were implemented in dependency order and validated through EF design-time metadata tests.
 
 Completed:
 
@@ -106,22 +106,19 @@ M3  procurement + processing                      25 / 55
 M4  outsourced + sales + inventory                35 / 55
 M5  sales_handling + labor                        41 / 55
 M6  finance                                       52 / 55
+M7  audit                                         55 / 55
 ```
 
-M6 includes:
-- typed Payables with confirmed partial business uniques and `(id, payable_kind)` structural key
-- flattened Payable Obligation Items with real source FKs and Payable-kind compatibility
-- original obligation amounts permitting zero (`>= 0`) per the consolidated baseline
-- Company Pickup per-entry transport basis plus M:N obligation lineage without inventing grouping, payee, or rounding rules
-- confirmed Supplier quality/weight deduction adjustment as a negative append fact
-- positive partial Payment / Receipt settlement facts
-- one Receivable per confirmed Sales and same-Sale Receivable Obligation Item composite integrity
-- Payable / Receivable Outstanding transactional projections with explicit row-version monetary concurrency ownership
-- outstanding row formula without a permanent `outstanding >= 0` CHECK while FIN-001/002/004 remain unresolved
+M7 includes:
+- append-oriented command Audit Event with optional CommandId correlation and no FK to CommandExecution
+- real actor FK to `system.accounts`
+- investigation indexes for command, actor/time, and event-kind/time
+- Audit Event Subjects with composite identity, JSONB historical subject locator, optional audit-safe change summary, and no Domain target FK
+- Correction Links between Audit Events with `DIRECT_AMENDMENT / COMPENSATION` only; `BLOCK` is not persisted
+- no audit `row_version`
+- full-model architecture gates for exactly 55 relations across 14 schemas, no global query filters, no cascade delete, no `xmin`, and typed AccountId FKs
 
-Only formally confirmed closed vocabularies are mapped as CLR enums to PostgreSQL text. Cross-row source/payable semantic alignment and FIN-001–FIN-009 behavior remain owning-command/business-gap responsibilities rather than invented relational rules.
-
-No `InitialV01` migration is generated until all M1–M7 mappings reach 55 / 55.
+All 55 formal relations are now represented in the EF model. `InitialV01` is still blocked until the P3 API shell is in place, the P3.5 AuthN/AuthZ implementation architecture hard gate is completed, and any resulting formally approved relational revision is incorporated first.
 
 ## Local .NET validation
 
