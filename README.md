@@ -6,7 +6,7 @@ YowThi ERP V2 is the clean-slate replacement architecture and implementation for
 
 ## Current phase
 
-Implementation P3 API technical shell and the P3.5 AuthN/AuthZ implementation architecture hard gate are complete. The next phase is **P4 — generate and statically review `InitialV01`**.
+Implementation P4 is complete: the formal `InitialV01` migration has been generated, statically reviewed, drift-checked, and validated. Next: **P5 - PostgreSQL 18 persistence acceptance**.
 
 P0 is complete:
 - .NET 10 solution/project scaffold
@@ -172,31 +172,37 @@ P3.5 formally confirms:
 
 See `docs/15-authn-authz-implementation-architecture-v0.1.md`.
 
-## InitialV01 readiness
+## InitialV01 migration baseline
 
-The P3.5 security hard gate is complete and its relational correction is represented in the EF model.
-
-The next formal step is P4:
+P4 is complete. Formal migration:
 
 ```text
-generate InitialV01
-→ static review against docs/10 + docs/15
-→ verify no pending model changes
+src/YowThi.Erp.Infrastructure.Migrations/Migrations/20260828033151_InitialV01.cs
 ```
 
-Docker Desktop / PostgreSQL are **not** required for migration generation or static review.
+P4 acceptance:
+- 55 `CreateTable` operations
+- 14 PostgreSQL schemas
+- no pending EF model changes after migration generation
+- explicit lower snake_case database index names; convention/truncation fallback is guarded by ArchitectureTests
+- P3.5 `system.accounts` OIDC identity columns, constraints, and partial unique index are included
+- Inventory Position `NULLS NOT DISTINCT` identity is included
+- Finance Outstanding formula is retained without inventing a permanent `outstanding >= 0` rule
+- Audit/Outbox CommandId reference and retention boundaries are preserved
+- self-hosted restore/build/test passed
 
-Docker Desktop becomes required at P5:
+`InitialV01` has **not** yet been applied to a real PostgreSQL database.
+
+P5 now requires Docker Desktop / PostgreSQL 18:
 
 ```text
 approved InitialV01
-→ Docker Desktop ON
-→ PostgreSQL 18 up
-→ clean migration apply
-→ schema introspection
-→ PostgreSQL integration/concurrency acceptance
+-> Docker Desktop ON
+-> PostgreSQL 18 clean database
+-> apply InitialV01
+-> schema / migration-history introspection
+-> PostgreSQL integration and concurrency acceptance
 ```
-
 ## Local .NET validation
 
 ```powershell
