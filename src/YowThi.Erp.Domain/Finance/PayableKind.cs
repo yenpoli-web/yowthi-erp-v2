@@ -1,0 +1,10 @@
+namespace YowThi.Erp.Domain.Finance;
+
+public enum PayableKind
+{
+    PROCUREMENT_SUPPLIER,
+    PROCUREMENT_FARMER,
+    COMPANY_PICKUP_TRANSPORT,
+    OUTSOURCED_VENDOR,
+    EMPLOYEE_DAILY_WAGE,
+}

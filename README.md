@@ -6,7 +6,7 @@ YowThi ERP V2 is the clean-slate replacement architecture and implementation for
 
 ## Current phase
 
-Implementation P2 / M5 is complete: 41 of 55 formal relations are mapped. Next: P2 / M6 — `finance`, cumulative 52 of 55 relations.
+Implementation P2 / M6 is complete: 52 of 55 formal relations are mapped. Next: P2 / M7 — `audit`, cumulative 55 of 55 relations.
 
 P0 is complete:
 - .NET 10 solution/project scaffold
@@ -14,7 +14,7 @@ P0 is complete:
 - React + TypeScript + Vite web scaffold
 - React Router + TanStack Query wiring
 - locked pnpm dependency graph
-- local validation gates; GitHub-hosted automatic CI is disabled by cost governance
+- self-hosted validation gates; GitHub-hosted automatic CI is disabled by cost governance
 
 The architecture and implementation-order baseline is complete through:
 
@@ -34,7 +34,7 @@ The recovery baseline remains:
 
 GitHub usage must remain on a no-unapproved-cost path. Do not depend on services that can continue into paid metered usage after a free quota is exhausted.
 
-Routine CI on GitHub-hosted runners is disabled. Backend candidate branches matching `m*-validation` may validate automatically only on a matching self-hosted runner (`self-hosted`, `yowthi-erp-v2`); `main` does not trigger that workflow. Until a self-hosted runner is deliberately configured, validation remains local-first.
+Routine CI on GitHub-hosted runners is disabled. Backend candidate branches matching `m*-validation` validate automatically only on the YowThi ERP V2 Windows self-hosted runner (`self-hosted`, `yowthi-erp-v2`); `main` does not trigger that workflow.
 
 Do not reintroduce `ubuntu-latest`, `windows-latest`, `macos-latest`, paid/larger runners, Codespaces, or other metered GitHub infrastructure without first verifying zero-cost behavior and explicitly revising the governance decision.
 
@@ -105,19 +105,21 @@ M2  infrastructure + product + processing_config  20 / 55
 M3  procurement + processing                      25 / 55
 M4  outsourced + sales + inventory                35 / 55
 M5  sales_handling + labor                        41 / 55
+M6  finance                                       52 / 55
 ```
 
-M5 includes:
-- Sales Packaging Item bilingual lifecycle master with no wage rate on the master
-- Sales Packaging Work Record confirmed day-rate wage facts with no quantity/weight/box/hour/unit-rate fields
-- no unconfirmed `(sales, work_date, employee, item)` business uniqueness while HANDLING-002 remains unresolved
-- Employee Daily Wage identity = Work Date + Employee
-- Daily Wage total row formula
-- Processing Wage aggregation, override snapshots, aggregate-first multiplication and final THB floor
-- Processing Execution Output lineage with one-output-to-one-confirmed-wage-component uniqueness
-- Sales Packaging Work Record to one Daily Wage uniqueness
+M6 includes:
+- typed Payables with confirmed partial business uniques and `(id, payable_kind)` structural key
+- flattened Payable Obligation Items with real source FKs and Payable-kind compatibility
+- original obligation amounts permitting zero (`>= 0`) per the consolidated baseline
+- Company Pickup per-entry transport basis plus M:N obligation lineage without inventing grouping, payee, or rounding rules
+- confirmed Supplier quality/weight deduction adjustment as a negative append fact
+- positive partial Payment / Receipt settlement facts
+- one Receivable per confirmed Sales and same-Sale Receivable Obligation Item composite integrity
+- Payable / Receivable Outstanding transactional projections with explicit row-version monetary concurrency ownership
+- outstanding row formula without a permanent `outstanding >= 0` CHECK while FIN-001/002/004 remain unresolved
 
-Only formally confirmed closed vocabularies are mapped as CLR enums to PostgreSQL text. Cross-row lifecycle/business eligibility remains owning-command transactional validation rather than being invented as database constraints.
+Only formally confirmed closed vocabularies are mapped as CLR enums to PostgreSQL text. Cross-row source/payable semantic alignment and FIN-001–FIN-009 behavior remain owning-command/business-gap responsibilities rather than invented relational rules.
 
 No `InitialV01` migration is generated until all M1–M7 mappings reach 55 / 55.
 
