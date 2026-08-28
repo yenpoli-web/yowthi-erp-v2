@@ -5,6 +5,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="Microsoft.Extensions.Validation" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="../YowThi.Erp.Application/YowThi.Erp.Application.csproj" />
     <ProjectReference Include="../YowThi.Erp.Infrastructure/YowThi.Erp.Infrastructure.csproj" />
   </ItemGroup>
