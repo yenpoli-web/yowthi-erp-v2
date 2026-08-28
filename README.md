@@ -6,7 +6,7 @@ YowThi ERP V2 is the clean-slate replacement architecture and implementation for
 
 ## Current phase
 
-Implementation P2 relational mapping is complete: all 55 formal relations are mapped through M7. Next: P3 — API technical shell, followed by the P3.5 AuthN/AuthZ hard gate before `InitialV01`.
+Implementation P3 API technical shell is complete. Next: P3.5 — AuthN/AuthZ implementation architecture hard gate before `InitialV01`.
 
 P0 is complete:
 - .NET 10 solution/project scaffold
@@ -118,7 +118,29 @@ M7 includes:
 - no audit `row_version`
 - full-model architecture gates for exactly 55 relations across 14 schemas, no global query filters, no cascade delete, no `xmin`, and typed AccountId FKs
 
-All 55 formal relations are now represented in the EF model. `InitialV01` is still blocked until the P3 API shell is in place, the P3.5 AuthN/AuthZ implementation architecture hard gate is completed, and any resulting formally approved relational revision is incorporated first.
+All 55 formal relations are represented in the EF model.
+
+## API technical shell
+
+P3 establishes transport/hosting infrastructure only; it does not implement Business Commands or choose an authentication mechanism.
+
+Current API shell includes:
+- Minimal API composition root
+- authenticated-by-default `/api/v1` route-group helper
+- confirmed v1 module route vocabulary
+- first-party Problem Details and stable error-code helpers
+- first-party OpenAPI registration; Development-only OpenAPI endpoint
+- first-party validation registration
+- camelCase JSON with unknown write properties rejected
+- `Idempotency-Key` transport filter that parses a UUID into the existing Application `CommandId` feature without acquiring/replaying persistence itself
+- `Accept-Language` resolver for `zh-TW` / `th-TH` with deployment-configured default locale
+- operation/capability policy-name constants without role assignment or auth persistence
+- rate-limiter infrastructure with stable 429 Problem Details handling; numeric thresholds remain deployment controls
+- optional finite request-body limit configuration hook
+- minimal anonymous `/health/live` probe
+- API contract tests for routing/auth metadata, OpenAPI exposure, JSON strictness, locale resolution, and Idempotency-Key transport behavior
+
+`InitialV01` remains blocked until the P3.5 AuthN/AuthZ implementation architecture hard gate is completed and any resulting formally approved relational revision is incorporated first.
 
 ## Local .NET validation
 
@@ -129,7 +151,7 @@ dotnet build YowThi.Erp.slnx
 dotnet test YowThi.Erp.slnx
 ```
 
-The repository pins .NET SDK `10.0.400` in `global.json` and uses Microsoft Testing Platform through xUnit v3.
+The repository pins .NET SDK `10.0.400` in `global.json` and uses Microsoft Testing Platform through xUnit v3. Candidate branches matching `m*-validation` use the Windows self-hosted runner automatically.
 
 ## React web baseline
 
@@ -159,7 +181,7 @@ pnpm build
 
 The P0 web shell wires React Router and TanStack Query only. It does not contain mock ERP entities, fake Business Rules, or a temporary replacement API model.
 
-Docker Desktop / PostgreSQL are not required for P2 relational model mapping and metadata tests. They become required at the Build Plan P5 gate when `InitialV01` is first applied to PostgreSQL 18 and persistence integration/concurrency tests begin.
+Docker Desktop / PostgreSQL are not required for P3 API-shell contract tests. They become required at the Build Plan P5 gate when `InitialV01` is first applied to PostgreSQL 18 and persistence integration/concurrency tests begin.
 
 ## Information labels
 
