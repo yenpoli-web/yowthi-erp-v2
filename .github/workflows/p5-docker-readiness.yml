@@ -1,0 +1,31 @@
+name: p5-docker-readiness
+
+on:
+  push:
+    branches:
+      - p5-docker-readiness
+
+permissions:
+  contents: read
+
+jobs:
+  readiness:
+    runs-on: [self-hosted, yowthi-erp-v2]
+    timeout-minutes: 10
+
+    defaults:
+      run:
+        shell: cmd
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Docker CLI
+        run: docker --version
+
+      - name: Docker Compose
+        run: docker compose version
+
+      - name: Docker Engine
+        run: docker info
