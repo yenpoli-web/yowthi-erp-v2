@@ -9,17 +9,34 @@ function Replace-Exact([string]$text, [string]$old, [string]$new, [string]$label
     return $text.Replace($old, $new)
 }
 
-function Replace-Regex([string]$text, [string]$pattern, [string]$replacement, [string]$label) {
-    $regex = New-Object System.Text.RegularExpressions.Regex($pattern, [System.Text.RegularExpressions.RegexOptions]::Singleline)
-    if (-not $regex.IsMatch($text)) {
-        throw "Required pattern not found for $label"
+function Replace-LineStartingWith([string]$text, [string]$prefix, [string]$newLine, [string]$label) {
+    $start = $text.IndexOf($prefix, [StringComparison]::Ordinal)
+    if ($start -lt 0) {
+        throw "Required line not found for $label"
     }
-    return $regex.Replace($text, $replacement, 1)
+    $end = $text.IndexOf("`n", $start)
+    if ($end -lt 0) {
+        $end = $text.Length
+        return $text.Substring(0, $start) + $newLine
+    }
+    return $text.Substring(0, $start) + $newLine + $text.Substring($end)
+}
+
+function Replace-Section([string]$text, [string]$startMarker, [string]$endMarker, [string]$replacement, [string]$label) {
+    $start = $text.IndexOf($startMarker, [StringComparison]::Ordinal)
+    if ($start -lt 0) {
+        throw "Required section start not found for $label"
+    }
+    $end = $text.IndexOf($endMarker, $start + $startMarker.Length, [StringComparison]::Ordinal)
+    if ($end -lt 0) {
+        throw "Required section end not found for $label"
+    }
+    return $text.Substring(0, $start) + $replacement + $text.Substring($end)
 }
 
 $readmePath = 'README.md'
 $readme = [IO.File]::ReadAllText($readmePath)
-$readme = Replace-Regex $readme '(?m)^Implementation P3 API technical shell.*InitialV01.*$' 'Implementation P4 is complete: the formal `InitialV01` migration has been generated, statically reviewed, drift-checked, and validated. Next: **P5 - PostgreSQL 18 persistence acceptance**.' 'README current phase'
+$readme = Replace-LineStartingWith $readme 'Implementation P3 API technical shell' 'Implementation P4 is complete: the formal `InitialV01` migration has been generated, statically reviewed, drift-checked, and validated. Next: **P5 - PostgreSQL 18 persistence acceptance**.' 'README current phase'
 
 $readmeMigrationSection = @'
 ## InitialV01 migration baseline
@@ -54,15 +71,17 @@ approved InitialV01
 -> PostgreSQL integration and concurrency acceptance
 ```
 
-## Local .NET validation
 '@
-$readme = Replace-Regex $readme '## InitialV01 readiness\r?\n.*?## Local \.NET validation\r?\n' $readmeMigrationSection 'README InitialV01 section'
+$readme = Replace-Section $readme '## InitialV01 readiness' '## Local .NET validation' $readmeMigrationSection 'README InitialV01 section'
 [IO.File]::WriteAllText($readmePath, $readme, $utf8NoBom)
 
 $checkpointPath = 'docs/09-current-design-checkpoint.md'
 $checkpoint = [IO.File]::ReadAllText($checkpointPath)
 $checkpoint = Replace-Exact $checkpoint 'Checkpoint status: **v0.1 implementation baseline through P3.5**' 'Checkpoint status: **v0.1 implementation baseline through P4**' 'checkpoint status'
-$checkpoint = Replace-Exact $checkpoint '- P3.5 AuthN/AuthZ architecture hard gate and auth-specific `system.accounts` mapping revision' "- P3.5 AuthN/AuthZ architecture hard gate and auth-specific `system.accounts` mapping revision`n- P4 `InitialV01` generation, static review, model-drift verification, and migration validation" 'completed P4 phase'
+
+$completedP35 = '- P3.5 AuthN/AuthZ architecture hard gate and auth-specific `system.accounts` mapping revision'
+$completedP4 = $completedP35 + "`n" + '- P4 `InitialV01` generation, static review, model-drift verification, and migration validation'
+$checkpoint = Replace-Exact $checkpoint $completedP35 $completedP4 'completed P4 phase'
 
 $checkpointNextPhase = @'
 Current next phase:
@@ -71,11 +90,13 @@ Current next phase:
 
 P4 `InitialV01` generation/static review is complete. Docker Desktop is now required for the first real PostgreSQL 18 apply, schema introspection, and integration/concurrency acceptance.
 
-## 4. Core domain modules
 '@
-$checkpoint = Replace-Regex $checkpoint 'Current next phase:\r?\n.*?## 4\. Core domain modules\r?\n' $checkpointNextPhase 'checkpoint current phase'
+$checkpoint = Replace-Section $checkpoint 'Current next phase:' '## 4. Core domain modules' $checkpointNextPhase 'checkpoint current phase'
 
-$checkpoint = Replace-Exact $checkpoint '- migration history at `system.__ef_migrations_history`' "- migration history at `system.__ef_migrations_history``n- formal initial migration `InitialV01` generated and statically approved in P4`n- post-generation `dotnet ef migrations has-pending-model-changes` reports no model drift`n- `InitialV01` has not yet been applied to PostgreSQL" 'checkpoint migration status'
+$migrationHistory = '- migration history at `system.__ef_migrations_history`'
+$migrationStatus = $migrationHistory + "`n" + '- formal initial migration `InitialV01` generated and statically approved in P4' + "`n" + '- post-generation `dotnet ef migrations has-pending-model-changes` reports no model drift' + "`n" + '- `InitialV01` has not yet been applied to PostgreSQL'
+$checkpoint = Replace-Exact $checkpoint $migrationHistory $migrationStatus 'checkpoint migration status'
+
 $checkpoint = Replace-Exact $checkpoint 'P4  InitialV01 generation/static review               NEXT' 'P4  InitialV01 generation/static review               COMPLETE' 'phase table P4'
 $checkpoint = Replace-Exact $checkpoint 'P5  PostgreSQL 18 persistence acceptance' 'P5  PostgreSQL 18 persistence acceptance              NEXT' 'phase table P5'
 
@@ -92,10 +113,13 @@ P4 result:
 - self-hosted restore/build/test passed
 - migration has not yet been applied to PostgreSQL
 
-P5 activation:
 '@
-$checkpoint = Replace-Regex $checkpoint 'P4 rules:\r?\n.*?P5 activation:\r?\n' $p4Result 'checkpoint P4 result'
+$checkpoint = Replace-Section $checkpoint 'P4 rules:' 'P5 activation:' $p4Result 'checkpoint P4 result'
 
+$nextStepStart = $checkpoint.IndexOf('## 23. Next step', [StringComparison]::Ordinal)
+if ($nextStepStart -lt 0) {
+    throw 'Required section start not found for checkpoint next step'
+}
 $nextStep = @'
 ## 23. Next step
 
@@ -122,7 +146,7 @@ P4 InitialV01 approved
 
 Do not start Business vertical slices until P5 persistence acceptance is green.
 '@
-$checkpoint = Replace-Regex $checkpoint '## 23\. Next step\r?\n.*\z' $nextStep 'checkpoint next step'
+$checkpoint = $checkpoint.Substring(0, $nextStepStart) + $nextStep
 [IO.File]::WriteAllText($checkpointPath, $checkpoint, $utf8NoBom)
 
 Write-Host 'P4 checkpoint documents updated.'
