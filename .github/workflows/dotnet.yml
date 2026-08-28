@@ -23,7 +23,7 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Verify .NET SDK
-        shell: pwsh
+        shell: powershell
         run: |
           $sdkVersion = dotnet --version
           if ($sdkVersion -ne "10.0.400") {
