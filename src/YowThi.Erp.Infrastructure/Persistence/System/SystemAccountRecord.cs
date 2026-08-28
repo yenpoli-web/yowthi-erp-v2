@@ -7,6 +7,8 @@ internal sealed class SystemAccountRecord : IHasRowVersion
     public Guid Id { get; private set; }
     public string DisplayName { get; private set; } = null!;
     public bool Active { get; private set; }
+    public string? IdentityIssuer { get; private set; }
+    public string? IdentitySubject { get; private set; }
     public long RowVersion { get; private set; }
     public DateTimeOffset CreatedAt { get; private set; }
 }

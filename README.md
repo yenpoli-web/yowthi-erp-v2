@@ -6,7 +6,7 @@ YowThi ERP V2 is the clean-slate replacement architecture and implementation for
 
 ## Current phase
 
-Implementation P3 API technical shell is complete. Next: P3.5 — AuthN/AuthZ implementation architecture hard gate before `InitialV01`.
+Implementation P3 API technical shell and the P3.5 AuthN/AuthZ implementation architecture hard gate are complete. The next phase is **P4 — generate and statically review `InitialV01`**.
 
 P0 is complete:
 - .NET 10 solution/project scaffold
@@ -16,19 +16,27 @@ P0 is complete:
 - locked pnpm dependency graph
 - self-hosted validation gates; GitHub-hosted automatic CI is disabled by cost governance
 
-The architecture and implementation-order baseline is complete through:
+The formal architecture/recovery baseline now includes:
 
 - Business Discovery / Domain Model / Command Contracts
 - PostgreSQL relational model consolidation
 - EF Core Mapping Architecture
 - REST/API Architecture
 - Implementation Sequencing / Build Plan
+- GitHub Cost Governance
+- AuthN/AuthZ Implementation Architecture
 
-The recovery baseline remains:
+The recovery baseline is:
 
 - `docs/09-current-design-checkpoint.md`
+- `docs/10-relational-model-consolidation-v0.1.md`
+- `docs/11-ef-core-mapping-architecture-v0.1.md`
+- `docs/12-rest-api-architecture-v0.1.md`
 - `docs/13-implementation-sequencing-build-plan-v0.1.md`
 - `docs/14-github-cost-governance-v0.1.md`
+- `docs/15-authn-authz-implementation-architecture-v0.1.md`
+
+For the auth-specific `system.accounts` identity binding only, `docs/15` is the later confirmed correction to older wording in `docs/10` / PostgreSQL Schema Part 6 that external identity mapping was not yet defined. Relation count remains 55.
 
 ## GitHub cost governance
 
@@ -109,20 +117,20 @@ M6  finance                                       52 / 55
 M7  audit                                         55 / 55
 ```
 
-M7 includes:
-- append-oriented command Audit Event with optional CommandId correlation and no FK to CommandExecution
-- real actor FK to `system.accounts`
-- investigation indexes for command, actor/time, and event-kind/time
-- Audit Event Subjects with composite identity, JSONB historical subject locator, optional audit-safe change summary, and no Domain target FK
-- Correction Links between Audit Events with `DIRECT_AMENDMENT / COMPENSATION` only; `BLOCK` is not persisted
-- no audit `row_version`
-- full-model architecture gates for exactly 55 relations across 14 schemas, no global query filters, no cascade delete, no `xmin`, and typed AccountId FKs
-
 All 55 formal relations are represented in the EF model.
+
+P3.5 adds no relation 56+. It revises the existing `system.accounts` relation with an optional, paired, unique external OIDC identity mapping:
+
+```text
+identity_issuer  text NULL
+identity_subject text NULL
+```
+
+The pair is either both NULL or both present/nonblank. When present, `(identity_issuer, identity_subject)` is unique.
 
 ## API technical shell
 
-P3 establishes transport/hosting infrastructure only; it does not implement Business Commands or choose an authentication mechanism.
+P3 establishes transport/hosting infrastructure only; it does not implement Business Commands.
 
 Current API shell includes:
 - Minimal API composition root
@@ -134,13 +142,60 @@ Current API shell includes:
 - camelCase JSON with unknown write properties rejected
 - `Idempotency-Key` transport filter that parses a UUID into the existing Application `CommandId` feature without acquiring/replaying persistence itself
 - `Accept-Language` resolver for `zh-TW` / `th-TH` with deployment-configured default locale
-- operation/capability policy-name constants without role assignment or auth persistence
+- operation/capability policy-name constants
 - rate-limiter infrastructure with stable 429 Problem Details handling; numeric thresholds remain deployment controls
 - optional finite request-body limit configuration hook
 - minimal anonymous `/health/live` probe
 - API contract tests for routing/auth metadata, OpenAPI exposure, JSON strictness, locale resolution, and Idempotency-Key transport behavior
 
-`InitialV01` remains blocked until the P3.5 AuthN/AuthZ implementation architecture hard gate is completed and any resulting formally approved relational revision is incorporated first.
+## AuthN/AuthZ hard-gate baseline
+
+P3.5 formally confirms:
+- provider-neutral external OpenID Connect authentication
+- Authorization Code + PKCE for interactive browser login
+- ASP.NET Core encrypted Cookie session
+- `/api/v1` returns `401` for unauthenticated API requests rather than redirecting business requests
+- stable authenticated identity = validated `(issuer, subject)`
+- exact external identity maps server-side to `system.accounts`
+- ERP accounts are pre-provisioned; first login does not auto-create accounts
+- account must exist and remain `active = true` for ActorContext resolution
+- clients never select actor account IDs
+- authorization uses explicit capability policies such as `sales.confirm`, `finance.pay`, `inventory.adjust`, `data-protection.hard-delete`
+- v0.1 capability grants are deployment-configured by persistent Account UUID
+- no `Admin` / `Manager` / `SuperAdmin` business-role invention
+- no ERP password storage
+- no roles/permissions/session/password/refresh-token relations
+- React does not store access or refresh tokens
+- cookie-authenticated unsafe browser writes require antiforgery protection; confirmed request header is `X-CSRF-TOKEN`
+- test authentication remains test-only and cannot become a staging/production bypass
+- Tailscale remains network transport only, not ERP authentication
+
+See `docs/15-authn-authz-implementation-architecture-v0.1.md`.
+
+## InitialV01 readiness
+
+The P3.5 security hard gate is complete and its relational correction is represented in the EF model.
+
+The next formal step is P4:
+
+```text
+generate InitialV01
+→ static review against docs/10 + docs/15
+→ verify no pending model changes
+```
+
+Docker Desktop / PostgreSQL are **not** required for migration generation or static review.
+
+Docker Desktop becomes required at P5:
+
+```text
+approved InitialV01
+→ Docker Desktop ON
+→ PostgreSQL 18 up
+→ clean migration apply
+→ schema introspection
+→ PostgreSQL integration/concurrency acceptance
+```
 
 ## Local .NET validation
 
@@ -180,8 +235,6 @@ pnpm build
 ```
 
 The P0 web shell wires React Router and TanStack Query only. It does not contain mock ERP entities, fake Business Rules, or a temporary replacement API model.
-
-Docker Desktop / PostgreSQL are not required for P3 API-shell contract tests. They become required at the Build Plan P5 gate when `InitialV01` is first applied to PostgreSQL 18 and persistence integration/concurrency tests begin.
 
 ## Information labels
 

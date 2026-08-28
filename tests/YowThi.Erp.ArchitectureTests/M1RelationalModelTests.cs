@@ -59,6 +59,38 @@ public sealed class M1RelationalModelTests
     }
 
     [Fact]
+    public void Account_external_identity_mapping_is_optional_paired_nonblank_and_unique_when_present()
+    {
+        using var context = CreateContext();
+        var model = GetDesignTimeModel(context);
+        var accounts = GetTable(model, "system", "accounts");
+        var table = StoreObjectIdentifier.Table("accounts", "system");
+
+        var issuer = accounts.FindProperty("IdentityIssuer");
+        var subject = accounts.FindProperty("IdentitySubject");
+
+        Assert.NotNull(issuer);
+        Assert.NotNull(subject);
+        Assert.True(issuer!.IsNullable);
+        Assert.True(subject!.IsNullable);
+        Assert.Equal("identity_issuer", issuer.GetColumnName(table));
+        Assert.Equal("identity_subject", subject.GetColumnName(table));
+
+        var checks = accounts.GetCheckConstraints().Select(check => check.Name).ToHashSet(StringComparer.Ordinal);
+        Assert.Contains("ck_accounts_identity_pair", checks);
+        Assert.Contains("ck_accounts_identity_issuer_nonblank", checks);
+        Assert.Contains("ck_accounts_identity_subject_nonblank", checks);
+
+        var identityIndex = Assert.Single(accounts.GetIndexes().Where(index =>
+            index.IsUnique
+            && index.Properties.Select(property => property.Name)
+                .SequenceEqual(new[] { "IdentityIssuer", "IdentitySubject" }, StringComparer.Ordinal)));
+
+        Assert.Equal("ux_accounts_identity_issuer_subject", identityIndex.GetDatabaseName());
+        Assert.Equal("identity_issuer IS NOT NULL", identityIndex.GetFilter());
+    }
+
+    [Fact]
     public void Party_actor_references_are_real_restrict_foreign_keys_and_not_business_uniqueness()
     {
         using var context = CreateContext();
