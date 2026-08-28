@@ -99,6 +99,28 @@ public sealed class FullRelationalModelTests
         }
     }
 
+    [Fact]
+    public void All_database_indexes_use_explicit_lower_snake_case_names()
+    {
+        using var context = CreateContext();
+        var model = GetDesignTimeModel(context);
+
+        var invalidNames = model.GetEntityTypes()
+            .SelectMany(entityType => entityType.GetIndexes())
+            .Select(index => index.GetDatabaseName())
+            .Where(name => string.IsNullOrWhiteSpace(name) ||
+                           (!name!.StartsWith("ix_", StringComparison.Ordinal) &&
+                            !name.StartsWith("ux_", StringComparison.Ordinal)) ||
+                           name.Any(character => !(character is >= 'a' and <= 'z' or >= '0' and <= '9' or '_')))
+            .Distinct(StringComparer.Ordinal)
+            .OrderBy(name => name, StringComparer.Ordinal)
+            .ToArray();
+
+        Assert.True(
+            invalidNames.Length == 0,
+            $"Convention-generated or non-snake-case database indexes found: {string.Join(", ", invalidNames)}");
+    }
+
     private static ErpDbContext CreateContext()
     {
         var options = new DbContextOptionsBuilder<ErpDbContext>()

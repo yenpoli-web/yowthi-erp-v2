@@ -24,6 +24,7 @@ internal sealed class SalesAllocationConfiguration : IEntityTypeConfiguration<Sa
         builder.HasOne<SalesDetail>().WithMany().HasForeignKey(x => x.SalesDetailId).OnDelete(DeleteBehavior.Restrict).HasConstraintName("fk_sales_allocations_sales_detail");
         builder.HasOne<SalesAllocationRevisionItem>().WithMany().HasForeignKey(x => new { x.SalesAllocationRevisionItemId, x.SalesDetailId }).HasPrincipalKey(x => new { x.Id, x.SalesDetailId }).OnDelete(DeleteBehavior.Restrict).HasConstraintName("fk_sales_allocations_revision_item_detail");
 
+        builder.HasIndex(x => new { x.SalesAllocationRevisionItemId, x.SalesDetailId }).HasDatabaseName("ix_sales_allocations_revision_item_detail");
         builder.HasIndex(x => x.SalesAllocationRevisionItemId).IsUnique().HasDatabaseName("ux_sales_allocations_revision_item_id");
     }
 }

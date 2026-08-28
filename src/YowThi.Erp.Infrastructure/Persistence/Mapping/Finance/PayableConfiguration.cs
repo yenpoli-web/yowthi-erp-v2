@@ -38,6 +38,8 @@ internal sealed class PayableConfiguration : IEntityTypeConfiguration<Payable>
         builder.HasOne<OutsourcedSupplyDetail>().WithMany().HasForeignKey(x => x.OutsourcedSupplyDetailId).OnDelete(DeleteBehavior.Restrict).HasConstraintName("fk_payables_outsourced_supply_detail");
         builder.HasOne<EmployeeDailyWage>().WithMany().HasForeignKey(x => x.EmployeeDailyWageId).OnDelete(DeleteBehavior.Restrict).HasConstraintName("fk_payables_employee_daily_wage");
 
+        builder.HasIndex(x => x.SupplierId).HasDatabaseName("ix_payables_supplier_id");
+        builder.HasIndex(x => x.FarmerId).HasDatabaseName("ix_payables_farmer_id");
         builder.HasIndex(x => new { x.ProcurementBatchId, x.SupplierId }).IsUnique().HasFilter("payable_kind = 'PROCUREMENT_SUPPLIER'").HasDatabaseName("ux_payables_procurement_supplier");
         builder.HasIndex(x => new { x.ProcurementBatchId, x.FarmerId }).IsUnique().HasFilter("payable_kind = 'PROCUREMENT_FARMER'").HasDatabaseName("ux_payables_procurement_farmer");
         builder.HasIndex(x => x.OutsourcedSupplyDetailId).IsUnique().HasFilter("payable_kind = 'OUTSOURCED_VENDOR'").HasDatabaseName("ux_payables_outsourced_vendor");
