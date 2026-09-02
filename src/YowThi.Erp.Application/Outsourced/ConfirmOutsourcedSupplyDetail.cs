@@ -48,6 +48,7 @@ public static class OutsourcedApplicationErrorCodes
     public const string ReceiptLocationNotFound = "outsourced.receipt-location-not-found";
     public const string ReceiptLocationInactive = "outsourced.receipt-location-inactive";
     public const string ReceiptLocationRequired = "outsourced.receipt-location-required";
+    public const string BatchClosedLateDetailUnverified = "outsourced.batch-closed-late-detail-unverified";
     public const string BatchUnavailable = "outsourced.batch-unavailable";
     public const string IdempotencyKeyReused = "idempotency.key-reused";
 }
