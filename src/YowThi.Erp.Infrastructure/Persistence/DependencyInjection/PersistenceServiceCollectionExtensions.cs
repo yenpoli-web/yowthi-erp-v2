@@ -2,8 +2,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using YowThi.Erp.Application.Common.Idempotency;
 using YowThi.Erp.Application.Common.Transactions;
+using YowThi.Erp.Application.Procurement;
 using YowThi.Erp.Infrastructure.Persistence.Concurrency;
 using YowThi.Erp.Infrastructure.Persistence.Idempotency;
+using YowThi.Erp.Infrastructure.Persistence.Procurement;
 using YowThi.Erp.Infrastructure.Persistence.Transactions;
 
 namespace YowThi.Erp.Infrastructure.Persistence.DependencyInjection;
@@ -20,6 +22,7 @@ public static class PersistenceServiceCollectionExtensions
         services.AddSingleton(TimeProvider.System);
         services.AddSingleton<ICommandRequestHasher, Sha256CommandRequestHasher>();
         services.AddScoped<ICommandTransactionRunner, EfCommandTransactionRunner>();
+        services.AddScoped<IConfirmProcurementEntryExecutor, PostgreSqlConfirmProcurementEntryExecutor>();
         services.AddSingleton<RowVersionSaveChangesInterceptor>();
 
         services.AddDbContext<ErpDbContext>((serviceProvider, options) =>
