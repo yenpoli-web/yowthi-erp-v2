@@ -75,4 +75,25 @@ public sealed class InventoryOperation
             RecordedByAccountId = recordedByAccountId,
         };
     }
+
+    public static InventoryOperation CreateSalesIssue(
+        Guid id,
+        Guid salesId,
+        DateTimeOffset recordedAt,
+        Guid recordedByAccountId)
+    {
+        if (id == Guid.Empty || salesId == Guid.Empty || recordedByAccountId == Guid.Empty)
+        {
+            throw new ArgumentException("Inventory operation technical and reference IDs cannot be empty.");
+        }
+
+        return new InventoryOperation
+        {
+            Id = id,
+            OperationType = InventoryOperationType.SALES_ISSUE,
+            SalesId = salesId,
+            RecordedAt = recordedAt,
+            RecordedByAccountId = recordedByAccountId,
+        };
+    }
 }
