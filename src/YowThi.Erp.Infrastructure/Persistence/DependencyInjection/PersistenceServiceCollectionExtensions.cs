@@ -27,6 +27,7 @@ public static class PersistenceServiceCollectionExtensions
         services.AddScoped<IConfirmProcurementEntryExecutor, PostgreSqlConfirmProcurementEntryExecutor>();
         services.AddScoped<IProcurementEntryOptionsReader, EfProcurementEntryOptionsReader>();
         services.AddScoped<IConfirmOutsourcedSupplyDetailExecutor, PostgreSqlConfirmOutsourcedSupplyDetailExecutor>();
+        services.AddScoped<IOutsourcedSupplyDetailOptionsReader, EfOutsourcedSupplyDetailOptionsReader>();
         services.AddSingleton<RowVersionSaveChangesInterceptor>();
 
         services.AddDbContext<ErpDbContext>((serviceProvider, options) =>

@@ -13,6 +13,7 @@ app.MapYowThiTechnicalEndpoints();
 app.MapProcurementEndpoints();
 app.MapProcurementEntryOptionEndpoints();
 app.MapOutsourcedEndpoints();
+app.MapOutsourcedSupplyDetailOptionEndpoints();
 
 app.Run();
 

@@ -81,6 +81,37 @@ public sealed class ApiShellContractTests
     }
 
     [Fact]
+    public async Task Outsourced_supply_detail_option_queries_are_authenticated_purpose_specific_gets_without_idempotency()
+    {
+        await using var app = CreateApp(Environments.Development);
+        app.MapOutsourcedSupplyDetailOptionEndpoints();
+
+        var expected = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["/api/v1/outsourced/supply-detail-options/vendors"] = OutsourcedSupplyDetailOptionEndpoints.VendorsOperationId,
+            ["/api/v1/outsourced/supply-detail-options/products"] = OutsourcedSupplyDetailOptionEndpoints.ProductsOperationId,
+            ["/api/v1/outsourced/supply-detail-options/storage-locations"] = OutsourcedSupplyDetailOptionEndpoints.StorageLocationsOperationId,
+        };
+
+        foreach (var pair in expected)
+        {
+            var endpoint = Assert.Single(
+                GetRouteEndpoints(app),
+                endpoint => endpoint.RoutePattern.RawText == pair.Key);
+
+            Assert.Contains(HttpMethods.Get, endpoint.Metadata.GetMetadata<IHttpMethodMetadata>()?.HttpMethods ?? []);
+            Assert.Equal(pair.Value, endpoint.Metadata.GetMetadata<IEndpointNameMetadata>()?.EndpointName);
+            Assert.Contains(
+                endpoint.Metadata.GetOrderedMetadata<IAuthorizeData>(),
+                metadata => metadata.Policy == CapabilityPolicies.OutsourcedConfirm);
+            Assert.Null(endpoint.Metadata.GetMetadata<RequiresIdempotencyKeyMetadata>());
+            Assert.Contains(
+                endpoint.Metadata.GetOrderedMetadata<IProducesResponseTypeMetadata>(),
+                metadata => metadata.StatusCode == StatusCodes.Status200OK);
+        }
+    }
+
+    [Fact]
     public async Task Procurement_entry_option_queries_are_authenticated_purpose_specific_gets_without_idempotency()
     {
         await using var app = CreateApp(Environments.Development);
