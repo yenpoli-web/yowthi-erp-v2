@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - "m*-validation"
+      - "p*-validation"
   workflow_dispatch:
 
 permissions:
