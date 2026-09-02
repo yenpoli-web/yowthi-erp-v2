@@ -19,4 +19,42 @@ public sealed class InventoryMovement
     public decimal QuantityDelta { get; private set; }
     public Guid? SalesAllocationRevisionItemId { get; private set; }
     public DateTimeOffset RecordedAt { get; private set; }
+
+    public static InventoryMovement CreateProcurementReceipt(
+        Guid id,
+        Guid inventoryOperationId,
+        Guid procurementBatchId,
+        Guid procurementProductId,
+        Guid storageLocationId,
+        InventoryRawSourceKind rawSourceKind,
+        Guid? supplierId,
+        decimal quantity,
+        DateTimeOffset recordedAt)
+    {
+        if (id == Guid.Empty
+            || inventoryOperationId == Guid.Empty
+            || procurementBatchId == Guid.Empty
+            || procurementProductId == Guid.Empty
+            || storageLocationId == Guid.Empty)
+        {
+            throw new ArgumentException("Inventory movement technical and reference IDs cannot be empty.");
+        }
+
+        return new InventoryMovement
+        {
+            Id = id,
+            InventoryOperationId = inventoryOperationId,
+            Sequence = 1,
+            MovementType = InventoryMovementType.PURCHASE_RECEIPT,
+            Origin = InventoryOrigin.IN_HOUSE,
+            ProcurementBatchId = procurementBatchId,
+            InventoryObjectKind = InventoryObjectKind.PROCUREMENT_PRODUCT,
+            ProcurementProductId = procurementProductId,
+            StorageLocationId = storageLocationId,
+            RawSourceKind = rawSourceKind,
+            SupplierId = supplierId,
+            QuantityDelta = quantity,
+            RecordedAt = recordedAt,
+        };
+    }
 }

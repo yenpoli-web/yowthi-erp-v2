@@ -12,4 +12,25 @@ public sealed class InventoryOperation
     public Guid? ProcurementBatchId { get; private set; }
     public DateTimeOffset RecordedAt { get; private set; }
     public Guid RecordedByAccountId { get; private set; }
+
+    public static InventoryOperation CreateProcurementReceipt(
+        Guid id,
+        Guid procurementEntryId,
+        DateTimeOffset recordedAt,
+        Guid recordedByAccountId)
+    {
+        if (id == Guid.Empty || procurementEntryId == Guid.Empty || recordedByAccountId == Guid.Empty)
+        {
+            throw new ArgumentException("Inventory operation technical and reference IDs cannot be empty.");
+        }
+
+        return new InventoryOperation
+        {
+            Id = id,
+            OperationType = InventoryOperationType.PROCUREMENT_RECEIPT,
+            ProcurementEntryId = procurementEntryId,
+            RecordedAt = recordedAt,
+            RecordedByAccountId = recordedByAccountId,
+        };
+    }
 }

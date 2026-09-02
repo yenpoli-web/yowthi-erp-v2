@@ -14,4 +14,34 @@ public sealed class PayableObligationItem
     public decimal? AggregatedApplicableQuantity { get; private set; }
     public decimal? AppliedRatePerKg { get; private set; }
     public DateTimeOffset RecordedAt { get; private set; }
+
+    public static PayableObligationItem CreateProcurementEntry(
+        Guid id,
+        Guid payableId,
+        PayableKind payableKind,
+        Guid procurementEntryId,
+        long amountThb,
+        DateTimeOffset recordedAt)
+    {
+        if (id == Guid.Empty || payableId == Guid.Empty || procurementEntryId == Guid.Empty)
+        {
+            throw new ArgumentException("Payable obligation technical and reference IDs cannot be empty.");
+        }
+
+        if (payableKind is not (PayableKind.PROCUREMENT_SUPPLIER or PayableKind.PROCUREMENT_FARMER))
+        {
+            throw new ArgumentOutOfRangeException(nameof(payableKind), payableKind, "Procurement Entry obligations require a Procurement payable kind.");
+        }
+
+        return new PayableObligationItem
+        {
+            Id = id,
+            PayableId = payableId,
+            PayableKind = payableKind,
+            ObligationKind = PayableObligationKind.PROCUREMENT_ENTRY,
+            AmountThb = amountThb,
+            ProcurementEntryId = procurementEntryId,
+            RecordedAt = recordedAt,
+        };
+    }
 }
