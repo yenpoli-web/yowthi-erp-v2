@@ -16,6 +16,7 @@
 | PROCESS-003 | Multi-input Processing Module | C | not implemented |
 | PROCESS-004 | Negative inventory for modes other than Final Packaging | C | disallow unless explicitly configured/confirmed |
 | OUT-001 | Outsourced receipt location | B | unique default or explicit choice |
+| OUT-002 | Outsourced Supply Detail zero Quantity confirmation | A | Block zero-quantity confirmation until real YowThi behavior is confirmed; Outsourced Supply Detail currently permits zero but required OUTSOURCED_RECEIPT structurally requires a positive movement |
 | SALES-001 | Sales issue location when stock spans locations | A | require explicit resolution if ambiguous |
 | SALES-002 | Sales Product negative inventory / presales | C | not implemented |
 | BATCH-001 | Automatic vs user-confirmed batch close | A | sold-out detection separate from Close command |
