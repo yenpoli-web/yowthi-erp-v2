@@ -23,6 +23,7 @@ public static class PersistenceServiceCollectionExtensions
         services.AddSingleton<ICommandRequestHasher, Sha256CommandRequestHasher>();
         services.AddScoped<ICommandTransactionRunner, EfCommandTransactionRunner>();
         services.AddScoped<IConfirmProcurementEntryExecutor, PostgreSqlConfirmProcurementEntryExecutor>();
+        services.AddScoped<IProcurementEntryOptionsReader, EfProcurementEntryOptionsReader>();
         services.AddSingleton<RowVersionSaveChangesInterceptor>();
 
         services.AddDbContext<ErpDbContext>((serviceProvider, options) =>

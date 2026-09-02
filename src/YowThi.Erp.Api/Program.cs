@@ -10,6 +10,7 @@ var app = builder.Build();
 app.UseYowThiApiInfrastructure();
 app.MapYowThiTechnicalEndpoints();
 app.MapProcurementEndpoints();
+app.MapProcurementEntryOptionEndpoints();
 
 app.Run();
 
