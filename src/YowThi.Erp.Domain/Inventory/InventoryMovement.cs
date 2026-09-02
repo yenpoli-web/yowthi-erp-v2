@@ -57,4 +57,38 @@ public sealed class InventoryMovement
             RecordedAt = recordedAt,
         };
     }
+
+    public static InventoryMovement CreateOutsourcedReceipt(
+        Guid id,
+        Guid inventoryOperationId,
+        Guid outsourcedSupplyBatchId,
+        Guid salesProductId,
+        Guid storageLocationId,
+        decimal quantity,
+        DateTimeOffset recordedAt)
+    {
+        if (id == Guid.Empty
+            || inventoryOperationId == Guid.Empty
+            || outsourcedSupplyBatchId == Guid.Empty
+            || salesProductId == Guid.Empty
+            || storageLocationId == Guid.Empty)
+        {
+            throw new ArgumentException("Inventory movement technical and reference IDs cannot be empty.");
+        }
+
+        return new InventoryMovement
+        {
+            Id = id,
+            InventoryOperationId = inventoryOperationId,
+            Sequence = 1,
+            MovementType = InventoryMovementType.OUTSOURCED_RECEIPT,
+            Origin = InventoryOrigin.OUTSOURCED,
+            OutsourcedSupplyBatchId = outsourcedSupplyBatchId,
+            InventoryObjectKind = InventoryObjectKind.SALES_PRODUCT,
+            SalesProductId = salesProductId,
+            StorageLocationId = storageLocationId,
+            QuantityDelta = quantity,
+            RecordedAt = recordedAt,
+        };
+    }
 }
