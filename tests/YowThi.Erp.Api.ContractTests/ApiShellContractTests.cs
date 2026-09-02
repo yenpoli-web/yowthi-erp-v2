@@ -12,6 +12,8 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using YowThi.Erp.Api.Authorization;
 using YowThi.Erp.Api.Hosting;
+using YowThi.Erp.Api.Idempotency;
+using YowThi.Erp.Api.Procurement;
 using YowThi.Erp.Api.Routing;
 
 namespace YowThi.Erp.Api.ContractTests;
@@ -29,6 +31,29 @@ public sealed class ApiShellContractTests
         var endpoint = Assert.Single(GetRouteEndpoints(app), endpoint => endpoint.RoutePattern.RawText == "/api/v1/contract-probe");
 
         Assert.NotEmpty(endpoint.Metadata.GetOrderedMetadata<IAuthorizeData>());
+    }
+
+    [Fact]
+    public async Task Confirm_procurement_entry_endpoint_matches_v1_contract()
+    {
+        await using var app = CreateApp(Environments.Development);
+        app.MapProcurementEndpoints();
+
+        var endpoint = Assert.Single(
+            GetRouteEndpoints(app),
+            endpoint => endpoint.RoutePattern.RawText == "/api/v1/procurement/entries");
+
+        Assert.Contains(HttpMethods.Post, endpoint.Metadata.GetMetadata<IHttpMethodMetadata>()?.HttpMethods ?? []);
+        Assert.Equal(
+            ProcurementEndpoints.ConfirmEntryOperationId,
+            endpoint.Metadata.GetMetadata<IEndpointNameMetadata>()?.EndpointName);
+        Assert.Contains(
+            endpoint.Metadata.GetOrderedMetadata<IAuthorizeData>(),
+            metadata => metadata.Policy == CapabilityPolicies.ProcurementConfirm);
+        Assert.NotNull(endpoint.Metadata.GetMetadata<RequiresIdempotencyKeyMetadata>());
+        Assert.Contains(
+            endpoint.Metadata.GetOrderedMetadata<IProducesResponseTypeMetadata>(),
+            metadata => metadata.StatusCode == StatusCodes.Status201Created);
     }
 
     [Fact]
@@ -92,6 +117,7 @@ public sealed class ApiShellContractTests
     [Fact]
     public void Capability_policy_names_are_operation_oriented_not_roles()
     {
+        Assert.Equal("procurement.confirm", CapabilityPolicies.ProcurementConfirm);
         Assert.Equal("sales.confirm", CapabilityPolicies.SalesConfirm);
         Assert.Equal("finance.pay", CapabilityPolicies.FinancePay);
         Assert.Equal("inventory.adjust", CapabilityPolicies.InventoryAdjust);

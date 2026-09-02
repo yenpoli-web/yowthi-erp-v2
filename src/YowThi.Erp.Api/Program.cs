@@ -1,4 +1,5 @@
 using YowThi.Erp.Api.Hosting;
+using YowThi.Erp.Api.Procurement;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,6 +9,7 @@ var app = builder.Build();
 
 app.UseYowThiApiInfrastructure();
 app.MapYowThiTechnicalEndpoints();
+app.MapProcurementEndpoints();
 
 app.Run();
 
