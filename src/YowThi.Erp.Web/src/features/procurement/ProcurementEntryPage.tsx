@@ -1,5 +1,12 @@
-import { useMutation } from '@tanstack/react-query';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import {
+  type FormEvent,
+  useDeferredValue,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 import {
   ApiProblemError,
@@ -8,6 +15,14 @@ import {
   type OperationalLocale,
   type ProcurementSourceType,
 } from './confirmProcurementEntry';
+import {
+  listProcurementProductOptions,
+  listProcurementReceiptStorageLocationOptions,
+  listProcurementSourceOptions,
+  type ProcurementProductOption,
+  type ProcurementReceiptStorageLocationOption,
+  type ProcurementSourceOption,
+} from './procurementEntryOptions';
 
 interface Submission {
   request: ConfirmProcurementEntryRequest;
@@ -20,32 +35,39 @@ interface SubmissionIdentity {
   idempotencyKey: string;
 }
 
-const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-
 const copy = {
   'zh-TW': {
     eyebrow: 'P6 · 採購',
     title: '確認採購登錄',
-    intro: '此畫面直接呼叫正式 ConfirmProcurementEntry command。現階段尚未建立 Master lookup query，因此產品、來源與儲位以 UUID 輸入；不使用 mock 資料。',
+    intro: '此畫面直接使用正式 ConfirmProcurementEntry command。產品、來源與收貨儲位由 purpose-specific query 提供，不再要求操作人員手動貼 UUID。',
     locale: '介面語言',
     date: '採購日期',
-    product: '採購產品 UUID',
-    sourceType: '來源類型',
-    supplier: '供應商 UUID',
-    farmer: '農民 UUID',
+    product: '採購產品',
+    productSearch: '搜尋產品名稱',
+    productSelect: '選擇採購產品',
+    sourceType: '供應來源',
+    source: '供應來源對象',
+    sourceSearch: '搜尋供應商 / 農戶',
+    sourceSelect: '選擇來源對象',
     quantity: '淨數量',
     unitPrice: '單價',
     companyPickup: '公司取貨',
-    location: '收貨儲位 UUID（可留空）',
-    locationHint: '留空時由系統使用可解析的唯一預設；無法解析時會要求明確選擇。',
+    location: '收貨儲位',
+    locationSearch: '搜尋儲位名稱 / code',
+    useDefault: '由伺服器使用產品預設收貨儲位',
+    locationSelect: '選擇明確收貨儲位',
+    explicitLocationRequired: '此產品目前沒有可用的預設收貨儲位；依 PROC-002，確認前必須明確選擇收貨儲位。',
+    defaultLocation: '目前可用預設',
+    loading: '載入選項中…',
+    queryFailed: '選項查詢失敗',
     submit: '確認採購登錄',
     submitting: '確認中…',
-    validation: '請檢查輸入欄位。',
-    uuid: 'UUID 格式不正確。',
+    validation: '請檢查輸入資料。',
     quantityPositive: 'P6 目前依 PROC-003 safe control 要求淨數量大於 0。',
     priceNonNegative: '單價不可小於 0。',
-    sourceRequired: '請提供與來源類型相符的來源 UUID。',
-    locationRequired: '目前無法解析唯一收貨儲位，請填入明確的收貨儲位 UUID 後重新確認。',
+    productRequired: '請選擇採購產品。',
+    sourceRequired: '請選擇供應來源對象。',
+    locationRequired: '請明確選擇收貨儲位。',
     batchCompleted: '此採購批次已 COMPLETED；依 PROC-001，正常 late entry 目前被阻擋。',
     idempotencyConflict: '此 Idempotency-Key 已被不同 command request 使用。請修改輸入或重新開始一次確認。',
     success: '採購登錄已確認',
@@ -56,34 +78,42 @@ const copy = {
     receiptLocation: '收貨儲位',
     transportBasis: 'Company Pickup transport basis',
     noTransportBasis: '未建立',
-    technicalNote: 'UUID 欄位是目前 V1-C5 的技術輸入方式；正式 Master selector 需要新增 read/query contract，不會在前端自行推導或硬編業務資料。',
     unexpected: '發生未預期錯誤。',
   },
   'th-TH': {
     eyebrow: 'P6 · จัดซื้อ',
     title: 'ยืนยันรายการจัดซื้อ',
-    intro: 'หน้านี้เรียก ConfirmProcurementEntry จริงโดยตรง ขณะนี้ยังไม่มี Master lookup query จึงกรอก UUID ของสินค้า แหล่งที่มา และตำแหน่งจัดเก็บโดยไม่ใช้ mock data',
+    intro: 'หน้าจอนี้ใช้ ConfirmProcurementEntry จริง และโหลดตัวเลือกสินค้า แหล่งซื้อ และตำแหน่งรับสินค้าจาก query เฉพาะงาน ไม่ต้องกรอก UUID ด้วยตนเอง',
     locale: 'ภาษา',
     date: 'วันที่จัดซื้อ',
-    product: 'UUID สินค้าจัดซื้อ',
+    product: 'สินค้าจัดซื้อ',
+    productSearch: 'ค้นหาชื่อสินค้า',
+    productSelect: 'เลือกสินค้า',
     sourceType: 'ประเภทแหล่งที่มา',
-    supplier: 'UUID Supplier',
-    farmer: 'UUID Farmer',
+    source: 'แหล่งที่มา',
+    sourceSearch: 'ค้นหา Supplier / Farmer',
+    sourceSelect: 'เลือกแหล่งที่มา',
     quantity: 'ปริมาณสุทธิ',
     unitPrice: 'ราคาต่อหน่วย',
     companyPickup: 'บริษัทไปรับสินค้า',
-    location: 'UUID ตำแหน่งรับสินค้า (ไม่บังคับ)',
-    locationHint: 'หากเว้นว่าง ระบบจะใช้ค่าเริ่มต้นที่ระบุได้อย่างชัดเจน หากระบุไม่ได้ต้องเลือกตำแหน่งเอง',
+    location: 'ตำแหน่งรับสินค้า',
+    locationSearch: 'ค้นหาชื่อ / code ตำแหน่ง',
+    useDefault: 'ให้เซิร์ฟเวอร์ใช้ตำแหน่งรับสินค้าหลักของสินค้า',
+    locationSelect: 'เลือกตำแหน่งรับสินค้า',
+    explicitLocationRequired: 'สินค้านี้ไม่มีตำแหน่งรับสินค้าหลักที่ใช้งานได้ ตาม PROC-002 ต้องเลือกตำแหน่งรับสินค้าให้ชัดเจนก่อนยืนยัน',
+    defaultLocation: 'ตำแหน่งหลักที่ใช้งานได้',
+    loading: 'กำลังโหลดตัวเลือก…',
+    queryFailed: 'โหลดตัวเลือกไม่สำเร็จ',
     submit: 'ยืนยันรายการจัดซื้อ',
     submitting: 'กำลังยืนยัน…',
-    validation: 'โปรดตรวจสอบข้อมูลที่กรอก',
-    uuid: 'รูปแบบ UUID ไม่ถูกต้อง',
-    quantityPositive: 'P6 ใช้ PROC-003 safe control ชั่วคราว โดยปริมาณสุทธิต้องมากกว่า 0',
+    validation: 'โปรดตรวจสอบข้อมูล',
+    quantityPositive: 'P6 ใช้ PROC-003 safe control: ปริมาณสุทธิต้องมากกว่า 0',
     priceNonNegative: 'ราคาต่อหน่วยต้องไม่ติดลบ',
-    sourceRequired: 'โปรดกรอก UUID ให้ตรงกับประเภทแหล่งที่มา',
-    locationRequired: 'ระบบไม่สามารถระบุตำแหน่งรับสินค้าเพียงหนึ่งตำแหน่งได้ โปรดกรอก UUID ตำแหน่งรับสินค้าแล้วลองใหม่',
-    batchCompleted: 'Procurement Batch นี้ COMPLETED แล้ว ตาม PROC-001 การเพิ่มรายการปกติภายหลังถูกบล็อกไว้ในขณะนี้',
-    idempotencyConflict: 'Idempotency-Key นี้ถูกใช้กับ command request อื่นแล้ว โปรดแก้ข้อมูลหรือเริ่มการยืนยันใหม่',
+    productRequired: 'โปรดเลือกสินค้าจัดซื้อ',
+    sourceRequired: 'โปรดเลือกแหล่งที่มา',
+    locationRequired: 'โปรดเลือกตำแหน่งรับสินค้าให้ชัดเจน',
+    batchCompleted: 'Procurement Batch นี้ COMPLETED แล้ว ตาม PROC-001 การเพิ่มรายการย้อนหลังแบบปกติถูกบล็อกไว้',
+    idempotencyConflict: 'Idempotency-Key นี้ถูกใช้กับ command request อื่นแล้ว โปรดแก้ข้อมูลหรือเริ่มการยืนยันครั้งใหม่',
     success: 'ยืนยันรายการจัดซื้อแล้ว',
     entryId: 'Procurement Entry',
     batchId: 'Procurement Batch',
@@ -92,7 +122,6 @@ const copy = {
     receiptLocation: 'ตำแหน่งรับสินค้า',
     transportBasis: 'Company Pickup transport basis',
     noTransportBasis: 'ไม่ได้สร้าง',
-    technicalNote: 'ช่อง UUID เป็นวิธีกรอกทางเทคนิคของ V1-C5 ขณะนี้ Master selector ต้องมี read/query contract จริง และจะไม่สร้างหรือเดาข้อมูลธุรกิจใน frontend',
     unexpected: 'เกิดข้อผิดพลาดที่ไม่คาดคิด',
   },
 } as const;
@@ -100,13 +129,66 @@ const copy = {
 export function ProcurementEntryPage() {
   const [locale, setLocale] = useState<OperationalLocale>(resolveInitialLocale);
   const [sourceType, setSourceType] = useState<ProcurementSourceType>('SUPPLIER');
+  const [productSearch, setProductSearch] = useState('');
+  const [sourceSearch, setSourceSearch] = useState('');
+  const [locationSearch, setLocationSearch] = useState('');
+  const [selectedProduct, setSelectedProduct] = useState<ProcurementProductOption | null>(null);
+  const [selectedSource, setSelectedSource] = useState<ProcurementSourceOption | null>(null);
+  const [selectedLocation, setSelectedLocation] = useState<ProcurementReceiptStorageLocationOption | null>(null);
   const [localError, setLocalError] = useState<string | null>(null);
   const submissionIdentity = useRef<SubmissionIdentity | null>(null);
   const labels = copy[locale];
 
+  const deferredProductSearch = useDeferredValue(productSearch);
+  const deferredSourceSearch = useDeferredValue(sourceSearch);
+  const deferredLocationSearch = useDeferredValue(locationSearch);
+
   useEffect(() => {
     document.documentElement.lang = locale;
   }, [locale]);
+
+  const productQuery = useQuery({
+    queryKey: ['procurement-entry-options', 'products', locale, deferredProductSearch],
+    queryFn: ({ signal }) =>
+      listProcurementProductOptions({
+        locale,
+        search: deferredProductSearch,
+        limit: 50,
+        signal,
+      }),
+    staleTime: 30_000,
+  });
+
+  const sourceQuery = useQuery({
+    queryKey: ['procurement-entry-options', 'sources', sourceType, locale, deferredSourceSearch],
+    queryFn: ({ signal }) =>
+      listProcurementSourceOptions(sourceType, {
+        locale,
+        search: deferredSourceSearch,
+        limit: 50,
+        signal,
+      }),
+    staleTime: 30_000,
+  });
+
+  const locationQuery = useQuery({
+    queryKey: [
+      'procurement-entry-options',
+      'storage-locations',
+      selectedProduct?.id ?? null,
+      locale,
+      deferredLocationSearch,
+    ],
+    queryFn: ({ signal }) =>
+      listProcurementReceiptStorageLocationOptions(selectedProduct!.id, {
+        locale,
+        search: deferredLocationSearch,
+        limit: 50,
+        signal,
+      }),
+    enabled: selectedProduct !== null,
+    staleTime: 30_000,
+  });
 
   const mutation = useMutation({
     mutationFn: ({ request, idempotencyKey, locale: requestLocale }: Submission) =>
@@ -136,7 +218,52 @@ export function ProcurementEntryPage() {
     }
   }, [apiProblem, labels, mutation.error]);
 
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  const optionError = firstOptionError(productQuery.error, sourceQuery.error, locationQuery.error);
+  const optionErrorMessage = optionError
+    ? optionError instanceof ApiProblemError
+      ? `${labels.queryFailed}: ${optionError.code}`
+      : labels.queryFailed
+    : null;
+
+  const productItems = includeSelected(productQuery.data?.items ?? [], selectedProduct);
+  const sourceItems = includeSelected(sourceQuery.data?.items ?? [], selectedSource);
+  const locationItems = includeSelected(locationQuery.data?.items ?? [], selectedLocation);
+  const applicableDefault = locationQuery.data?.items.find((item) => item.isProductDefault) ?? null;
+  const requiresExplicitLocation =
+    selectedProduct !== null
+    && locationQuery.isSuccess
+    && locationQuery.data.defaultStorageLocationId === null;
+
+  function handleLocaleChange(next: OperationalLocale) {
+    setLocale(next);
+    setProductSearch('');
+    setSourceSearch('');
+    setLocationSearch('');
+    setSelectedProduct(null);
+    setSelectedSource(null);
+    setSelectedLocation(null);
+    mutation.reset();
+    setLocalError(null);
+  }
+
+  function handleSourceTypeChange(next: ProcurementSourceType) {
+    setSourceType(next);
+    setSelectedSource(null);
+    setSourceSearch('');
+    mutation.reset();
+    setLocalError(null);
+  }
+
+  function handleProductChange(productId: string) {
+    const option = productItems.find((item) => item.id === productId) ?? null;
+    setSelectedProduct(option);
+    setSelectedLocation(null);
+    setLocationSearch('');
+    mutation.reset();
+    setLocalError(null);
+  }
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setLocalError(null);
     mutation.reset();
@@ -144,13 +271,18 @@ export function ProcurementEntryPage() {
     const formData = new FormData(event.currentTarget);
 
     try {
-      const procurementProductId = requiredUuid(formData, 'procurementProductId', labels.uuid);
-      const sourceId = requiredUuid(formData, 'sourceId', labels.uuid);
-      const receiptStorageLocationId = optionalUuid(
-        formData,
-        'receiptStorageLocationId',
-        labels.uuid,
-      );
+      if (selectedProduct === null) {
+        throw new Error(labels.productRequired);
+      }
+
+      if (selectedSource === null) {
+        throw new Error(labels.sourceRequired);
+      }
+
+      if (requiresExplicitLocation && selectedLocation === null) {
+        throw new Error(labels.locationRequired);
+      }
+
       const netQuantity = requiredNumber(formData, 'netQuantity');
       const unitPrice = requiredNumber(formData, 'unitPrice');
 
@@ -164,14 +296,14 @@ export function ProcurementEntryPage() {
 
       const request: ConfirmProcurementEntryRequest = {
         procurementDate: requiredText(formData, 'procurementDate'),
-        procurementProductId,
+        procurementProductId: selectedProduct.id,
         sourceType,
-        supplierId: sourceType === 'SUPPLIER' ? sourceId : null,
-        farmerId: sourceType === 'FARMER' ? sourceId : null,
+        supplierId: sourceType === 'SUPPLIER' ? selectedSource.id : null,
+        farmerId: sourceType === 'FARMER' ? selectedSource.id : null,
         netQuantity,
         unitPrice,
         companyPickup: formData.get('companyPickup') === 'on',
-        receiptStorageLocationId,
+        receiptStorageLocationId: selectedLocation?.id ?? null,
       };
 
       const fingerprint = JSON.stringify(request);
@@ -192,6 +324,13 @@ export function ProcurementEntryPage() {
     }
   }
 
+  const submitDisabled =
+    mutation.isPending
+    || selectedProduct === null
+    || selectedSource === null
+    || locationQuery.isPending
+    || locationQuery.isError;
+
   return (
     <section className="procurement-page" aria-labelledby="procurement-entry-title">
       <header className="page-header">
@@ -203,7 +342,7 @@ export function ProcurementEntryPage() {
 
         <label className="locale-control">
           <span>{labels.locale}</span>
-          <select value={locale} onChange={(event) => setLocale(event.target.value as OperationalLocale)}>
+          <select value={locale} onChange={(event) => handleLocaleChange(event.target.value as OperationalLocale)}>
             <option value="zh-TW">繁體中文</option>
             <option value="th-TH">ไทย</option>
           </select>
@@ -219,29 +358,68 @@ export function ProcurementEntryPage() {
             </label>
 
             <label>
-              <span>{labels.product}</span>
-              <input name="procurementProductId" inputMode="text" autoComplete="off" required />
-            </label>
-
-            <label>
               <span>{labels.sourceType}</span>
               <select
                 name="sourceType"
                 value={sourceType}
-                onChange={(event) => setSourceType(event.target.value as ProcurementSourceType)}
+                onChange={(event) => handleSourceTypeChange(event.target.value as ProcurementSourceType)}
               >
                 <option value="SUPPLIER">SUPPLIER</option>
                 <option value="FARMER">FARMER</option>
               </select>
             </label>
 
-            <label>
-              <span>{sourceType === 'SUPPLIER' ? labels.supplier : labels.farmer}</span>
-              <input name="sourceId" inputMode="text" autoComplete="off" required />
-            </label>
+            <div className="option-picker full-width">
+              <span className="field-label">{labels.product}</span>
+              <input
+                value={productSearch}
+                onChange={(event) => setProductSearch(event.target.value)}
+                placeholder={labels.productSearch}
+                aria-label={labels.productSearch}
+              />
+              <select
+                value={selectedProduct?.id ?? ''}
+                onChange={(event) => handleProductChange(event.target.value)}
+                required
+              >
+                <option value="">{productQuery.isPending ? labels.loading : labels.productSelect}</option>
+                {productItems.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.displayName} · {item.unitCode}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="option-picker full-width">
+              <span className="field-label">{labels.source}</span>
+              <input
+                value={sourceSearch}
+                onChange={(event) => setSourceSearch(event.target.value)}
+                placeholder={labels.sourceSearch}
+                aria-label={labels.sourceSearch}
+              />
+              <select
+                value={selectedSource?.id ?? ''}
+                onChange={(event) =>
+                  setSelectedSource(sourceItems.find((item) => item.id === event.target.value) ?? null)
+                }
+                required
+              >
+                <option value="">{sourceQuery.isPending ? labels.loading : labels.sourceSelect}</option>
+                {sourceItems.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.displayName}
+                  </option>
+                ))}
+              </select>
+            </div>
 
             <label>
-              <span>{labels.quantity}</span>
+              <span>
+                {labels.quantity}
+                {selectedProduct ? ` · ${selectedProduct.unitCode}` : ''}
+              </span>
               <input type="number" name="netQuantity" min="0" step="any" inputMode="decimal" required />
             </label>
 
@@ -250,11 +428,47 @@ export function ProcurementEntryPage() {
               <input type="number" name="unitPrice" min="0" step="any" inputMode="decimal" required />
             </label>
 
-            <label className="full-width">
-              <span>{labels.location}</span>
-              <input name="receiptStorageLocationId" inputMode="text" autoComplete="off" />
-              <small>{labels.locationHint}</small>
-            </label>
+            <div className="option-picker full-width">
+              <span className="field-label">{labels.location}</span>
+              <input
+                value={locationSearch}
+                onChange={(event) => setLocationSearch(event.target.value)}
+                placeholder={labels.locationSearch}
+                aria-label={labels.locationSearch}
+                disabled={selectedProduct === null}
+              />
+              <select
+                value={selectedLocation?.id ?? ''}
+                onChange={(event) =>
+                  setSelectedLocation(locationItems.find((item) => item.id === event.target.value) ?? null)
+                }
+                disabled={selectedProduct === null || locationQuery.isPending}
+                required={requiresExplicitLocation}
+              >
+                <option value="">
+                  {locationQuery.isPending
+                    ? labels.loading
+                    : locationQuery.data?.defaultStorageLocationId
+                      ? labels.useDefault
+                      : labels.locationSelect}
+                </option>
+                {locationItems.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.displayName}
+                    {item.code ? ` · ${item.code}` : ''}
+                    {item.isProductDefault ? ` · ${labels.defaultLocation}` : ''}
+                  </option>
+                ))}
+              </select>
+              {applicableDefault && selectedLocation === null && (
+                <small className="default-hint">
+                  {labels.defaultLocation}: {applicableDefault.displayName}
+                </small>
+              )}
+              {requiresExplicitLocation && selectedLocation === null && (
+                <small className="required-hint">{labels.explicitLocationRequired}</small>
+              )}
+            </div>
           </div>
 
           <label className="checkbox-field">
@@ -262,17 +476,15 @@ export function ProcurementEntryPage() {
             <span>{labels.companyPickup}</span>
           </label>
 
-          {(localError ?? problemMessage) && (
+          {(localError ?? problemMessage ?? optionErrorMessage) && (
             <div className="problem-banner" role="alert">
-              {localError ?? problemMessage}
+              {localError ?? problemMessage ?? optionErrorMessage}
             </div>
           )}
 
-          <button className="primary-action" type="submit" disabled={mutation.isPending}>
+          <button className="primary-action" type="submit" disabled={submitDisabled}>
             {mutation.isPending ? labels.submitting : labels.submit}
           </button>
-
-          <p className="technical-note">{labels.technicalNote}</p>
         </form>
 
         <aside className="result-panel" aria-live="polite">
@@ -283,10 +495,7 @@ export function ProcurementEntryPage() {
                 <ResultRow label={labels.entryId} value={mutation.data.procurementEntryId} />
                 <ResultRow label={labels.batchId} value={mutation.data.procurementBatchId} />
                 <ResultRow label={labels.payableId} value={mutation.data.payableId} />
-                <ResultRow
-                  label={labels.amount}
-                  value={new Intl.NumberFormat(locale).format(mutation.data.amountThb)}
-                />
+                <ResultRow label={labels.amount} value={new Intl.NumberFormat(locale).format(mutation.data.amountThb)} />
                 <ResultRow label={labels.receiptLocation} value={mutation.data.receiptStorageLocationId} />
                 <ResultRow
                   label={labels.transportBasis}
@@ -312,6 +521,18 @@ function ResultRow({ label, value }: { label: string; value: string }) {
       <dd>{value}</dd>
     </div>
   );
+}
+
+function includeSelected<T extends { id: string }>(items: T[], selected: T | null): T[] {
+  if (selected === null || items.some((item) => item.id === selected.id)) {
+    return items;
+  }
+
+  return [selected, ...items];
+}
+
+function firstOptionError(...errors: Array<Error | null>): Error | null {
+  return errors.find((error) => error !== null) ?? null;
 }
 
 function resolveInitialLocale(): OperationalLocale {
@@ -349,29 +570,6 @@ function requiredText(formData: FormData, name: string): string {
   }
 
   return value.trim();
-}
-
-function requiredUuid(formData: FormData, name: string, errorMessage: string): string {
-  const value = requiredText(formData, name);
-  if (!uuidPattern.test(value)) {
-    throw new Error(errorMessage);
-  }
-
-  return value;
-}
-
-function optionalUuid(formData: FormData, name: string, errorMessage: string): string | null {
-  const value = formData.get(name);
-  if (typeof value !== 'string' || value.trim() === '') {
-    return null;
-  }
-
-  const trimmed = value.trim();
-  if (!uuidPattern.test(trimmed)) {
-    throw new Error(errorMessage);
-  }
-
-  return trimmed;
 }
 
 function requiredNumber(formData: FormData, name: string): number {
