@@ -44,4 +44,28 @@ public sealed class PayableObligationItem
             RecordedAt = recordedAt,
         };
     }
+
+    public static PayableObligationItem CreateOutsourcedSupplyDetail(
+        Guid id,
+        Guid payableId,
+        Guid outsourcedSupplyDetailId,
+        long amountThb,
+        DateTimeOffset recordedAt)
+    {
+        if (id == Guid.Empty || payableId == Guid.Empty || outsourcedSupplyDetailId == Guid.Empty)
+        {
+            throw new ArgumentException("Payable obligation technical and reference IDs cannot be empty.");
+        }
+
+        return new PayableObligationItem
+        {
+            Id = id,
+            PayableId = payableId,
+            PayableKind = PayableKind.OUTSOURCED_VENDOR,
+            ObligationKind = PayableObligationKind.OUTSOURCED_SUPPLY_DETAIL,
+            AmountThb = amountThb,
+            OutsourcedSupplyDetailId = outsourcedSupplyDetailId,
+            RecordedAt = recordedAt,
+        };
+    }
 }
