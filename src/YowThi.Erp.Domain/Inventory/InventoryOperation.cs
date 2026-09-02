@@ -34,6 +34,27 @@ public sealed class InventoryOperation
         };
     }
 
+    public static InventoryOperation CreateProcessing(
+        Guid id,
+        Guid processingExecutionId,
+        DateTimeOffset recordedAt,
+        Guid recordedByAccountId)
+    {
+        if (id == Guid.Empty || processingExecutionId == Guid.Empty || recordedByAccountId == Guid.Empty)
+        {
+            throw new ArgumentException("Inventory operation technical and reference IDs cannot be empty.");
+        }
+
+        return new InventoryOperation
+        {
+            Id = id,
+            OperationType = InventoryOperationType.PROCESSING,
+            ProcessingExecutionId = processingExecutionId,
+            RecordedAt = recordedAt,
+            RecordedByAccountId = recordedByAccountId,
+        };
+    }
+
     public static InventoryOperation CreateOutsourcedReceipt(
         Guid id,
         Guid outsourcedSupplyDetailId,
