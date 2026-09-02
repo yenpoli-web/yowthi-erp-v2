@@ -11,6 +11,7 @@ export function App() {
         <nav aria-label="Primary navigation">
           <NavLink to="/procurement/entries/new">Procurement</NavLink>
           <NavLink to="/outsourced/supply-details/new">Outsourced</NavLink>
+          <NavLink to="/processing/executions/new">Processing</NavLink>
         </nav>
       </header>
 

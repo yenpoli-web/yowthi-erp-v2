@@ -6,6 +6,7 @@ import { RouterProvider } from 'react-router';
 import { queryClient } from './app/queryClient';
 import { router } from './app/router';
 import './styles.css';
+import './features/processing/processingExecution.css';
 
 const rootElement = document.getElementById('root');
 

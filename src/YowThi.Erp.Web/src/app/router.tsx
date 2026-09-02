@@ -1,6 +1,7 @@
 import { Navigate, createBrowserRouter } from 'react-router';
 
 import { OutsourcedSupplyDetailPage } from '../features/outsourced/OutsourcedSupplyDetailPage';
+import { ProcessingExecutionPage } from '../features/processing/ProcessingExecutionPage';
 import { ProcurementEntryPage } from '../features/procurement/ProcurementEntryPage';
 import { App } from './App';
 
@@ -20,6 +21,10 @@ export const router = createBrowserRouter([
       {
         path: 'outsourced/supply-details/new',
         element: <OutsourcedSupplyDetailPage />,
+      },
+      {
+        path: 'processing/executions/new',
+        element: <ProcessingExecutionPage />,
       },
     ],
   },
