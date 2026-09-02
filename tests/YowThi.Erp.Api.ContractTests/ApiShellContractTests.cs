@@ -13,6 +13,7 @@ using Microsoft.Extensions.Options;
 using YowThi.Erp.Api.Authorization;
 using YowThi.Erp.Api.Hosting;
 using YowThi.Erp.Api.Idempotency;
+using YowThi.Erp.Api.Outsourced;
 using YowThi.Erp.Api.Procurement;
 using YowThi.Erp.Api.Routing;
 
@@ -50,6 +51,29 @@ public sealed class ApiShellContractTests
         Assert.Contains(
             endpoint.Metadata.GetOrderedMetadata<IAuthorizeData>(),
             metadata => metadata.Policy == CapabilityPolicies.ProcurementConfirm);
+        Assert.NotNull(endpoint.Metadata.GetMetadata<RequiresIdempotencyKeyMetadata>());
+        Assert.Contains(
+            endpoint.Metadata.GetOrderedMetadata<IProducesResponseTypeMetadata>(),
+            metadata => metadata.StatusCode == StatusCodes.Status201Created);
+    }
+
+    [Fact]
+    public async Task Confirm_outsourced_supply_detail_endpoint_matches_v1_contract()
+    {
+        await using var app = CreateApp(Environments.Development);
+        app.MapOutsourcedEndpoints();
+
+        var endpoint = Assert.Single(
+            GetRouteEndpoints(app),
+            endpoint => endpoint.RoutePattern.RawText == "/api/v1/outsourced/supply-details");
+
+        Assert.Contains(HttpMethods.Post, endpoint.Metadata.GetMetadata<IHttpMethodMetadata>()?.HttpMethods ?? []);
+        Assert.Equal(
+            OutsourcedEndpoints.ConfirmSupplyDetailOperationId,
+            endpoint.Metadata.GetMetadata<IEndpointNameMetadata>()?.EndpointName);
+        Assert.Contains(
+            endpoint.Metadata.GetOrderedMetadata<IAuthorizeData>(),
+            metadata => metadata.Policy == CapabilityPolicies.OutsourcedConfirm);
         Assert.NotNull(endpoint.Metadata.GetMetadata<RequiresIdempotencyKeyMetadata>());
         Assert.Contains(
             endpoint.Metadata.GetOrderedMetadata<IProducesResponseTypeMetadata>(),
@@ -149,6 +173,7 @@ public sealed class ApiShellContractTests
     public void Capability_policy_names_are_operation_oriented_not_roles()
     {
         Assert.Equal("procurement.confirm", CapabilityPolicies.ProcurementConfirm);
+        Assert.Equal("outsourced.confirm", CapabilityPolicies.OutsourcedConfirm);
         Assert.Equal("sales.confirm", CapabilityPolicies.SalesConfirm);
         Assert.Equal("finance.pay", CapabilityPolicies.FinancePay);
         Assert.Equal("inventory.adjust", CapabilityPolicies.InventoryAdjust);
