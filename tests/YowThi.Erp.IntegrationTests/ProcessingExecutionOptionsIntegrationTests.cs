@@ -285,7 +285,7 @@ public sealed class ProcessingExecutionOptionsIntegrationTests
                  created_at, created_by_account_id)
             VALUES
                 (@batch_id, @work_date, @procurement_product_id, 'OPEN', 'ACTIVE', @route_id, @route_version_id, @now, @actor_id),
-                (@no_route_batch_id, @work_date, @procurement_product_id, 'OPEN', 'ACTIVE', NULL, NULL, @now, @actor_id);
+                (@no_route_batch_id, @no_route_date, @procurement_product_id, 'OPEN', 'ACTIVE', NULL, NULL, @now, @actor_id);
             """,
             cancellationToken,
             ("actor_id", scenario.ActorAccountId),
@@ -317,6 +317,7 @@ public sealed class ProcessingExecutionOptionsIntegrationTests
             ("batch_id", scenario.ProcurementBatchId),
             ("no_route_batch_id", scenario.NoRouteBatchId),
             ("work_date", scenario.WorkDate),
+            ("no_route_date", scenario.WorkDate.AddDays(-1)),
             ("now", DateTimeOffset.UtcNow));
 
         return scenario;
