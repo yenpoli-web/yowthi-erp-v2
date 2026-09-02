@@ -328,9 +328,9 @@ internal sealed class PostgreSqlConfirmProcessingExecutionExecutor : IConfirmPro
               SELECT id FROM inventory.inventory_positions
               WHERE origin='IN_HOUSE' AND procurement_batch_id=@batch AND storage_location_id=@location
                 AND inventory_object_kind=@kind
-                AND ((@material IS NULL AND process_material_id IS NULL) OR process_material_id=@material)
-                AND ((@raw IS NULL AND raw_source_kind IS NULL) OR raw_source_kind=@raw)
-                AND ((@supplier IS NULL AND supplier_id IS NULL) OR supplier_id=@supplier)
+                AND ((CAST(@material AS uuid) IS NULL AND process_material_id IS NULL) OR process_material_id=CAST(@material AS uuid))
+                AND ((CAST(@raw AS text) IS NULL AND raw_source_kind IS NULL) OR raw_source_kind=CAST(@raw AS text))
+                AND ((CAST(@supplier AS uuid) IS NULL AND supplier_id IS NULL) OR supplier_id=CAST(@supplier AS uuid))
               LIMIT 1 FOR UPDATE)
               AND (@allow_negative OR p.balance_quantity + @delta >= 0);
             """);
