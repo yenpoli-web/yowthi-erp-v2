@@ -14,6 +14,7 @@ app.MapYowThiTechnicalEndpoints();
 app.MapProcurementEndpoints();
 app.MapProcurementEntryOptionEndpoints();
 app.MapProcessingEndpoints();
+app.MapProcessingExecutionOptionEndpoints();
 app.MapOutsourcedEndpoints();
 app.MapOutsourcedSupplyDetailOptionEndpoints();
 
