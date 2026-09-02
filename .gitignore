@@ -1,10 +1,12 @@
 yowthi-erp-v2-design-checkpoint-*.zip
 _tool-safety-probe*.txt
+*.yowthi-*.bak
 
 # .NET
 **/bin/
 **/obj/
 artifacts/
+.artifacts/
 TestResults/
 *.user
 *.suo

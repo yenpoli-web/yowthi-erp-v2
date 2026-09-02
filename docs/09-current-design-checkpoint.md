@@ -1,6 +1,6 @@
 # Current Design Checkpoint — YowThi ERP V2
 
-Checkpoint status: **v0.1 implementation baseline through P4**
+Checkpoint status: **v0.1 implementation baseline through P5**
 Purpose: recover the project design and current implementation state if conversational context is lost.
 
 ## 1. Highest-level rule
@@ -62,12 +62,14 @@ Completed implementation phases:
 - P3 API technical shell
 - P3.5 AuthN/AuthZ architecture hard gate and auth-specific `system.accounts` mapping revision
 - P4 `InitialV01` generation, static review, model-drift verification, and migration validation
+- P5 PostgreSQL 18 persistence acceptance
 
 Current next phase:
 
-**P5 - PostgreSQL 18 persistence acceptance.**
+**P6 - Business vertical slices**, beginning with `ConfirmProcurementEntry`.
 
-P4 `InitialV01` generation/static review is complete. Docker Desktop is now required for the first real PostgreSQL 18 apply, schema introspection, and integration/concurrency acceptance.
+P5 applied the approved `InitialV01` to PostgreSQL 18 and validated the live relational baseline, PostgreSQL structural rejection behavior, concurrency/race semantics, and transaction rollback behavior. Business vertical slices may now begin subject to the existing Gap Register and owning-command prerequisites.
+
 ## 4. Core domain modules
 
 - Product & Processing Configuration
@@ -459,7 +461,7 @@ Migrations:
 - migration history at `system.__ef_migrations_history`
 - formal initial migration `InitialV01` generated and statically approved in P4
 - post-generation `dotnet ef migrations has-pending-model-changes` reports no model drift
-- `InitialV01` has not yet been applied to PostgreSQL
+- `InitialV01` applied to the fixed PostgreSQL 18 development endpoint in P5 and accepted with zero pending migrations
 - production API does not call `Database.Migrate()` at startup
 - no operational business master seeding through `HasData()`
 
@@ -581,14 +583,14 @@ See `docs/15-authn-authz-implementation-architecture-v0.1.md`.
 Formal implementation phases:
 
 ```text
-P0  Repository / solution scaffolding                 COMPLETE
-P1  Shared technical foundation                       COMPLETE
-P2  Full 55-relation Domain + EF model               COMPLETE
-P3  API technical shell                               COMPLETE
+P0  Repository / solution scaffolding                  COMPLETE
+P1  Shared technical foundation                        COMPLETE
+P2  Full 55-relation Domain + EF model                COMPLETE
+P3  API technical shell                                COMPLETE
 P3.5 AuthN/AuthZ implementation architecture hard gate COMPLETE
-P4  InitialV01 generation/static review               COMPLETE
-P5  PostgreSQL 18 persistence acceptance              NEXT
-P6  Business vertical slices
+P4  InitialV01 generation/static review                COMPLETE
+P5  PostgreSQL 18 persistence acceptance               COMPLETE
+P6  Business vertical slices                           NEXT
 P7  React UI vertical slices
 P8  CI / production hardening
 ```
@@ -612,17 +614,19 @@ P4 result:
 - all database index names are now guarded by a full-model explicit lower-snake-case metadata test
 - `dotnet ef migrations has-pending-model-changes` reports no drift after generation
 - self-hosted restore/build/test passed
-- migration has not yet been applied to PostgreSQL
-P5 activation:
-- Docker Desktop ON only after P4 static/model-drift gate passes
-- PostgreSQL 18 clean apply
-- schema introspection
-- typed constraint tests
-- row-version tests
-- Finance CAS concurrency
-- CommandId race
-- Inventory identity/concurrency
-- Outbox SKIP LOCKED/lease tests
+
+P5 result:
+- fixed endpoint: `127.0.0.1:55432/yowthi_dev`
+- PostgreSQL: `18.6`
+- `InitialV01`: `20260828033151_InitialV01`
+- migration status: `1 applied / 0 pending`
+- migration-state fingerprint: `9645A93DBC1642819210DFA99904A81776AF0CBE0116458945409A9611889E6E`
+- live DB1 schema/catalog acceptance passed for 14 ERP schemas, 55 ERP relations, migration history, named constraints, and explicit indexes
+- DB2 structural rejection tests passed for representative approved relational constraints
+- DB3 PostgreSQL concurrency/race tests passed for stale row-version write, Finance Outstanding CAS, same CommandId acquisition, Inventory Position identity race, and Outbox `SKIP LOCKED` lease behavior
+- DB4 forced late failure proved transaction rollback across Procurement, Inventory, Finance, Audit, Outbox, and CommandExecution
+- full Release test suite after P5 tests: `97 passed / 0 failed / 0 skipped`
+- `erp_migration_acceptance`: `accepted=true`
 
 First full Business Command vertical slice after persistence acceptance remains `ConfirmProcurementEntry`.
 
@@ -679,23 +683,18 @@ Do not require GitHub-hosted runners, paid/larger runners, Codespaces, or other 
 
 Proceed with:
 
-**P5 - PostgreSQL 18 persistence acceptance.**
+**P6 - first full Business Command vertical slice: `ConfirmProcurementEntry`.**
 
 Required sequence:
 
 ```text
-P4 InitialV01 approved
--> Docker Desktop ON
--> PostgreSQL 18 clean database/container
--> apply InitialV01
--> verify system.__ef_migrations_history
--> schema / constraint / index introspection
--> row-version conflict acceptance
--> Finance CAS concurrency acceptance
--> CommandId race acceptance
--> Inventory identity/concurrency acceptance
--> Outbox SKIP LOCKED / lease acceptance
--> self-hosted validation
+P5 PostgreSQL persistence acceptance green
+-> review PROC-001 / PROC-002 Gap Register state
+-> V1-C1 Domain/Application command + result + receipt-location resolution contract
+-> V1-C2 Infrastructure atomic persistence transaction
+-> V1-C3 POST /api/v1/procurement/entries
+-> V1-C4 PostgreSQL integration/concurrency/rollback tests
+-> V1-C5 React Procurement Entry UI only after backend contract is stable
 ```
 
-Do not start Business vertical slices until P5 persistence acceptance is green.
+Do not invent the unresolved Completed Procurement Batch late-entry Business Rule. Keep PROC-002 receipt-location handling exactly at the already approved safe v0.1 control: explicit location when supplied, otherwise a unique applicable default, otherwise block and require explicit choice.

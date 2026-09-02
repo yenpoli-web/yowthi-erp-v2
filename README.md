@@ -6,7 +6,7 @@ YowThi ERP V2 is the clean-slate replacement architecture and implementation for
 
 ## Current phase
 
-Implementation P4 is complete: the formal `InitialV01` migration has been generated, statically reviewed, drift-checked, and validated. Next: **P5 - PostgreSQL 18 persistence acceptance**.
+Implementation P5 is complete: `InitialV01` is applied to PostgreSQL 18.6 and the PostgreSQL persistence baseline has passed live schema/catalog, structural rejection, concurrency/race, and transaction rollback acceptance. Next: **P6 - Business vertical slices**, beginning with `ConfirmProcurementEntry`.
 
 P0 is complete:
 - .NET 10 solution/project scaffold
@@ -172,9 +172,9 @@ P3.5 formally confirms:
 
 See `docs/15-authn-authz-implementation-architecture-v0.1.md`.
 
-## InitialV01 migration baseline
+## InitialV01 / PostgreSQL persistence baseline
 
-P4 is complete. Formal migration:
+P4 generated and approved the formal migration:
 
 ```text
 src/YowThi.Erp.Infrastructure.Migrations/Migrations/20260828033151_InitialV01.cs
@@ -191,18 +191,33 @@ P4 acceptance:
 - Audit/Outbox CommandId reference and retention boundaries are preserved
 - self-hosted restore/build/test passed
 
-`InitialV01` has **not** yet been applied to a real PostgreSQL database.
-
-P5 now requires Docker Desktop / PostgreSQL 18:
+P5 PostgreSQL 18 persistence acceptance is complete against:
 
 ```text
-approved InitialV01
--> Docker Desktop ON
--> PostgreSQL 18 clean database
--> apply InitialV01
--> schema / migration-history introspection
--> PostgreSQL integration and concurrency acceptance
+127.0.0.1:55432/yowthi_dev
+PostgreSQL 18.6
+InitialV01: 20260828033151_InitialV01
+migration: 1 applied / 0 pending
+migration-state fingerprint: 9645A93DBC1642819210DFA99904A81776AF0CBE0116458945409A9611889E6E
 ```
+
+P5 acceptance evidence:
+- DB1: live PostgreSQL identity, 14 ERP schemas, 55 ERP relations, `system.__ef_migrations_history`, named PK/UK/FK/CHECK constraints, and explicit `ix_/ux_` indexes match the approved EF relational model
+- DB2: PostgreSQL rejects invalid external identity pairing, invalid Sales Product pricing shape, invalid Procurement typed-source shape, and duplicate nullable Inventory Position identity
+- DB3: stale explicit row-version write, Finance Outstanding CAS race, same-CommandId acquisition race, Inventory Position identity race, and Outbox `FOR UPDATE SKIP LOCKED`/lease behavior pass on PostgreSQL 18
+- DB4: a forced late Finance failure rolls back Procurement, Inventory, Finance, Audit, Outbox, and CommandExecution work from the same transaction
+- full Release test suite after P5 tests: 97 passed / 0 failed / 0 skipped
+- `erp_migration_acceptance`: `accepted=true`
+
+The P5 tests use the fixed local loopback development endpoint when `YOWTHI_ERP_CONNECTION_STRING` is absent; CI/deployment environments may provide the connection string explicitly. No production endpoint or Legacy ERP path is used.
+
+Next implementation phase:
+
+```text
+P6 Business vertical slices
+-> first full slice: ConfirmProcurementEntry
+```
+
 ## Local .NET validation
 
 ```powershell
