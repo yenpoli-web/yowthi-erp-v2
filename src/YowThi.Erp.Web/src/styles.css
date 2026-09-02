@@ -2,9 +2,8 @@
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   line-height: 1.5;
   font-weight: 400;
-  color-scheme: light dark;
-  background: Canvas;
-  color: CanvasText;
+  background: #f5f2eb;
+  color: #18231d;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
 }
@@ -17,6 +16,9 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, rgba(74, 101, 83, 0.12), transparent 32rem),
+    #f5f2eb;
 }
 
 button,
@@ -26,32 +28,306 @@ select {
   font: inherit;
 }
 
-.app-shell {
+button,
+select {
+  cursor: pointer;
+}
+
+input,
+select {
+  width: 100%;
+  border: 1px solid #c7c9c3;
+  border-radius: 0.65rem;
+  background: #fffefa;
+  color: #18231d;
+  padding: 0.72rem 0.8rem;
+  outline: none;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+
+input:focus,
+select:focus {
+  border-color: #476855;
+  box-shadow: 0 0 0 3px rgba(71, 104, 85, 0.14);
+}
+
+.application-frame {
   min-height: 100vh;
+}
+
+.topbar {
+  min-height: 4.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem clamp(1rem, 4vw, 3rem);
+  border-bottom: 1px solid rgba(24, 35, 29, 0.12);
+  background: rgba(255, 254, 250, 0.9);
+  backdrop-filter: blur(12px);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.brand-mark {
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.brand-subtitle {
+  margin-left: 0.55rem;
+  color: #68736c;
+  font-size: 0.8rem;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+}
+
+.topbar nav a {
+  color: #294838;
+  text-decoration: none;
+  font-weight: 700;
+  padding: 0.45rem 0.7rem;
+  border-radius: 0.55rem;
+}
+
+.topbar nav a.active {
+  background: #e6ece7;
+}
+
+.app-shell {
+  width: min(1180px, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: clamp(1.5rem, 4vw, 3.75rem) 0 4rem;
+}
+
+.procurement-page {
   display: grid;
-  place-items: center;
-  padding: 2rem;
+  gap: 2rem;
 }
 
-.baseline-card {
-  width: min(42rem, 100%);
-  padding: 2rem;
-  border: 1px solid color-mix(in srgb, CanvasText 18%, transparent);
-  border-radius: 1rem;
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 2rem;
 }
 
-.baseline-card h1,
-.baseline-card p {
-  margin-top: 0;
+.page-header h1 {
+  margin: 0.2rem 0 0.7rem;
+  font-size: clamp(2rem, 4vw, 3.4rem);
+  line-height: 1.03;
+  letter-spacing: -0.035em;
+  font-weight: 780;
 }
 
-.baseline-card p:last-child {
-  margin-bottom: 0;
+.page-intro {
+  max-width: 52rem;
+  margin: 0;
+  color: #57655d;
+  font-size: 1rem;
 }
 
 .eyebrow {
-  font-size: 0.875rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
+  margin: 0;
+  color: #4b6857;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
+}
+
+.locale-control {
+  min-width: 9.5rem;
+  display: grid;
+  gap: 0.4rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #516058;
+}
+
+.procurement-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(18rem, 0.7fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.entry-form,
+.result-panel {
+  border: 1px solid rgba(24, 35, 29, 0.13);
+  border-radius: 1rem;
+  background: rgba(255, 254, 250, 0.96);
+  box-shadow: 0 18px 50px rgba(35, 46, 39, 0.07);
+}
+
+.entry-form {
+  padding: clamp(1.25rem, 3vw, 2rem);
+}
+
+.field-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.field-grid label,
+.locale-control {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.field-grid label > span {
+  font-size: 0.86rem;
+  font-weight: 750;
+  color: #34473d;
+}
+
+.field-grid small {
+  color: #718078;
+  line-height: 1.45;
+}
+
+.full-width {
+  grid-column: 1 / -1;
+}
+
+.checkbox-field {
+  margin-top: 1.2rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  font-weight: 700;
+  color: #34473d;
+}
+
+.checkbox-field input {
+  width: 1.05rem;
+  height: 1.05rem;
+  padding: 0;
+}
+
+.primary-action {
+  margin-top: 1.35rem;
+  border: 0;
+  border-radius: 0.7rem;
+  background: #2d5943;
+  color: white;
+  padding: 0.78rem 1.15rem;
+  min-width: 10rem;
+  font-weight: 800;
+  box-shadow: 0 8px 20px rgba(45, 89, 67, 0.2);
+}
+
+.primary-action:hover:not(:disabled) {
+  background: #244a37;
+}
+
+.primary-action:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+.problem-banner {
+  margin-top: 1rem;
+  padding: 0.85rem 0.95rem;
+  border-radius: 0.7rem;
+  border: 1px solid #d6a6a0;
+  background: #fff0ed;
+  color: #77352f;
+  font-size: 0.9rem;
+  font-weight: 650;
+}
+
+.technical-note {
+  margin: 1.15rem 0 0;
+  color: #758078;
+  font-size: 0.78rem;
+  line-height: 1.55;
+}
+
+.result-panel {
+  min-height: 23rem;
+  padding: 1.5rem;
+  position: sticky;
+  top: 5.5rem;
+}
+
+.result-panel dl {
+  margin: 1rem 0 0;
+}
+
+.result-row {
+  padding: 0.85rem 0;
+  border-top: 1px solid rgba(24, 35, 29, 0.1);
+}
+
+.result-row dt {
+  margin-bottom: 0.2rem;
+  color: #6a766f;
+  font-size: 0.76rem;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.result-row dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.86rem;
+  color: #203c2e;
+}
+
+.result-placeholder {
+  min-height: 20rem;
+  display: grid;
+  place-items: center;
+  color: #a5afa8;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 820px) {
+  .page-header {
+    display: grid;
+  }
+
+  .locale-control {
+    width: min(14rem, 100%);
+  }
+
+  .procurement-grid,
+  .field-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .full-width {
+    grid-column: auto;
+  }
+
+  .result-panel {
+    position: static;
+    min-height: auto;
+  }
+}
+
+@media (max-width: 520px) {
+  .topbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .app-shell {
+    width: min(100% - 1.2rem, 1180px);
+    padding-top: 1.25rem;
+  }
+
+  .entry-form,
+  .result-panel {
+    border-radius: 0.8rem;
+  }
 }

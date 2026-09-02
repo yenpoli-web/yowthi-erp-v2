@@ -1,14 +1,21 @@
+import { NavLink, Outlet } from 'react-router';
+
 export function App() {
   return (
-    <main className="app-shell">
-      <section className="baseline-card" aria-labelledby="baseline-title">
-        <p className="eyebrow">Implementation P0</p>
-        <h1 id="baseline-title">YowThi ERP V2</h1>
-        <p>
-          React Router and TanStack Query are wired. Business modules will be added
-          only through approved vertical slices.
-        </p>
-      </section>
-    </main>
+    <div className="application-frame">
+      <header className="topbar">
+        <div>
+          <span className="brand-mark">YowThi</span>
+          <span className="brand-subtitle">ERP V2</span>
+        </div>
+        <nav aria-label="Primary navigation">
+          <NavLink to="/procurement/entries/new">Procurement</NavLink>
+        </nav>
+      </header>
+
+      <main className="app-shell">
+        <Outlet />
+      </main>
+    </div>
   );
 }
