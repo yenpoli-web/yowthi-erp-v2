@@ -10,6 +10,7 @@ export function App() {
         </div>
         <nav aria-label="Primary navigation">
           <NavLink to="/procurement/entries/new">Procurement</NavLink>
+          <NavLink to="/outsourced/supply-details/new">Outsourced</NavLink>
         </nav>
       </header>
 
