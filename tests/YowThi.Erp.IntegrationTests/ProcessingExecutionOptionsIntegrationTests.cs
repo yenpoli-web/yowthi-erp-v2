@@ -186,8 +186,8 @@ public sealed class ProcessingExecutionOptionsIntegrationTests
             EmployeeSearchText: "Fallback",
             SupplierThName: "P6V3Q1ซัพพลายSearch",
             SupplierSearchText: "Search",
-            ProcurementProductZhTwName: "P6V3Q1原料SearchProduct",
-            ProductSearchText: "SearchProduct",
+            ProcurementProductZhTwName: "P6V3Q1原料ProcOptUnique",
+            ProductSearchText: "ProcOptUnique",
             MaterialAThName: "P6V3Q1วัตถุดิบA",
             WorkDate: new DateOnly(2026, 9, 2));
 
