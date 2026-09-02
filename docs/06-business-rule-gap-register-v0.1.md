@@ -10,6 +10,7 @@
 |---|---|---|---|
 | PROC-001 | Procurement Batch COMPLETED then late entry | A | Block normal entry |
 | PROC-002 | Procurement receipt location default vs override | B | use unique default; otherwise require explicit choice |
+| PROC-003 | Procurement Entry zero Net Quantity confirmation | A | Block zero-quantity confirmation until real YowThi behavior is confirmed; Procurement Entry currently permits zero but required PURCHASE_RECEIPT structurally requires a positive movement |
 | PROCESS-001 | Input spread across multiple locations | A | require explicit source if ambiguous |
 | PROCESS-002 | Processing output location | B | unique default or explicit choice |
 | PROCESS-003 | Multi-input Processing Module | C | not implemented |
