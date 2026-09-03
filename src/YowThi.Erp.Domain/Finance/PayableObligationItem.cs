@@ -68,4 +68,31 @@ public sealed class PayableObligationItem
             RecordedAt = recordedAt,
         };
     }
+
+    public static PayableObligationItem CreateEmployeeDailyWage(
+        Guid id,
+        Guid payableId,
+        Guid employeeDailyWageId,
+        long amountThb,
+        DateTimeOffset recordedAt)
+    {
+        if (id == Guid.Empty
+            || payableId == Guid.Empty
+            || employeeDailyWageId == Guid.Empty
+            || amountThb < 0)
+        {
+            throw new ArgumentException("Employee Daily Wage payable obligation is invalid.");
+        }
+
+        return new PayableObligationItem
+        {
+            Id = id,
+            PayableId = payableId,
+            PayableKind = PayableKind.EMPLOYEE_DAILY_WAGE,
+            ObligationKind = PayableObligationKind.EMPLOYEE_DAILY_WAGE,
+            AmountThb = amountThb,
+            EmployeeDailyWageId = employeeDailyWageId,
+            RecordedAt = recordedAt,
+        };
+    }
 }

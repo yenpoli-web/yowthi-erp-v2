@@ -15,4 +15,38 @@ public sealed class SalesPackagingWorkRecord : IHasRowVersion
     public long RowVersion { get; private set; }
     public DateTimeOffset? DeletedAt { get; private set; }
     public Guid? DeletedByAccountId { get; private set; }
+
+    public static SalesPackagingWorkRecord Create(
+        Guid id,
+        Guid salesId,
+        DateOnly workDate,
+        Guid employeeId,
+        Guid salesPackagingItemId,
+        long confirmedWageThb,
+        DateTimeOffset recordedAt,
+        Guid recordedByAccountId)
+    {
+        if (id == Guid.Empty
+            || salesId == Guid.Empty
+            || employeeId == Guid.Empty
+            || salesPackagingItemId == Guid.Empty
+            || recordedByAccountId == Guid.Empty
+            || confirmedWageThb < 0)
+        {
+            throw new ArgumentException("Sales Packaging Work Record is invalid.");
+        }
+
+        return new SalesPackagingWorkRecord
+        {
+            Id = id,
+            SalesId = salesId,
+            WorkDate = workDate,
+            EmployeeId = employeeId,
+            SalesPackagingItemId = salesPackagingItemId,
+            ConfirmedWageThb = confirmedWageThb,
+            RecordedAt = recordedAt,
+            RecordedByAccountId = recordedByAccountId,
+            RowVersion = 1,
+        };
+    }
 }

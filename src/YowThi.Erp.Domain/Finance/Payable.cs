@@ -13,4 +13,24 @@ public sealed class Payable : IHasRowVersion
     public Guid? EmployeeDailyWageId { get; private set; }
     public DateTimeOffset CreatedAt { get; private set; }
     public long RowVersion { get; private set; }
+
+    public static Payable CreateEmployeeDailyWage(
+        Guid id,
+        Guid employeeDailyWageId,
+        DateTimeOffset createdAt)
+    {
+        if (id == Guid.Empty || employeeDailyWageId == Guid.Empty)
+        {
+            throw new ArgumentException("Employee Daily Wage Payable references cannot be empty.");
+        }
+
+        return new Payable
+        {
+            Id = id,
+            PayableKind = PayableKind.EMPLOYEE_DAILY_WAGE,
+            EmployeeDailyWageId = employeeDailyWageId,
+            CreatedAt = createdAt,
+            RowVersion = 1,
+        };
+    }
 }
