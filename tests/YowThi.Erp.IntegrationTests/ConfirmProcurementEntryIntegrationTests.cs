@@ -27,10 +27,6 @@ public sealed class ConfirmProcurementEntryIntegrationTests
 
         try
         {
-            var transportPayablesBefore = await ScalarAsync<long>(
-                "SELECT count(*) FROM finance.payables WHERE payable_kind = 'COMPANY_PICKUP_TRANSPORT';",
-                cancellationToken);
-
             var supplierCommand = new ConfirmProcurementEntryCommand(
                 scenario.ProcurementDate,
                 scenario.ProductId,
@@ -213,10 +209,16 @@ public sealed class ConfirmProcurementEntryIntegrationTests
                     cancellationToken,
                     ("id", farmerResult.Value.CompanyPickupTransportBasisId!.Value)));
             Assert.Equal(
-                transportPayablesBefore,
+                2L,
                 await ScalarAsync<long>(
-                    "SELECT count(*) FROM finance.payables WHERE payable_kind = 'COMPANY_PICKUP_TRANSPORT';",
-                    cancellationToken));
+                    """
+                    SELECT count(*)
+                    FROM finance.payables
+                    WHERE procurement_batch_id = @batch_id
+                      AND payable_kind IN ('PROCUREMENT_SUPPLIER', 'PROCUREMENT_FARMER');
+                    """,
+                    cancellationToken,
+                    ("batch_id", supplierResult.Value.ProcurementBatchId)));
         }
         finally
         {
