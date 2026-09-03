@@ -1,6 +1,6 @@
 # Current Design Checkpoint — YowThi ERP V2
 
-Checkpoint status: **v0.1 implementation baseline through P5**
+Checkpoint status: **v0.1 implementation baseline through P6 V7**
 Purpose: recover the project design and current implementation state if conversational context is lost.
 
 ## 1. Highest-level rule
@@ -65,12 +65,32 @@ Completed implementation phases:
 - P3.5 AuthN/AuthZ architecture hard gate and auth-specific `system.accounts` mapping revision
 - P4 `InitialV01` generation, static review, model-drift verification, and migration validation
 - P5 PostgreSQL 18 persistence acceptance
+- P6 V1 `ConfirmProcurementEntry`
+- P6 V2 `ConfirmOutsourcedSupplyDetail`
+- P6 V3 `ConfirmProcessingExecution`
+- P6 V4 `ConfirmSales`
+- P6 V5 `RecordSalesPackagingWork` + `ConfirmEmployeeDailyWage`
+- P6 V6 `AddPayableAdjustment` + `PayPayable` + `ReceiveReceivable`
+- P6 V7 `TransferInventory` + `AdjustInventory` + Batch Close
 
-Current next phase:
+Current next slice:
 
-**P6 - Business vertical slices**, beginning with `ConfirmProcurementEntry`.
+**P6 V8 — Correction / Lifecycle / Hard Delete commands.**
 
-P5 applied the approved `InitialV01` to PostgreSQL 18 and validated the live relational baseline, PostgreSQL structural rejection behavior, concurrency/race semantics, and transaction rollback behavior. Business vertical slices may now begin subject to the existing Gap Register and owning-command prerequisites.
+P5 applied the approved `InitialV01` to PostgreSQL 18 and validated the live relational baseline, PostgreSQL structural rejection behavior, concurrency/race semantics, and transaction rollback behavior.
+
+P6 V1–V7 have now implemented and validated the first seven backend Business Command vertical slices. V7 formally completes Inventory Transfer/Adjustment plus explicit Procurement/Outsourced Batch Close without resolving the still-open automatic-vs-manual Close Business Rule gap.
+
+Formal P6 V7 completion evidence:
+- formal commit: `e294107f2f991cbf44ebc0c28765a456e4967d22` — `feat: complete batch close commands`
+- `main = origin/main = p6-v7-close-validation` at that SHA after ff-only promotion
+- self-hosted workflow: `dotnet.yml` / `dotnet-self-hosted`
+- validation run: `33818749647`
+- runner: `YowThi-ERP-V2`
+- required labels: `self-hosted`, `yowthi-erp-v2`
+- workflow conclusion: `success`
+- local final gates before commit: Domain `29/29`, Architecture `66/66`, API Contract `55/55`, PostgreSQL Integration `59/59`
+- no schema or EF migration change was introduced by V7
 
 ## 4. Core domain modules
 
@@ -164,6 +184,12 @@ Procurement receipt location safe handling under PROC-002:
 - omitted location with no unique applicable default blocks confirmation and requires explicit choice
 
 This is an existing safe v0.1 control, not a new Business Rule.
+
+P6 V7 Inventory write lifecycle protection:
+- `TransferInventory`, `AdjustInventory`, and `ConfirmProcessingExecution` acquire a shared source-Batch lifecycle guard inside the command transaction
+- the PostgreSQL writer guard uses `FOR SHARE`, allowing concurrent writers while conflicting with Batch Close's exclusive lifecycle lock/update
+- a Closed/deleted source Batch rejects new manual Inventory writes rather than silently reopening or mutating it
+- explicit row-level Inventory Position concurrency semantics remain intact
 
 ## 9. Sales
 
@@ -295,7 +321,9 @@ Outsourced Batch:
 - mark Closed
 - no processing reconciliation
 
-Whether close is automatic after sold-out or manually confirmed remains TO VERIFY.
+P6 V7 implementation exposes explicit idempotent Close commands with `expectedRowVersion`, Audit, Outbox, and PostgreSQL transaction/concurrency protection. Sold-out detection does not itself trigger an automatic Close in the current implementation.
+
+Whether close should ultimately occur automatically after sold-out or remain manually/user-confirmed remains TO VERIFY under the existing Batch Close gap. The explicit v0.1 command boundary must not be reinterpreted as confirmation of that unresolved Business Rule.
 
 ## 14. Data lifecycle / correction / audit
 
@@ -450,6 +478,7 @@ PostgreSQL-specific operations allowed where the atomic primitive matters:
 - CommandId acquisition: `ON CONFLICT DO NOTHING`
 - Finance monetary CAS: expected row_version + current Outstanding predicate
 - Outbox dequeue: row locking / `FOR UPDATE SKIP LOCKED` + lease
+- Batch lifecycle writer guard: `FOR SHARE` against the owning source Batch, with Close using the conflicting exclusive lifecycle lock/update
 
 Transactions/retry:
 - one explicit PostgreSQL transaction per persisted Business Command
@@ -610,7 +639,7 @@ P3  API technical shell                                COMPLETE
 P3.5 AuthN/AuthZ implementation architecture hard gate COMPLETE
 P4  InitialV01 generation/static review                COMPLETE
 P5  PostgreSQL 18 persistence acceptance               COMPLETE
-P6  Business vertical slices                           NEXT
+P6  Business vertical slices                           IN PROGRESS — V1–V7 COMPLETE / V8 NEXT
 P7  React UI vertical slices (Desktop / Tablet / Mobile adaptive presentations)
 P8  CI / production hardening
 ```
@@ -648,7 +677,28 @@ P5 result:
 - full Release test suite after P5 tests: `97 passed / 0 failed / 0 skipped`
 - `erp_migration_acceptance`: `accepted=true`
 
-First full Business Command vertical slice after persistence acceptance remains `ConfirmProcurementEntry`.
+P6 status:
+- V1 `ConfirmProcurementEntry`: COMPLETE
+- V2 `ConfirmOutsourcedSupplyDetail`: COMPLETE
+- V3 `ConfirmProcessingExecution`: COMPLETE
+- V4 `ConfirmSales`: COMPLETE
+- V5 `RecordSalesPackagingWork` + `ConfirmEmployeeDailyWage`: COMPLETE
+- V6 `AddPayableAdjustment` + `PayPayable` + `ReceiveReceivable`: COMPLETE
+- V7 `TransferInventory` + `AdjustInventory` + Batch Close: COMPLETE
+- V8 Correction / Lifecycle / Hard Delete commands: NEXT
+
+P6 V7 acceptance specifically proves:
+- explicit Procurement and Outsourced Batch Close API/Application/Persistence boundaries
+- persistent idempotency and replay
+- `expectedRowVersion` stale-write rejection
+- Procurement sellable-inventory close gate
+- Procurement `BATCH_RECONCILIATION` for remaining non-sellable positive/negative positions
+- final whole-batch zero-inventory validation before Procurement Close
+- Outsourced sellable-inventory close gate with no processing reconciliation
+- transactional Audit and Outbox
+- Closed Batch lifecycle rejection for later Inventory/Processing writes
+- shared-writer concurrency preserved under the Batch `FOR SHARE` lifecycle guard
+- existing concurrent Inventory Transfer acceptance remains green
 
 ## 21. Important unresolved business gaps
 
@@ -685,6 +735,7 @@ Validation branches matching:
 
 ```text
 m*-validation
+p*-validation
 ```
 
 run automatically only on:
@@ -702,18 +753,31 @@ Do not require GitHub-hosted runners, paid/larger runners, Codespaces, or other 
 
 Proceed with:
 
-**P6 - first full Business Command vertical slice: `ConfirmProcurementEntry`.**
+**P6 V8 — Correction / Lifecycle / Hard Delete commands.**
 
-Required sequence:
+Required recovery sequence:
 
 ```text
-P5 PostgreSQL persistence acceptance green
--> review PROC-001 / PROC-002 Gap Register state
--> V1-C1 Domain/Application command + result + receipt-location resolution contract
--> V1-C2 Infrastructure atomic persistence transaction
--> V1-C3 POST /api/v1/procurement/entries
--> V1-C4 PostgreSQL integration/concurrency/rollback tests
--> V1-C5 React Procurement Entry UI only after backend contract is stable
+P6 V7 validated and promoted
+-> review Correction Command Framework + Application Command Catalogue
+-> review owning-domain Business Facts / Command Contracts / Gap Register / ADR-005
+-> enumerate only V8 commands whose required Business Rules are confirmed or have an explicitly approved safe control
+-> implement focused Domain/Application + persistence + API slices
+-> include idempotency + Audit + Outbox where applicable
+-> validate PostgreSQL dependency/concurrency/rollback semantics
+-> self-hosted validation
+-> ff-only main promotion
 ```
 
-Do not invent the unresolved Completed Procurement Batch late-entry Business Rule. Keep PROC-002 receipt-location handling exactly at the already approved safe v0.1 control: explicit location when supplied, otherwise a unique applicable default, otherwise block and require explicit choice.
+V8 must not become generic CRUD or a generic mutation framework.
+
+Do not invent or prematurely implement unresolved behavior, including:
+- automatic-vs-manual Batch Close policy
+- Closed Batch reopen
+- FIN-003/FIN-005 settlement/adjustment correction or reversal behavior that remains unresolved
+- generic `(type,id)` Hard Delete resolution
+- generic JSON Patch / Undo / correction endpoints
+
+Hard Delete remains target-specific, highest-authority, dependency-checked, explicit physical deletion with retained audit according to the existing architecture.
+
+React P7 remains after the required backend sequencing defined by `docs/13`; stable backend slices may inform UI contracts, but V8 is the formal next implementation slice.
