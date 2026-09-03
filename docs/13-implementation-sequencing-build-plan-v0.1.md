@@ -941,14 +941,37 @@ Pattern:
 
 ```text
 Procurement backend slice stable
-→ Procurement UI
+→ Procurement UI across Desktop / Tablet / Mobile
 Processing backend slice stable
-→ Processing UI
+→ Processing UI across Desktop / Tablet / Mobile
 Sales backend slice stable
-→ Sales UI
+→ Sales UI across Desktop / Tablet / Mobile
 ```
 
+P7 follows `docs/16-adaptive-web-ui-architecture-v0.1.md` and ADR-006.
+
+The frontend remains one React application with one shared feature/API core and three adaptive presentation experiences:
+- Desktop
+- Tablet
+- Mobile
+
+Do not build three independent frontend applications.
 Do not build the full operational UI against long-lived mock APIs and reconcile it with real command contracts later.
+Do not create device-specific REST endpoints or device-specific Business Commands.
+
+For each UI vertical slice:
+1. stabilize the backend command/query contract
+2. isolate the shared feature core
+3. define Desktop composition
+4. define Tablet composition
+5. define Mobile composition
+6. prove required command facts and safe Gap handling are semantically equivalent
+7. validate loading, Problem Details, locale, authorization presentation, and concurrency behavior across applicable experiences
+8. run frontend typecheck/lint/build and device-experience acceptance
+
+A simple feature may share presentation components when this is operationally appropriate; three duplicate components are not required merely for symmetry.
+
+Automatic experience resolution uses viewport plus pointer/hover capabilities. User-Agent sniffing is not the authoritative architecture mechanism. Development/QA may force an experience deterministically without changing server behavior.
 
 Frontend error handling uses HTTP status + stable Problem Details `code`, not localized detail parsing.
 Frontend concurrency flows refresh/retry using new command identity where required by the REST architecture.
@@ -1140,11 +1163,18 @@ A persisted Business Command is Done only when the applicable implementation inc
 
 A UI slice is Done only when:
 - its backend contract is stable
-- server-state query/mutation integration works
+- shared server-state query/mutation integration is not duplicated by device experience
+- Desktop, Tablet, and Mobile presentation behavior is intentionally defined
+- required command facts and semantic validation remain equivalent across presentations
 - loading/error/validation states are handled
 - Problem Details codes drive client flow where appropriate
 - locale behavior is handled
 - concurrency refresh/retry behavior follows the API contract
+- mandatory actions do not depend on hover
+- Tablet/Mobile touch operation is usable where applicable
+- narrow-screen overflow is controlled
+- frontend typecheck/lint/build pass
+- the affected workflow passes three-experience acceptance
 
 ## 57. Production migration rule
 

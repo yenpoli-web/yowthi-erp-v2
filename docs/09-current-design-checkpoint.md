@@ -17,6 +17,7 @@ Precedence for implementation recovery:
 - implementation order/readiness gates: `docs/13-implementation-sequencing-build-plan-v0.1.md`
 - GitHub cost governance: `docs/14-github-cost-governance-v0.1.md`
 - AuthN/AuthZ implementation/security architecture and auth-specific `system.accounts` correction: `docs/15-authn-authz-implementation-architecture-v0.1.md`
+- adaptive Desktop/Tablet/Mobile web presentation architecture: `docs/16-adaptive-web-ui-architecture-v0.1.md` and ADR-006
 
 Earlier Part 1–6 schema notes remain design history. `docs/10` is the later consolidated relational baseline when relational details conflict.
 
@@ -54,6 +55,7 @@ Completed architecture/design to v0.1:
 - Implementation Sequencing / Build Plan v0.1
 - GitHub Cost Governance v0.1
 - AuthN/AuthZ Implementation Architecture v0.1
+- Adaptive Web UI Architecture v0.1 + ADR-006 Device-Specific Web Presentation
 
 Completed implementation phases:
 - P0 repository / .NET / React scaffolding
@@ -578,6 +580,23 @@ Tailscale remains network transport only, not ERP authentication.
 
 See `docs/15-authn-authz-implementation-architecture-v0.1.md`.
 
+## 19.5. Adaptive Web UI Architecture v0.1
+
+The single `YowThi.Erp.Web` React application formally supports three presentation experiences:
+- Desktop
+- Tablet
+- Mobile
+
+They share REST contracts, TanStack Query/API feature core, authentication/authorization, locale, Problem Details, idempotency, concurrency, and Business Command semantics. Presentation composition may differ by device experience.
+
+Automatic experience selection is capability-aware (viewport plus pointer/hover characteristics), not User-Agent-driven and not viewport-width-only. Development/QA may force an experience for deterministic acceptance testing without altering server behavior.
+
+Existing responsive Procurement/Outsourced/Processing pages migrate incrementally: device-aware application shell first, then feature-level Desktop/Tablet/Mobile composition only where operationally valuable.
+
+No device-specific REST endpoints, Business Rules, or capability grants are created. Native platform applications remain outside v0.1.
+
+See `docs/16-adaptive-web-ui-architecture-v0.1.md` and `docs/adr/ADR-006-device-specific-web-presentation.md`.
+
 ## 20. Implementation Sequencing / Build Plan v0.1
 
 Formal implementation phases:
@@ -591,7 +610,7 @@ P3.5 AuthN/AuthZ implementation architecture hard gate COMPLETE
 P4  InitialV01 generation/static review                COMPLETE
 P5  PostgreSQL 18 persistence acceptance               COMPLETE
 P6  Business vertical slices                           NEXT
-P7  React UI vertical slices
+P7  React UI vertical slices (Desktop / Tablet / Mobile adaptive presentations)
 P8  CI / production hardening
 ```
 

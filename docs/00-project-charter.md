@@ -15,6 +15,9 @@ Frontend:
 - React Router
 - TanStack Query
 - pnpm
+- single web application with shared feature core
+- three supported adaptive presentation experiences: Desktop, Tablet, Mobile
+- device-specific UI composition may differ; REST contracts, Business Commands, authorization, and Business Rules remain shared
 
 Backend:
 - ASP.NET Core 10 / C# / .NET 10 LTS
@@ -63,3 +66,5 @@ RDC is retired.
 Tailscale is approved for development cross-device testing.
 It does not replace ERP authentication.
 Development-only no-password bootstrap access must not exist in staging/production.
+
+Desktop, Tablet, and Mobile are supported browser presentation experiences under `docs/16-adaptive-web-ui-architecture-v0.1.md` and ADR-006. This does not imply native platform applications.
