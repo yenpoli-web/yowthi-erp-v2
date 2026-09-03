@@ -44,6 +44,7 @@ public static class LaborApplicationErrorCodes
     public const string ProcessingRateOverrideInvalid = "labor.processing-rate-override-invalid";
     public const string ProcessingRateOverrideTargetNotFound = "labor.processing-rate-override-target-not-found";
     public const string WageAmountInvalid = "labor.wage-amount-invalid";
+    public const string ConcurrentChange = "labor.concurrent-change";
     public const string IdempotencyKeyReused = "idempotency.key-reused";
 }
 
