@@ -376,6 +376,199 @@ public sealed class ConfirmSalesIntegrationTests
         }
     }
 
+    [Fact]
+    public async Task Repeated_sales_details_share_one_position_without_self_concurrency()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var scenario = await SeedScenarioAsync(3m, 10m, 0m, cancellationToken);
+        var secondDetailId = Guid.CreateVersion7();
+        var commandId = Guid.CreateVersion7();
+
+        try
+        {
+            await InsertSalesDetailAsync(scenario, secondDetailId, 2, 4m, cancellationToken);
+
+            var result = await ExecuteAsync(
+                Execution(
+                    commandId,
+                    scenario.ActorAccountId,
+                    Hash(8),
+                    new ConfirmSalesCommand(
+                        scenario.SalesId,
+                        1,
+                        Array.Empty<SalesManualAllocationOverride>())),
+                cancellationToken);
+
+            Assert.True(result.IsSuccess);
+            Assert.Equal(
+                3m,
+                await ScalarAsync<decimal>(
+                    "SELECT balance_quantity FROM inventory.inventory_positions WHERE id = @position_id;",
+                    cancellationToken,
+                    ("position_id", scenario.OutsourcedPositionId)));
+            Assert.Equal(
+                2L,
+                await ScalarAsync<long>(
+                    "SELECT row_version FROM inventory.inventory_positions WHERE id = @position_id;",
+                    cancellationToken,
+                    ("position_id", scenario.OutsourcedPositionId)));
+            Assert.Equal(
+                2L,
+                await ScalarAsync<long>(
+                    "SELECT count(*) FROM sales.sales_allocation_revision_items WHERE sales_id = @sales_id;",
+                    cancellationToken,
+                    ("sales_id", scenario.SalesId)));
+            Assert.Equal(
+                -7m,
+                await ScalarAsync<decimal>(
+                    "SELECT sum(quantity_delta) FROM inventory.inventory_movements WHERE inventory_operation_id = @operation_id;",
+                    cancellationToken,
+                    ("operation_id", result.Value.InventoryOperationId)));
+            Assert.Equal(
+                350L,
+                await ScalarAsync<long>(
+                    "SELECT outstanding_thb FROM finance.receivable_outstanding_positions WHERE receivable_id = @receivable_id;",
+                    cancellationToken,
+                    ("receivable_id", result.Value.ReceivableId)));
+        }
+        finally
+        {
+            await CleanupScenarioAsync(scenario, new[] { commandId }, cancellationToken);
+        }
+    }
+
+    [Fact]
+    public async Task Concurrent_sales_competing_for_one_position_allow_at_most_one_commit_and_never_negative_stock()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var scenario = await SeedScenarioAsync(6m, 8m, 0m, cancellationToken);
+        var competitor = await SeedCompetingSaleAsync(scenario, 6m, cancellationToken);
+        var firstCommandId = Guid.CreateVersion7();
+        var secondCommandId = Guid.CreateVersion7();
+        var lockReleased = false;
+
+        await using var lockConnection = await OpenConnectionAsync(cancellationToken);
+        await using var lockTransaction = await lockConnection.BeginTransactionAsync(cancellationToken);
+        await using (var lockCommand = new NpgsqlCommand(
+                         "SELECT id FROM inventory.inventory_positions WHERE id = @position_id FOR UPDATE;",
+                         lockConnection,
+                         lockTransaction))
+        {
+            lockCommand.Parameters.AddWithValue("position_id", scenario.OutsourcedPositionId);
+            Assert.NotNull(await lockCommand.ExecuteScalarAsync(cancellationToken));
+        }
+
+        var firstTask = ExecuteAsync(
+                Execution(
+                    firstCommandId,
+                    scenario.ActorAccountId,
+                    Hash(9),
+                    new ConfirmSalesCommand(
+                        scenario.SalesId,
+                        1,
+                        Array.Empty<SalesManualAllocationOverride>())),
+                cancellationToken)
+            .AsTask();
+        var secondTask = ExecuteAsync(
+                Execution(
+                    secondCommandId,
+                    scenario.ActorAccountId,
+                    Hash(10),
+                    new ConfirmSalesCommand(
+                        competitor.SalesId,
+                        1,
+                        Array.Empty<SalesManualAllocationOverride>())),
+                cancellationToken)
+            .AsTask();
+
+        try
+        {
+            await WaitForBlockedInventoryUpdatesAsync(2, cancellationToken);
+            await lockTransaction.CommitAsync(cancellationToken);
+            lockReleased = true;
+
+            var results = await Task.WhenAll(firstTask, secondTask);
+            var succeeded = results.Where(result => result.IsSuccess).ToArray();
+            var failed = results.Where(result => result.IsFailure).ToArray();
+
+            Assert.Single(succeeded);
+            var losingResult = Assert.Single(failed);
+            Assert.Equal(ApplicationErrorKind.Conflict, losingResult.Error.Kind);
+            Assert.Equal(SalesApplicationErrorCodes.ConcurrentInventoryChange, losingResult.Error.Code);
+
+            Assert.Equal(
+                2m,
+                await ScalarAsync<decimal>(
+                    "SELECT balance_quantity FROM inventory.inventory_positions WHERE id = @position_id;",
+                    cancellationToken,
+                    ("position_id", scenario.OutsourcedPositionId)));
+            Assert.Equal(
+                2L,
+                await ScalarAsync<long>(
+                    "SELECT row_version FROM inventory.inventory_positions WHERE id = @position_id;",
+                    cancellationToken,
+                    ("position_id", scenario.OutsourcedPositionId)));
+            Assert.Equal(
+                1L,
+                await ScalarAsync<long>(
+                    "SELECT count(*) FROM sales.sales WHERE id = ANY(@sales_ids) AND status = 'CONFIRMED';",
+                    cancellationToken,
+                    ("sales_ids", new[] { scenario.SalesId, competitor.SalesId })));
+            Assert.Equal(
+                1L,
+                await ScalarAsync<long>(
+                    "SELECT count(*) FROM sales.sales WHERE id = ANY(@sales_ids) AND status = 'DRAFT';",
+                    cancellationToken,
+                    ("sales_ids", new[] { scenario.SalesId, competitor.SalesId })));
+            Assert.Equal(
+                1L,
+                await ScalarAsync<long>(
+                    "SELECT count(*) FROM system.command_executions WHERE command_id = ANY(@command_ids) AND status = 'SUCCEEDED';",
+                    cancellationToken,
+                    ("command_ids", new[] { firstCommandId, secondCommandId })));
+            Assert.Equal(
+                1L,
+                await ScalarAsync<long>(
+                    "SELECT count(*) FROM finance.receivables WHERE sales_id = ANY(@sales_ids);",
+                    cancellationToken,
+                    ("sales_ids", new[] { scenario.SalesId, competitor.SalesId })));
+            Assert.Equal(
+                -6m,
+                await ScalarAsync<decimal>(
+                    """
+                    SELECT sum(m.quantity_delta)
+                    FROM inventory.inventory_movements m
+                    JOIN inventory.inventory_operations o ON o.id = m.inventory_operation_id
+                    WHERE o.sales_id = ANY(@sales_ids)
+                      AND m.movement_type = 'SALES_ISSUE';
+                    """,
+                    cancellationToken,
+                    ("sales_ids", new[] { scenario.SalesId, competitor.SalesId })));
+        }
+        finally
+        {
+            if (!lockReleased)
+            {
+                await lockTransaction.RollbackAsync(CancellationToken.None);
+            }
+
+            try
+            {
+                await Task.WhenAll(firstTask, secondTask);
+            }
+            catch
+            {
+                // Preserve the original assertion/command failure while ensuring blocked work is released before cleanup.
+            }
+
+            await CleanupAdditionalSaleAsync(competitor, cancellationToken);
+            await CleanupScenarioAsync(
+                scenario,
+                new[] { firstCommandId, secondCommandId },
+                cancellationToken);
+        }
+    }
+
     private static ConfirmSalesExecution Execution(
         Guid commandId,
         Guid actorAccountId,
@@ -597,6 +790,130 @@ public sealed class ConfirmSalesIntegrationTests
         return scenario;
     }
 
+    private static async Task InsertSalesDetailAsync(
+        Scenario scenario,
+        Guid salesDetailId,
+        int lineNumber,
+        decimal quantity,
+        CancellationToken cancellationToken)
+    {
+        var amountThb = checked((long)decimal.Floor(quantity * 50m));
+        await ExecuteNonQueryAsync(
+            """
+            INSERT INTO sales.sales_details
+                (id, sales_id, line_number, sales_product_id, quantity,
+                 pricing_basis_snapshot, sales_weight_snapshot, unit_price, amount_thb,
+                 row_version, created_at, created_by_account_id, deleted_at, deleted_by_account_id)
+            VALUES
+                (@detail_id, @sales_id, @line_number, @sales_product_id, @quantity,
+                 'UNIT_BASED', NULL, 50, @amount_thb,
+                 1, @now, @actor_id, NULL, NULL);
+            """,
+            cancellationToken,
+            ("detail_id", salesDetailId),
+            ("sales_id", scenario.SalesId),
+            ("line_number", lineNumber),
+            ("sales_product_id", scenario.SalesProductId),
+            ("quantity", quantity),
+            ("amount_thb", amountThb),
+            ("now", DateTimeOffset.UtcNow),
+            ("actor_id", scenario.ActorAccountId));
+    }
+
+    private static async Task<AdditionalSale> SeedCompetingSaleAsync(
+        Scenario scenario,
+        decimal quantity,
+        CancellationToken cancellationToken)
+    {
+        var additional = new AdditionalSale(Guid.CreateVersion7(), Guid.CreateVersion7());
+        var amountThb = checked((long)decimal.Floor(quantity * 50m));
+
+        await ExecuteNonQueryAsync(
+            """
+            INSERT INTO sales.sales
+                (id, sales_date, customer_id, status, confirmed_at, confirmed_by_account_id,
+                 row_version, created_at, created_by_account_id, deleted_at, deleted_by_account_id)
+            VALUES
+                (@sales_id, DATE '2026-09-03', @customer_id, 'DRAFT', NULL, NULL,
+                 1, @now, @actor_id, NULL, NULL);
+
+            INSERT INTO sales.sales_details
+                (id, sales_id, line_number, sales_product_id, quantity,
+                 pricing_basis_snapshot, sales_weight_snapshot, unit_price, amount_thb,
+                 row_version, created_at, created_by_account_id, deleted_at, deleted_by_account_id)
+            VALUES
+                (@detail_id, @sales_id, 1, @sales_product_id, @quantity,
+                 'UNIT_BASED', NULL, 50, @amount_thb,
+                 1, @now, @actor_id, NULL, NULL);
+            """,
+            cancellationToken,
+            ("sales_id", additional.SalesId),
+            ("detail_id", additional.SalesDetailId),
+            ("customer_id", scenario.CustomerId),
+            ("sales_product_id", scenario.SalesProductId),
+            ("quantity", quantity),
+            ("amount_thb", amountThb),
+            ("now", DateTimeOffset.UtcNow),
+            ("actor_id", scenario.ActorAccountId));
+
+        return additional;
+    }
+
+    private static async Task WaitForBlockedInventoryUpdatesAsync(
+        long expectedCount,
+        CancellationToken cancellationToken)
+    {
+        var deadline = DateTimeOffset.UtcNow.AddSeconds(10);
+        while (DateTimeOffset.UtcNow < deadline)
+        {
+            var blocked = await ScalarAsync<long>(
+                """
+                SELECT count(*)
+                FROM pg_stat_activity
+                WHERE datname = current_database()
+                  AND state = 'active'
+                  AND wait_event_type = 'Lock'
+                  AND query LIKE '%UPDATE inventory.inventory_positions%';
+                """,
+                cancellationToken);
+
+            if (blocked >= expectedCount)
+            {
+                return;
+            }
+
+            await Task.Delay(25, cancellationToken);
+        }
+
+        Assert.Fail($"Expected at least {expectedCount} ConfirmSales inventory updates to be blocked concurrently.");
+    }
+
+    private static async Task CleanupAdditionalSaleAsync(
+        AdditionalSale additional,
+        CancellationToken cancellationToken)
+    {
+        await ExecuteNonQueryAsync(
+            """
+            DELETE FROM finance.receivable_outstanding_positions
+            WHERE receivable_id IN (SELECT id FROM finance.receivables WHERE sales_id = @sales_id);
+            DELETE FROM finance.receivable_obligation_items WHERE sales_id = @sales_id;
+            DELETE FROM finance.receivables WHERE sales_id = @sales_id;
+
+            DELETE FROM inventory.inventory_movements
+            WHERE inventory_operation_id IN (SELECT id FROM inventory.inventory_operations WHERE sales_id = @sales_id);
+            DELETE FROM inventory.inventory_operations WHERE sales_id = @sales_id;
+
+            DELETE FROM sales.sales_allocations
+            WHERE sales_detail_id IN (SELECT id FROM sales.sales_details WHERE sales_id = @sales_id);
+            DELETE FROM sales.sales_allocation_revision_items WHERE sales_id = @sales_id;
+            DELETE FROM sales.sales_allocation_revisions WHERE sales_id = @sales_id;
+            DELETE FROM sales.sales_details WHERE sales_id = @sales_id;
+            DELETE FROM sales.sales WHERE id = @sales_id;
+            """,
+            cancellationToken,
+            ("sales_id", additional.SalesId));
+    }
+
     private static async Task CleanupScenarioAsync(
         Scenario scenario,
         IReadOnlyCollection<Guid> commandIds,
@@ -619,7 +936,8 @@ public sealed class ConfirmSalesIntegrationTests
             WHERE inventory_operation_id IN (SELECT id FROM inventory.inventory_operations WHERE sales_id = @sales_id);
             DELETE FROM inventory.inventory_operations WHERE sales_id = @sales_id;
 
-            DELETE FROM sales.sales_allocations WHERE sales_detail_id = @detail_id;
+            DELETE FROM sales.sales_allocations
+            WHERE sales_detail_id IN (SELECT id FROM sales.sales_details WHERE sales_id = @sales_id);
             DELETE FROM sales.sales_allocation_revision_items WHERE sales_id = @sales_id;
             DELETE FROM sales.sales_allocation_revisions WHERE sales_id = @sales_id;
             DELETE FROM sales.sales_details WHERE sales_id = @sales_id;
@@ -714,6 +1032,8 @@ public sealed class ConfirmSalesIntegrationTests
         await connection.OpenAsync(cancellationToken);
         return connection;
     }
+
+    private sealed record AdditionalSale(Guid SalesId, Guid SalesDetailId);
 
     private sealed record Scenario(
         Guid ActorAccountId,
