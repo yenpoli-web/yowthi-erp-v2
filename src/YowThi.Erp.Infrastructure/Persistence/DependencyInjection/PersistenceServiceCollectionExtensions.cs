@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using YowThi.Erp.Application.Common.Idempotency;
 using YowThi.Erp.Application.Common.Transactions;
+using YowThi.Erp.Application.Finance;
 using YowThi.Erp.Application.Labor;
 using YowThi.Erp.Application.Outsourced;
 using YowThi.Erp.Application.Procurement;
@@ -9,6 +10,7 @@ using YowThi.Erp.Application.Processing;
 using YowThi.Erp.Application.Sales;
 using YowThi.Erp.Application.SalesHandling;
 using YowThi.Erp.Infrastructure.Persistence.Concurrency;
+using YowThi.Erp.Infrastructure.Persistence.Finance;
 using YowThi.Erp.Infrastructure.Persistence.Idempotency;
 using YowThi.Erp.Infrastructure.Persistence.Labor;
 using YowThi.Erp.Infrastructure.Persistence.Outsourced;
@@ -41,6 +43,9 @@ public static class PersistenceServiceCollectionExtensions
         services.AddScoped<IConfirmSalesExecutor, PostgreSqlConfirmSalesExecutor>();
         services.AddScoped<IRecordSalesPackagingWorkExecutor, PostgreSqlRecordSalesPackagingWorkExecutor>();
         services.AddScoped<IConfirmEmployeeDailyWageExecutor, PostgreSqlConfirmEmployeeDailyWageExecutor>();
+        services.AddScoped<IAddPayableAdjustmentExecutor, PostgreSqlAddPayableAdjustmentExecutor>();
+        services.AddScoped<IPayPayableExecutor, PostgreSqlPayPayableExecutor>();
+        services.AddScoped<IReceiveReceivableExecutor, PostgreSqlReceiveReceivableExecutor>();
         services.AddSingleton<RowVersionSaveChangesInterceptor>();
 
         services.AddDbContext<ErpDbContext>((serviceProvider, options) =>
