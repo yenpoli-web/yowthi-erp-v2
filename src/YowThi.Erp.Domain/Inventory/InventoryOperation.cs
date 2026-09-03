@@ -96,4 +96,41 @@ public sealed class InventoryOperation
             RecordedByAccountId = recordedByAccountId,
         };
     }
+
+    public static InventoryOperation CreateTransfer(
+        Guid id,
+        DateTimeOffset recordedAt,
+        Guid recordedByAccountId) =>
+        CreateStandalone(id, InventoryOperationType.TRANSFER, recordedAt, recordedByAccountId);
+
+    public static InventoryOperation CreateAdjustment(
+        Guid id,
+        DateTimeOffset recordedAt,
+        Guid recordedByAccountId) =>
+        CreateStandalone(id, InventoryOperationType.ADJUSTMENT, recordedAt, recordedByAccountId);
+
+    private static InventoryOperation CreateStandalone(
+        Guid id,
+        InventoryOperationType operationType,
+        DateTimeOffset recordedAt,
+        Guid recordedByAccountId)
+    {
+        if (id == Guid.Empty || recordedByAccountId == Guid.Empty)
+        {
+            throw new ArgumentException("Inventory operation technical and actor IDs cannot be empty.");
+        }
+
+        if (operationType is not InventoryOperationType.TRANSFER and not InventoryOperationType.ADJUSTMENT)
+        {
+            throw new ArgumentOutOfRangeException(nameof(operationType));
+        }
+
+        return new InventoryOperation
+        {
+            Id = id,
+            OperationType = operationType,
+            RecordedAt = recordedAt,
+            RecordedByAccountId = recordedByAccountId,
+        };
+    }
 }
