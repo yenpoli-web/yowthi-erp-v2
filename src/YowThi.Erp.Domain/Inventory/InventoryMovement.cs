@@ -91,4 +91,70 @@ public sealed class InventoryMovement
             RecordedAt = recordedAt,
         };
     }
+
+    public static InventoryMovement CreateSalesIssue(
+        Guid id,
+        Guid inventoryOperationId,
+        int sequence,
+        InventoryOrigin origin,
+        Guid? procurementBatchId,
+        Guid? outsourcedSupplyBatchId,
+        Guid salesProductId,
+        Guid storageLocationId,
+        decimal quantity,
+        Guid salesAllocationRevisionItemId,
+        DateTimeOffset recordedAt)
+    {
+        if (id == Guid.Empty
+            || inventoryOperationId == Guid.Empty
+            || salesProductId == Guid.Empty
+            || storageLocationId == Guid.Empty
+            || salesAllocationRevisionItemId == Guid.Empty)
+        {
+            throw new ArgumentException("Inventory movement technical and reference IDs cannot be empty.");
+        }
+
+        if (sequence <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(sequence), "Inventory movement sequence must be positive.");
+        }
+
+        if (quantity <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(quantity), "Sales issue quantity must be positive before sign inversion.");
+        }
+
+        var sourceShapeIsValid = origin switch
+        {
+            InventoryOrigin.IN_HOUSE => procurementBatchId is { } procurementId
+                && procurementId != Guid.Empty
+                && outsourcedSupplyBatchId is null,
+            InventoryOrigin.OUTSOURCED => outsourcedSupplyBatchId is { } outsourcedId
+                && outsourcedId != Guid.Empty
+                && procurementBatchId is null,
+            _ => false,
+        };
+
+        if (!sourceShapeIsValid)
+        {
+            throw new ArgumentException("Sales issue source batch shape is invalid.");
+        }
+
+        return new InventoryMovement
+        {
+            Id = id,
+            InventoryOperationId = inventoryOperationId,
+            Sequence = sequence,
+            MovementType = InventoryMovementType.SALES_ISSUE,
+            Origin = origin,
+            ProcurementBatchId = procurementBatchId,
+            OutsourcedSupplyBatchId = outsourcedSupplyBatchId,
+            InventoryObjectKind = InventoryObjectKind.SALES_PRODUCT,
+            SalesProductId = salesProductId,
+            StorageLocationId = storageLocationId,
+            QuantityDelta = -quantity,
+            SalesAllocationRevisionItemId = salesAllocationRevisionItemId,
+            RecordedAt = recordedAt,
+        };
+    }
 }

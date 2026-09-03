@@ -43,6 +43,7 @@ public static class SalesApplicationErrorCodes
     public const string SalesNotFound = "sales.not-found";
     public const string InvalidState = "sales.invalid-state";
     public const string InvalidExpectedRowVersion = "sales.expected-row-version-invalid";
+    public const string StaleRowVersion = "concurrency.stale-row-version";
     public const string DetailInvalid = "sales.detail-invalid";
     public const string PricingInvalid = "sales.pricing-invalid";
     public const string AllocationInvalid = "sales.allocation-invalid";
