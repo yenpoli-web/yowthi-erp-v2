@@ -57,8 +57,8 @@ public static class RecordSalesPackagingWorkValidation
                 SalesHandlingApplicationErrorCodes.InvalidInput);
         }
 
-        // HANDLING-001 is deliberately not resolved here. The execution layer must
-        // enforce only a Sales lifecycle state explicitly confirmed by YowThi.
+        // HANDLING-001 confirmed 2026-09-03: DRAFT and CONFIRMED Sales are both allowed.
+        // The execution layer validates the current persisted Sales lifecycle value.
         return null;
     }
 }

@@ -5,14 +5,17 @@ using Npgsql;
 using YowThi.Erp.Application.Common.Errors;
 using YowThi.Erp.Application.Common.Results;
 using YowThi.Erp.Application.Common.Transactions;
+using YowThi.Erp.Application.Labor;
 using YowThi.Erp.Application.Processing;
 using YowThi.Erp.Domain.Infrastructure;
 using YowThi.Erp.Domain.Inventory;
+using YowThi.Erp.Domain.Labor;
 using YowThi.Erp.Domain.Party;
 using YowThi.Erp.Domain.Processing;
 using YowThi.Erp.Domain.ProcessingConfiguration;
 using YowThi.Erp.Domain.Procurement;
 using YowThi.Erp.Domain.Product;
+using YowThi.Erp.Infrastructure.Persistence.Labor;
 
 namespace YowThi.Erp.Infrastructure.Persistence.Processing;
 
@@ -62,9 +65,12 @@ internal sealed class PostgreSqlConfirmProcessingExecutionExecutor : IConfirmPro
             }
 
             var command = execution.Command;
-            var employee = await _dbContext.Set<Employee>().AsNoTracking().SingleOrDefaultAsync(x => x.Id == command.EmployeeId, ct);
-            if (employee is null) return RollbackFailure(ApplicationErrorKind.NotFound, ProcessingApplicationErrorCodes.EmployeeNotFound);
-            if (!employee.Active || employee.DeletedAt is not null) return RollbackFailure(ApplicationErrorKind.Conflict, ProcessingApplicationErrorCodes.EmployeeInactive);
+            var employeeState = await EmployeeLaborCommandLock.AcquireAsync(_dbContext, command.EmployeeId, ct);
+            if (!employeeState.Exists) return RollbackFailure(ApplicationErrorKind.NotFound, ProcessingApplicationErrorCodes.EmployeeNotFound);
+            if (!employeeState.Active || employeeState.Deleted) return RollbackFailure(ApplicationErrorKind.Conflict, ProcessingApplicationErrorCodes.EmployeeInactive);
+            if (await _dbContext.Set<EmployeeDailyWage>().AsNoTracking().AnyAsync(
+                    x => x.WorkDate == command.WorkDate && x.EmployeeId == command.EmployeeId, ct))
+                return RollbackFailure(ApplicationErrorKind.Conflict, LaborApplicationErrorCodes.DailyWageAlreadyConfirmed);
 
             var batch = await _dbContext.Set<ProcurementBatch>().AsNoTracking().SingleOrDefaultAsync(x => x.Id == command.ProcurementBatchId, ct);
             if (batch is null) return RollbackFailure(ApplicationErrorKind.NotFound, ProcessingApplicationErrorCodes.BatchNotFound);

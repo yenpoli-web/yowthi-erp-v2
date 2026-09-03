@@ -8,7 +8,6 @@ using YowThi.Erp.Application.Common.Transactions;
 using YowThi.Erp.Application.Labor;
 using YowThi.Erp.Domain.Finance;
 using YowThi.Erp.Domain.Labor;
-using YowThi.Erp.Domain.Party;
 using YowThi.Erp.Domain.Processing;
 using YowThi.Erp.Domain.SalesHandling;
 
@@ -65,10 +64,11 @@ internal sealed class PostgreSqlConfirmEmployeeDailyWageExecutor : IConfirmEmplo
                 }
 
                 var command = execution.Command;
-                var employeeExists = await _dbContext.Set<Employee>()
-                    .AsNoTracking()
-                    .AnyAsync(x => x.Id == command.EmployeeId, operationCancellationToken);
-                if (!employeeExists)
+                var employeeState = await EmployeeLaborCommandLock.AcquireAsync(
+                    _dbContext,
+                    command.EmployeeId,
+                    operationCancellationToken);
+                if (!employeeState.Exists)
                 {
                     return RollbackFailure(ApplicationErrorKind.NotFound, LaborApplicationErrorCodes.EmployeeNotFound);
                 }

@@ -4,6 +4,7 @@ using YowThi.Erp.Application.Common.Errors;
 using YowThi.Erp.Application.Common.Idempotency;
 using YowThi.Erp.Application.Common.Identity;
 using YowThi.Erp.Application.Common.Results;
+using YowThi.Erp.Application.Labor;
 using YowThi.Erp.Application.Processing;
 using YowThi.Erp.Domain.Processing;
 using YowThi.Erp.Infrastructure.Persistence.DependencyInjection;
@@ -452,6 +453,75 @@ public sealed class ConfirmProcessingExecutionIntegrationTests
         }
     }
 
+    [Fact]
+    public async Task Existing_daily_wage_blocks_normal_late_processing_and_rolls_back_command_identity()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var scenario = await SeedScenarioAsync(cancellationToken);
+        var commandId = Guid.CreateVersion7();
+
+        try
+        {
+            await ExecuteNonQueryAsync(
+                """
+                INSERT INTO labor.employee_daily_wages
+                    (id, work_date, employee_id, processing_wage_total_thb,
+                     sales_packaging_wage_total_thb, total_wage_thb,
+                     confirmed_at, confirmed_by_account_id, row_version)
+                VALUES
+                    (@id, @work_date, @employee_id, 0, 0, 0, @now, @actor_id, 1);
+                """,
+                cancellationToken,
+                ("id", Guid.CreateVersion7()),
+                ("work_date", scenario.WorkDate),
+                ("employee_id", scenario.EmployeeId),
+                ("now", DateTimeOffset.UtcNow),
+                ("actor_id", scenario.ActorAccountId));
+
+            var command = new ConfirmProcessingExecutionCommand(
+                scenario.WorkDate,
+                scenario.EmployeeId,
+                scenario.ProcurementBatchId,
+                scenario.PooledModuleId,
+                null,
+                null,
+                null,
+                new[]
+                {
+                    new ProcessingOutputMeasurement(
+                        scenario.PooledOutputId,
+                        1m,
+                        null,
+                        null,
+                        null),
+                });
+
+            var result = await ExecuteAsync(
+                Execution(commandId, scenario.ActorAccountId, Hash(7), command),
+                cancellationToken);
+
+            Assert.True(result.IsFailure);
+            Assert.Equal(ApplicationErrorKind.Conflict, result.Error.Kind);
+            Assert.Equal(LaborApplicationErrorCodes.DailyWageAlreadyConfirmed, result.Error.Code);
+            Assert.Equal(
+                0L,
+                await ScalarAsync<long>(
+                    "SELECT count(*) FROM system.command_executions WHERE command_id = @command_id;",
+                    cancellationToken,
+                    ("command_id", commandId)));
+            Assert.Equal(
+                0L,
+                await ScalarAsync<long>(
+                    "SELECT count(*) FROM processing.processing_executions WHERE procurement_batch_id = @batch_id;",
+                    cancellationToken,
+                    ("batch_id", scenario.ProcurementBatchId)));
+        }
+        finally
+        {
+            await CleanupScenarioAsync(scenario, new[] { commandId }, cancellationToken);
+        }
+    }
+
     private static ConfirmProcessingExecutionExecution Execution(
         Guid commandId,
         Guid actorAccountId,
@@ -764,6 +834,9 @@ public sealed class ConfirmProcessingExecutionIntegrationTests
                 SELECT id FROM processing.processing_executions WHERE procurement_batch_id = @batch_id);
             DELETE FROM processing.processing_executions WHERE procurement_batch_id = @batch_id;
 
+            DELETE FROM labor.employee_daily_wages
+            WHERE work_date = @work_date AND employee_id = @employee_id;
+
             DELETE FROM procurement.procurement_batches WHERE id = @batch_id;
 
             DELETE FROM processing_config.processing_module_outputs
@@ -789,6 +862,7 @@ public sealed class ConfirmProcessingExecutionIntegrationTests
             """,
             cancellationToken,
             ("command_ids", commandIds.ToArray()),
+            ("work_date", scenario.WorkDate),
             ("batch_id", scenario.ProcurementBatchId),
             ("route_version_id", scenario.RouteVersionId),
             ("route_id", scenario.RouteId),

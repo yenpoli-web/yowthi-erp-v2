@@ -7,6 +7,7 @@ using YowThi.Erp.Application.Outsourced;
 using YowThi.Erp.Application.Procurement;
 using YowThi.Erp.Application.Processing;
 using YowThi.Erp.Application.Sales;
+using YowThi.Erp.Application.SalesHandling;
 using YowThi.Erp.Infrastructure.Persistence.Concurrency;
 using YowThi.Erp.Infrastructure.Persistence.Idempotency;
 using YowThi.Erp.Infrastructure.Persistence.Labor;
@@ -14,6 +15,7 @@ using YowThi.Erp.Infrastructure.Persistence.Outsourced;
 using YowThi.Erp.Infrastructure.Persistence.Procurement;
 using YowThi.Erp.Infrastructure.Persistence.Processing;
 using YowThi.Erp.Infrastructure.Persistence.Sales;
+using YowThi.Erp.Infrastructure.Persistence.SalesHandling;
 using YowThi.Erp.Infrastructure.Persistence.Transactions;
 
 namespace YowThi.Erp.Infrastructure.Persistence.DependencyInjection;
@@ -37,6 +39,7 @@ public static class PersistenceServiceCollectionExtensions
         services.AddScoped<IConfirmProcessingExecutionExecutor, PostgreSqlConfirmProcessingExecutionExecutor>();
         services.AddScoped<IProcessingExecutionOptionsReader, EfProcessingExecutionOptionsReader>();
         services.AddScoped<IConfirmSalesExecutor, PostgreSqlConfirmSalesExecutor>();
+        services.AddScoped<IRecordSalesPackagingWorkExecutor, PostgreSqlRecordSalesPackagingWorkExecutor>();
         services.AddScoped<IConfirmEmployeeDailyWageExecutor, PostgreSqlConfirmEmployeeDailyWageExecutor>();
         services.AddSingleton<RowVersionSaveChangesInterceptor>();
 
