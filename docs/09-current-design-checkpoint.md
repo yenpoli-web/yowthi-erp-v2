@@ -223,6 +223,7 @@ Sales Packaging/Handling:
 - day-rate
 - no quantity/kg/box/hour fields in v0.1
 - one confirmed Work Record can enter only one Employee Daily Wage
+- Handling Work may be recorded while Sales is either DRAFT or CONFIRMED (HANDLING-001 resolved 2026-09-03)
 
 Employee Daily Wage identity:
 - Work Date + Employee
@@ -656,7 +657,6 @@ Must be confirmed before affected functionality goes live:
 - Processing input location selection when multiple locations exist
 - Sales issue location selection when stock spans locations
 - automatic vs manual batch close
-- Sales Handling allowed Sales lifecycle state
 - late work after Employee Daily Wage confirmation
 - overpayment
 - over-collection

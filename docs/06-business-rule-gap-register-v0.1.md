@@ -5,6 +5,7 @@
 - A — must be confirmed before affected function goes live
 - B — safe v0.1 control can be used without pretending it is a Business Rule
 - C — deferred extension; do not implement until real need appears
+- RESOLVED — confirmed YowThi Business Fact; retained here for decision history
 
 | ID | Gap | Class | Safe v0.1 handling |
 |---|---|---|---|
@@ -23,7 +24,7 @@
 | BATCH-001 | Automatic vs user-confirmed batch close | A | sold-out detection separate from Close command |
 | INV-001 | Inventory count UI enters absolute or delta | B | ledger always stores delta |
 | INV-002 | Fixed adjustment reason codes | C | store context first |
-| HANDLING-001 | Sales lifecycle state required before handling work | A | block states not explicitly allowed |
+| HANDLING-001 | Sales lifecycle state required before handling work | RESOLVED | Confirmed 2026-09-03: Sales Packaging / Handling Work may be recorded while Sales is either DRAFT or CONFIRMED |
 | HANDLING-002 | Multiple same day-rate entries per sale/date/employee/item | B | no business unique constraint yet |
 | LABOR-001 | Late work after Daily Wage confirmed | A | block normal late work |
 | FIN-001 | Payment > Outstanding | A | block |
