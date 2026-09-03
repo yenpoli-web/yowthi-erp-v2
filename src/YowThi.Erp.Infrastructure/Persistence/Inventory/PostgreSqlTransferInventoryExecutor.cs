@@ -71,6 +71,24 @@ internal sealed class PostgreSqlTransferInventoryExecutor : ITransferInventoryEx
                 }
 
                 var command = execution.Command;
+                var batchState = await InventoryBatchLifecycleCommandLock.AcquireAsync(
+                    _dbContext,
+                    command.InventoryIdentity,
+                    ct);
+                if (!batchState.Exists)
+                {
+                    return RollbackFailure(
+                        ApplicationErrorKind.NotFound,
+                        InventoryApplicationErrorCodes.PositionNotFound);
+                }
+
+                if (!batchState.Active || batchState.Deleted)
+                {
+                    return RollbackFailure(
+                        ApplicationErrorKind.Conflict,
+                        InventoryApplicationErrorCodes.BatchClosed);
+                }
+
                 if (!await IsCurrentStorageLocationAsync(command.DestinationStorageLocationId, ct))
                 {
                     return RollbackFailure(

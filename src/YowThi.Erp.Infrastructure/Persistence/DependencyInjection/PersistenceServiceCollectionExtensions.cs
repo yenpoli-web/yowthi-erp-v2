@@ -37,8 +37,10 @@ public static class PersistenceServiceCollectionExtensions
         services.AddSingleton<ICommandRequestHasher, Sha256CommandRequestHasher>();
         services.AddScoped<ICommandTransactionRunner, EfCommandTransactionRunner>();
         services.AddScoped<IConfirmProcurementEntryExecutor, PostgreSqlConfirmProcurementEntryExecutor>();
+        services.AddScoped<ICloseProcurementBatchExecutor, PostgreSqlCloseProcurementBatchExecutor>();
         services.AddScoped<IProcurementEntryOptionsReader, EfProcurementEntryOptionsReader>();
         services.AddScoped<IConfirmOutsourcedSupplyDetailExecutor, PostgreSqlConfirmOutsourcedSupplyDetailExecutor>();
+        services.AddScoped<ICloseOutsourcedSupplyBatchExecutor, PostgreSqlCloseOutsourcedSupplyBatchExecutor>();
         services.AddScoped<IOutsourcedSupplyDetailOptionsReader, EfOutsourcedSupplyDetailOptionsReader>();
         services.AddScoped<IConfirmProcessingExecutionExecutor, PostgreSqlConfirmProcessingExecutionExecutor>();
         services.AddScoped<IProcessingExecutionOptionsReader, EfProcessingExecutionOptionsReader>();

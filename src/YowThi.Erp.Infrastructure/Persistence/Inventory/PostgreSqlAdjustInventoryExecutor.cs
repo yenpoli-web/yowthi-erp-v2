@@ -76,6 +76,24 @@ internal sealed class PostgreSqlAdjustInventoryExecutor : IAdjustInventoryExecut
                 }
 
                 var command = execution.Command;
+                var batchState = await InventoryBatchLifecycleCommandLock.AcquireAsync(
+                    _dbContext,
+                    command.InventoryIdentity,
+                    ct);
+                if (!batchState.Exists)
+                {
+                    return RollbackFailure(
+                        ApplicationErrorKind.Validation,
+                        InventoryApplicationErrorCodes.InvalidInput);
+                }
+
+                if (!batchState.Active || batchState.Deleted)
+                {
+                    return RollbackFailure(
+                        ApplicationErrorKind.Conflict,
+                        InventoryApplicationErrorCodes.BatchClosed);
+                }
+
                 if (!await IsUsableStorageLocationAsync(command.StorageLocationId, ct))
                 {
                     return RollbackFailure(

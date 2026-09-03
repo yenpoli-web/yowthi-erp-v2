@@ -15,6 +15,7 @@ using YowThi.Erp.Domain.Processing;
 using YowThi.Erp.Domain.ProcessingConfiguration;
 using YowThi.Erp.Domain.Procurement;
 using YowThi.Erp.Domain.Product;
+using YowThi.Erp.Infrastructure.Persistence.Inventory;
 using YowThi.Erp.Infrastructure.Persistence.Labor;
 
 namespace YowThi.Erp.Infrastructure.Persistence.Processing;
@@ -72,10 +73,15 @@ internal sealed class PostgreSqlConfirmProcessingExecutionExecutor : IConfirmPro
                     x => x.WorkDate == command.WorkDate && x.EmployeeId == command.EmployeeId, ct))
                 return RollbackFailure(ApplicationErrorKind.Conflict, LaborApplicationErrorCodes.DailyWageAlreadyConfirmed);
 
-            var batch = await _dbContext.Set<ProcurementBatch>().AsNoTracking().SingleOrDefaultAsync(x => x.Id == command.ProcurementBatchId, ct);
-            if (batch is null) return RollbackFailure(ApplicationErrorKind.NotFound, ProcessingApplicationErrorCodes.BatchNotFound);
-            if (batch.LifecycleStatus != ProcurementBatchLifecycleStatus.ACTIVE || batch.DeletedAt is not null)
+            var batchLock = await InventoryBatchLifecycleCommandLock.AcquireProcurementAsync(
+                _dbContext,
+                command.ProcurementBatchId,
+                ct);
+            if (!batchLock.Exists) return RollbackFailure(ApplicationErrorKind.NotFound, ProcessingApplicationErrorCodes.BatchNotFound);
+            if (!batchLock.Active || batchLock.Deleted)
                 return RollbackFailure(ApplicationErrorKind.Conflict, ProcessingApplicationErrorCodes.BatchUnavailable);
+
+            var batch = await _dbContext.Set<ProcurementBatch>().AsNoTracking().SingleAsync(x => x.Id == command.ProcurementBatchId, ct);
             if (batch.ProcessingRouteVersionId is not Guid batchRouteVersionId)
                 return RollbackFailure(ApplicationErrorKind.Validation, ProcessingApplicationErrorCodes.BatchRouteRequired);
 

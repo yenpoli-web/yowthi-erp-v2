@@ -16,6 +16,8 @@ public static class OutsourcedEndpoints
 {
     public const string ConfirmSupplyDetailOperationId = "Outsourced_ConfirmSupplyDetail";
     public const string ConfirmSupplyDetailCommandType = "ConfirmOutsourcedSupplyDetail";
+    public const string CloseBatchOperationId = "Outsourced_CloseBatch";
+    public const string CloseBatchCommandType = "CloseOutsourcedSupplyBatch";
 
     private static readonly JsonSerializerOptions CanonicalCommandJsonOptions = new(JsonSerializerDefaults.Web);
 
@@ -30,6 +32,18 @@ public static class OutsourcedEndpoints
             .RequireAuthorization(CapabilityPolicies.OutsourcedConfirm)
             .RequireIdempotencyKey()
             .Produces<ConfirmOutsourcedSupplyDetailResult>(StatusCodes.Status201Created)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict)
+            .ProducesProblem(StatusCodes.Status422UnprocessableEntity);
+
+        outsourced.MapPost("/batches/{outsourcedSupplyBatchId:guid}/close", CloseBatchAsync)
+            .WithName(CloseBatchOperationId)
+            .RequireAuthorization(CapabilityPolicies.OutsourcedConfirm)
+            .RequireIdempotencyKey()
+            .Produces<CloseOutsourcedSupplyBatchResult>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status403Forbidden)
@@ -75,25 +89,76 @@ public static class OutsourcedEndpoints
                 result.Value);
         }
 
-        var statusCode = result.Error.Kind switch
+        return CreateFailureResult(
+            httpContext,
+            result.Error,
+            "Outsourced Supply Detail confirmation failed.");
+    }
+
+    private static async Task<IResult> CloseBatchAsync(
+        Guid outsourcedSupplyBatchId,
+        CloseOutsourcedSupplyBatchRequest request,
+        HttpContext httpContext,
+        [FromServices] IActorContext actorContext,
+        [FromServices] ICommandRequestHasher requestHasher,
+        [FromServices] ICloseOutsourcedSupplyBatchExecutor executor,
+        CancellationToken cancellationToken)
+    {
+        var command = new CloseOutsourcedSupplyBatchCommand(
+            outsourcedSupplyBatchId,
+            request.ExpectedRowVersion);
+
+        var canonicalPayload = JsonPayload.FromUtf8Json(
+            JsonSerializer.SerializeToUtf8Bytes(
+                new CanonicalCloseOutsourcedSupplyBatchRequest(CloseBatchCommandType, command),
+                CanonicalCommandJsonOptions));
+
+        var execution = new CloseOutsourcedSupplyBatchExecution(
+            httpContext.GetRequiredCommandId(),
+            requestHasher.Compute(canonicalPayload),
+            actorContext.ActorAccountId,
+            command);
+
+        var result = await executor.ExecuteAsync(execution, cancellationToken);
+        if (result.IsSuccess)
+        {
+            return TypedResults.Ok(result.Value);
+        }
+
+        return CreateFailureResult(
+            httpContext,
+            result.Error,
+            "Outsourced Supply Batch close failed.");
+    }
+
+    private static IResult CreateFailureResult(
+        HttpContext httpContext,
+        ApplicationError error,
+        string title)
+    {
+        var statusCode = error.Kind switch
         {
             ApplicationErrorKind.Validation => StatusCodes.Status422UnprocessableEntity,
             ApplicationErrorKind.NotFound => StatusCodes.Status404NotFound,
             ApplicationErrorKind.Conflict => StatusCodes.Status409Conflict,
             ApplicationErrorKind.Forbidden => StatusCodes.Status403Forbidden,
-            _ => throw new ArgumentOutOfRangeException(nameof(result.Error.Kind), result.Error.Kind, "Unsupported application error kind."),
+            _ => throw new ArgumentOutOfRangeException(nameof(error.Kind), error.Kind, "Unsupported application error kind."),
         };
 
         return ApiProblemResults.Create(
             httpContext,
             statusCode,
-            result.Error.Code,
-            "Outsourced Supply Detail confirmation failed.");
+            error.Code,
+            title);
     }
 
     private sealed record CanonicalConfirmOutsourcedSupplyDetailRequest(
         string CommandType,
         ConfirmOutsourcedSupplyDetailCommand Command);
+
+    private sealed record CanonicalCloseOutsourcedSupplyBatchRequest(
+        string CommandType,
+        CloseOutsourcedSupplyBatchCommand Command);
 }
 
 public sealed record ConfirmOutsourcedSupplyDetailRequest(
@@ -103,3 +168,5 @@ public sealed record ConfirmOutsourcedSupplyDetailRequest(
     decimal Quantity,
     decimal UnitPrice,
     Guid? ReceiptStorageLocationId);
+
+public sealed record CloseOutsourcedSupplyBatchRequest(long ExpectedRowVersion);
