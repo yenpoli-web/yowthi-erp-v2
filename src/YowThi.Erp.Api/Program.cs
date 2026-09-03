@@ -2,6 +2,7 @@ using YowThi.Erp.Api.Hosting;
 using YowThi.Erp.Api.Outsourced;
 using YowThi.Erp.Api.Processing;
 using YowThi.Erp.Api.Procurement;
+using YowThi.Erp.Api.Sales;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,6 +18,7 @@ app.MapProcessingEndpoints();
 app.MapProcessingExecutionOptionEndpoints();
 app.MapOutsourcedEndpoints();
 app.MapOutsourcedSupplyDetailOptionEndpoints();
+app.MapSalesEndpoints();
 
 app.Run();
 
