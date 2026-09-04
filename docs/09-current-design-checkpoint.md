@@ -1,6 +1,6 @@
 # Current Design Checkpoint — YowThi ERP V2
 
-Checkpoint status: **v0.1 implementation baseline through P6 V8-C4 complete. Supplier Hard Delete, Customer Hard Delete, Sales Allocation Correction, the ERP Registration / Data Control boundary clarification, and Supplier Soft Delete / Restore are formally implemented and validated. P6 V8 remains IN PROGRESS for additional focused ERP Control slices.**
+Checkpoint status: **v0.1 implementation baseline through P6 V8-C5 complete. Supplier/Customer Hard Delete, Sales Allocation Correction, ERP Registration / Data Control clarification, Supplier lifecycle, and Customer lifecycle are formally implemented and validated. P6 V8 remains IN PROGRESS for remaining focused ERP Control slices.**
 
 Purpose: recover the current architecture and implementation state if conversational context is lost.
 
@@ -10,7 +10,7 @@ Business Rules come only from real YowThi operating facts.
 
 **Do not use Business Rules to unnecessarily constrain ERP data maintenance.** ERP registration of real operations and ERP control of system data/state are different logical concerns.
 
-Authoritative later clarification:
+Authoritative classification:
 - `docs/17-erp-registration-data-control-boundary-v0.1.md`
 
 Application writes are interpreted as:
@@ -37,7 +37,7 @@ Physical Inventory Reconciliation:
 
 Recovery precedence:
 1. Business Discovery / Command Contracts / Business Rule Gap Register for real Business Facts
-2. `docs/17-erp-registration-data-control-boundary-v0.1.md` for Business Fact vs ERP Control classification
+2. `docs/17-erp-registration-data-control-boundary-v0.1.md`
 3. this current checkpoint
 4. `docs/10-relational-model-consolidation-v0.1.md`
 5. `docs/11-ef-core-mapping-architecture-v0.1.md`
@@ -74,7 +74,7 @@ Protected Legacy ERP:
 - UUID v7 internal IDs
 - explicit `row_version bigint`
 - persistent CommandId idempotency
-- transactional Outbox
+- transactional Outbox where applicable
 - append-oriented Audit
 - typed real foreign keys
 - no Generic Repository / generic CRUD / generic command endpoint / generic `(type,id)` lifecycle/correction/hard-delete resolver
@@ -119,6 +119,7 @@ P6    Business / ERP Control vertical slices             IN PROGRESS
       C3 Sales Allocation Correction                     COMPLETE
       ERP Registration / Data Control clarification      COMPLETE
       C4 Supplier Soft Delete / Restore                  COMPLETE
+      C5 Customer Soft Delete / Restore                  COMPLETE
       remaining focused ERP Control slices               IN PROGRESS
 P7    React UI vertical slices                           NOT FORMALLY COMPLETE
 P8    CI / production hardening                          FUTURE
@@ -130,19 +131,24 @@ Do not mark P6 or all of V8 COMPLETE until the remaining required V8 control sco
 
 Formal code baseline immediately before this checkpoint-document commit:
 - `main = origin/main`
-- SHA: `22fd7770445d915fd428591dff3d7d1490911922`
-- commit: `feat: add supplier lifecycle control`
+- SHA: `e22d281e4c1c92bca6d57e6a301e2ea1cacc5cbb`
+- commit: `feat: add customer lifecycle control`
 - promotion: fast-forward only
 - push: non-force
 - remote fetch/read-back: clean
 
+C4 docs checkpoint:
+- commit: `f81cfb97eea4fecdb99a2e556dd746e0dac9ab9c`
+- commit: `docs: checkpoint supplier lifecycle completion`
+- validation branch: `p6-v8-c4-checkpoint-validation`
+- self-hosted run: `33841667574`
+- conclusion: `success`
+- ff-only main promotion complete
+
 ERP Registration / Data Control clarification:
 - commit: `53e9122b440209a9734697dd36a0f104dc59176c`
-- commit message: `docs: separate business facts from erp control`
-- validation branch: `p6-v8-control-boundary-validation`
 - self-hosted run: `33838713391`
 - conclusion: `success`
-- `eligibleForMainFastForward=true`
 
 ## 6. ERP Registration / Data Control boundary — CONFIRMED 2026-09-04
 
@@ -206,8 +212,6 @@ Reclassified on 2026-09-04:
 
 `SALES-003` remains RESOLVED Business Fact history.
 
-Business Rule gaps that still genuinely govern real operating-fact registration remain unchanged.
-
 ## 8. Sales Allocation Correction — V8-C3 COMPLETE
 
 Endpoint:
@@ -269,65 +273,92 @@ Endpoints:
 Capability:
 - `party.supplier.lifecycle`
 
-This capability is an ordinary target-specific ERP lifecycle-control policy. It is separate from and lower in authority than `data-protection.hard-delete`; no business role hierarchy or new authorization persistence was introduced.
+Semantics:
+- Soft Delete keeps the Supplier row and historical typed FKs
+- sets deleted metadata and increments `row_version`
+- preserves `active`
+- current-use Supplier selectors exclude deleted rows
+- historical dependencies do not by themselves block Soft Delete because the row remains for FK/traceability history
+- Restore clears deleted metadata, increments `row_version`, preserves `active`, and does not automatically reactivate an inactive Supplier
 
-Soft Delete semantics:
-- retain Supplier row and historical typed FKs
-- set `deleted_at`
-- set `deleted_by_account_id` from authenticated actor
-- increment `row_version`
-- preserve `active`
-- current-use Supplier selectors exclude soft-deleted rows
-- historical Procurement/Processing/Inventory/Finance references are not cascaded or removed
-- historical dependency does not by itself block Soft Delete because the Supplier row remains for FK/traceability history
+Technical controls:
+- acquire/replay CommandId before current lifecycle/version lookup
+- idempotency/concurrency/state conflicts roll back CommandExecution acquisition and Audit
+- Audit event kind `DATA_LIFECYCLE`, subject `party.supplier`, change kind `SOFT_DELETE` / `RESTORE`
 
-Restore semantics:
-- clear `deleted_at`
-- clear `deleted_by_account_id`
-- increment `row_version`
-- preserve the existing `active` value
-- do not automatically reactivate an inactive Supplier
-- an active restored Supplier re-enters the current Procurement Supplier selector
+Acceptance:
+- Domain 29/29
+- Architecture 66/66
+- API Contract 68/68
+- PostgreSQL Integration 76/76
+- total 239/239 PASS
+- implementation SHA `22fd7770445d915fd428591dff3d7d1490911922`
+- self-hosted run `33840747740` SUCCESS
+
+No relation, schema, model snapshot, or EF migration change.
+
+## 11. Customer lifecycle — V8-C5 COMPLETE
+
+Commands:
+- `SoftDeleteCustomer`
+- `RestoreCustomer`
+
+Endpoints:
+- `POST /api/v1/party/customers/{customerId}/soft-delete`
+- `POST /api/v1/party/customers/{customerId}/restore`
+
+Capability:
+- `party.customer.lifecycle`
+
+Semantics:
+- Soft Delete keeps the Customer row and all historical Sale references
+- sets `deleted_at` / `deleted_by_account_id`
+- increments `row_version`
+- preserves `active`
+- does not cascade/delete `sales.sales.customer_id` history
+- an existing Sale dependency does **not** block Soft Delete because Customer remains present for FK/traceability history
+- Restore clears deleted metadata, increments `row_version`, and preserves the existing `active` value
+- Restore does not automatically reactivate an inactive Customer
 
 Idempotency/concurrency:
 - acquire/replay CommandId before current lifecycle/version lookup
 - same actor + command type + canonical hash replays committed result
 - changed actor/type/hash → `idempotency.key-reused`
 - stale expected row version → `concurrency.stale-row-version`
-- already deleted Soft Delete → `party.supplier-already-deleted`
-- Restore of a current Supplier → `party.supplier-not-deleted`
+- already deleted Soft Delete → `party.customer-already-deleted`
+- Restore of a current Customer → `party.customer-not-deleted`
 - failed state/concurrency attempts roll back CommandExecution acquisition and Audit
 
 Audit:
 - event kind `DATA_LIFECYCLE`
-- subject kind `party.supplier`
-- subject change kind `SOFT_DELETE` or `RESTORE`
+- subject kind `party.customer`
+- subject change kind `SOFT_DELETE` / `RESTORE`
 - before/after row versions retained
 
-C4 local acceptance:
+C5 local acceptance:
 - Domain: 29/29 PASS
 - Architecture: 66/66 PASS
-- API Contract: 68/68 PASS
-- PostgreSQL Integration: 76/76 PASS
-- total: **239/239 PASS**
-- focused test-project builds: 0 warnings / 0 errors
+- API Contract: 71/71 PASS
+- PostgreSQL Integration: 79/79 PASS
+- total: **245/245 PASS**
+- focused project builds: 0 warnings / 0 errors
 - full Release solution build: 0 errors; only the known solution custom-output `NETSDK1194` warning
 
-C4 formal implementation evidence:
-- branch: `p6-v8-supplier-lifecycle-validation`
-- exact SHA: `22fd7770445d915fd428591dff3d7d1490911922`
-- commit: `feat: add supplier lifecycle control`
+C5 formal implementation evidence:
+- branch: `p6-v8-customer-lifecycle-validation`
+- exact SHA: `e22d281e4c1c92bca6d57e6a301e2ea1cacc5cbb`
+- commit: `feat: add customer lifecycle control`
 - workflow: `dotnet.yml` / `dotnet-self-hosted`
-- run: `33840747740`
+- run: `33842998109`
 - runner: `YowThi-ERP-V2`
 - required labels: `self-hosted`, `yowthi-erp-v2`
 - conclusion: `success`
 - `eligibleForMainFastForward=true`
 - ff-only main promotion + non-force push/read-back: COMPLETE
 
-C4 introduced no relation, schema, model snapshot, or EF migration change.
+C5 introduced no relation, schema, model snapshot, or EF migration change.
 
-## 11. Finance correction baseline
+## 12. Finance correction baseline
 
 Finance truth/projection remains:
 
@@ -348,7 +379,7 @@ If money actually moves again, record the new real Finance Business Fact.
 
 `FIN-003` / `FIN-005` are implementation/control design items, not Business Rule hard gates.
 
-## 12. Closed Batch Reopen baseline
+## 13. Closed Batch Reopen baseline
 
 Reopen is an ERP lifecycle control.
 
@@ -365,7 +396,7 @@ Physical inventory mismatch after operational history is handled through stockta
 
 `LIFE-001` is an implementation/control item, not a Business Rule hard gate.
 
-## 13. AuthN/AuthZ interpretation
+## 14. AuthN/AuthZ interpretation
 
 Capability policies are technical ERP Control / security identifiers, not Business Rules.
 
@@ -375,13 +406,14 @@ Current examples include:
 - `finance.pay`
 - `inventory.adjust`
 - `party.supplier.lifecycle`
+- `party.customer.lifecycle`
 - `data-protection.hard-delete`
 
 Capability grants remain deployment-configured by persistent Account UUID.
 
 `data-protection.hard-delete` remains highest authority and must not be reused for ordinary lifecycle/data correction.
 
-## 14. React/UI baseline
+## 15. React/UI baseline
 
 One React application:
 - `src/YowThi.Erp.Web`
@@ -398,7 +430,7 @@ Implemented routes currently include:
 
 The complete ERP UI is not finished. Broad formal UI sequencing remains P7 after required backend/control slices are stable.
 
-## 15. Remaining V8 sequencing
+## 16. Remaining V8 sequencing
 
 The old Business Rule hard gates for Finance correction and Batch Reopen are removed by docs/17. Remaining work should proceed as focused, target-specific ERP Control slices rather than reopening business-mode questions that are merely data-maintenance concerns.
 
@@ -412,7 +444,7 @@ Do not introduce a generic lifecycle/correction resolver to accelerate this sequ
 
 P6 V8 remains **IN PROGRESS** until the required remaining control scope is implemented or explicitly deferred.
 
-## 16. Validation / cost governance
+## 17. Validation / cost governance
 
 Routine validation uses only the Windows self-hosted runner.
 
@@ -426,18 +458,20 @@ Use ff-only promotion and non-force push.
 
 Do not require routine GitHub-hosted runners, paid/larger runners, Codespaces, or unconfirmed metered services.
 
-## 17. Recovery
+## 18. Recovery
 
 ```text
-main@22fd7770445d915fd428591dff3d7d1490911922
+main@e22d281e4c1c92bca6d57e6a301e2ea1cacc5cbb
 → V8-C1 Supplier Hard Delete COMPLETE
 → V8-C2 Customer Hard Delete COMPLETE
 → V8-C3 Sales Allocation Correction COMPLETE
 → ERP Registration / Data Control boundary COMPLETE
 → FIN-003 / FIN-005 / LIFE-001 classified as CONTROL
 → V8-C4 Supplier Soft Delete / Restore COMPLETE
-→ local C4 hard gates 239/239 PASS
-→ C4 self-hosted run 33840747740 SUCCESS
-→ C4 ff-only main promotion + non-force push/read-back COMPLETE
-→ current docs checkpoint branch: p6-v8-c4-checkpoint-validation
+→ C4 docs checkpoint f81cfb97eea4fecdb99a2e556dd746e0dac9ab9c COMPLETE
+→ V8-C5 Customer Soft Delete / Restore COMPLETE
+→ local C5 hard gates 245/245 PASS
+→ C5 self-hosted run 33842998109 SUCCESS
+→ C5 ff-only main promotion + non-force push/read-back COMPLETE
+→ current docs checkpoint branch: p6-v8-c5-checkpoint-validation
 ```

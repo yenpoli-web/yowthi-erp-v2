@@ -259,12 +259,17 @@ Current examples include:
 - `finance.pay`
 - `inventory.adjust`
 - `party.supplier.lifecycle`
+- `party.customer.lifecycle`
 - `data-protection.hard-delete`
 
 Capability names are technical authorization policy identifiers around explicit Application operations.
 They do not define a YowThi job-title or role hierarchy.
 
-`party.supplier.lifecycle` is the ordinary target-specific ERP lifecycle capability used by V8-C4 Supplier Soft Delete / Restore. It does not imply permission for physical deletion.
+`party.supplier.lifecycle` is the ordinary target-specific ERP lifecycle capability used by V8-C4 Supplier Soft Delete / Restore.
+
+`party.customer.lifecycle` is the ordinary target-specific ERP lifecycle capability used by V8-C5 Customer Soft Delete / Restore.
+
+Neither ordinary lifecycle capability implies permission for physical deletion.
 
 ## 15. Capability assignment v0.1
 
@@ -281,6 +286,9 @@ finance.pay
   → account UUID A
 
 party.supplier.lifecycle
+  → account UUID B
+
+party.customer.lifecycle
   → account UUID B
 ```
 
@@ -309,7 +317,7 @@ It does not invent a `SuperAdmin` role.
 
 Who receives this capability is a controlled security configuration decision, not a new Business Rule encoded in the domain model.
 
-`data-protection.hard-delete` is deliberately separate from ordinary lifecycle capabilities such as `party.supplier.lifecycle`. Possession of an ordinary Soft Delete / Restore capability must not imply Hard Delete authority, and Hard Delete authority must not be reused as the normal lifecycle permission.
+`data-protection.hard-delete` is deliberately separate from ordinary lifecycle capabilities such as `party.supplier.lifecycle` and `party.customer.lifecycle`. Possession of an ordinary Soft Delete / Restore capability must not imply Hard Delete authority, and Hard Delete authority must not be reused as the normal lifecycle permission.
 
 ## 17. Authentication token storage
 
@@ -446,22 +454,25 @@ P3.5 is complete when:
 
 After that, `InitialV01` is no longer blocked by AuthN/AuthZ architecture and the project may enter P4.
 
-## 27. V8-C4 lifecycle capability confirmation — 2026-09-04
+## 27. V8 lifecycle capability confirmations — 2026-09-04
 
-Supplier Soft Delete / Restore formally validates the ordinary ERP lifecycle authorization boundary:
+Ordinary ERP lifecycle authorization is target-specific:
 
 ```text
 party.supplier.lifecycle
+party.customer.lifecycle
 ```
 
-The capability controls only the target-specific Supplier Soft Delete / Restore operations implemented by V8-C4.
+Confirmed operations:
+- `party.supplier.lifecycle` → V8-C4 Supplier Soft Delete / Restore
+- `party.customer.lifecycle` → V8-C5 Customer Soft Delete / Restore
 
 Confirmed security consequences:
 - capability grants remain deployment-configured by persistent Account UUID
 - no `roles`, `permissions`, `account_roles`, or other new authorization relations are introduced
 - no YowThi business-role hierarchy is inferred
-- `party.supplier.lifecycle` does not grant Hard Delete
+- neither ordinary lifecycle capability grants Hard Delete
 - `data-protection.hard-delete` remains the separate highest-authority physical-delete capability
 - future target-specific lifecycle/correction capabilities may follow the same technical pattern without being treated as Business Rules
 
-V8-C4 therefore requires no AuthN/AuthZ persistence revision and no EF migration.
+V8-C4 and V8-C5 therefore require no AuthN/AuthZ persistence revision and no EF migration.

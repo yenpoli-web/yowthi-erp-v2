@@ -37,6 +37,8 @@ Examples of ERP Control Commands:
 - `CorrectSalesAllocation`
 - `SoftDeleteSupplier`
 - `RestoreSupplier`
+- `SoftDeleteCustomer`
+- `RestoreCustomer`
 - target-specific data correction
 - target-specific Reopen
 - target-specific Hard Delete under Data Protection
@@ -350,6 +352,59 @@ Audit:
 - before/after row versions are retained
 
 V8-C4 requires no relation, schema, snapshot, or EF migration change.
+
+### Customer lifecycle — V8-C5 COMPLETE
+
+Commands:
+- `SoftDeleteCustomer`
+- `RestoreCustomer`
+
+Routes:
+- `POST /api/v1/party/customers/{customerId}/soft-delete`
+- `POST /api/v1/party/customers/{customerId}/restore`
+
+Capability:
+- `party.customer.lifecycle`
+
+Shared input:
+- Customer
+- Expected Customer Row Version
+- Command Identity
+
+`SoftDeleteCustomer`:
+- sets `deleted_at`
+- sets `deleted_by_account_id` from the authenticated actor
+- increments Customer `row_version`
+- preserves `active`
+- does not physically delete the Customer
+- does not cascade/delete historical `sales.sales.customer_id` references
+
+An existing Sale dependency does not by itself block Soft Delete because the Customer row remains available for FK/traceability history. This differs deliberately from Customer Hard Delete, where a Sale dependency blocks physical deletion.
+
+`RestoreCustomer`:
+- clears `deleted_at`
+- clears `deleted_by_account_id`
+- increments Customer `row_version`
+- preserves the existing `active` value
+- does not automatically reactivate an inactive Customer
+
+Lifecycle technical controls:
+- replay/CommandId acquisition occurs before current lifecycle/version lookup
+- same actor + command type + canonical hash replays the committed result
+- changed actor/type/hash conflicts with `idempotency.key-reused`
+- stale expected row version conflicts with `concurrency.stale-row-version`
+- Soft Delete of an already deleted Customer conflicts with `party.customer-already-deleted`
+- Restore of a current/non-deleted Customer conflicts with `party.customer-not-deleted`
+- failed state/concurrency attempts roll back CommandExecution acquisition and Audit
+
+Audit:
+- event kind = `DATA_LIFECYCLE`
+- subject kind = `party.customer`
+- Soft Delete subject change kind = `SOFT_DELETE`
+- Restore subject change kind = `RESTORE`
+- before/after row versions are retained
+
+V8-C5 requires no relation, schema, snapshot, or EF migration change.
 
 ## Correction / control framework
 
