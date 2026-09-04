@@ -2,13 +2,26 @@
 
 ## Command design principle
 
-Commands express business intent, not CRUD.
+Application writes express **explicit application intent**, not generic CRUD.
 
-Examples:
+There are two command families:
+
+```text
+Application Write Command
+├─ Business Fact Command
+└─ ERP Control Command
+```
+
+Business Fact Commands register a real YowThi operation or result and may only encode Business Rules supported by real operating facts.
+
+ERP Control Commands maintain the ERP record/state because an authorized operator needs a correction or lifecycle change. They do not require inventing a new Business Rule merely to justify the database mutation, but they remain target-specific and must preserve authorization, idempotency, concurrency, dependency protection, Audit, and transaction safety.
+
+The later boundary decision is `docs/17-erp-registration-data-control-boundary-v0.1.md`.
+
+Examples of Business Fact Commands:
 - `ConfirmProcurementEntry`
 - `ConfirmProcessingExecution`
 - `ConfirmSales`
-- `CorrectSalesAllocation`
 - `ConfirmOutsourcedSupplyDetail`
 - `RecordSalesPackagingWork`
 - `ConfirmEmployeeDailyWage`
@@ -20,7 +33,14 @@ Examples:
 - `CloseProcurementBatch`
 - `CloseOutsourcedSupplyBatch`
 
-Core business writes are atomic in one PostgreSQL transaction.
+Examples of ERP Control Commands:
+- `CorrectSalesAllocation`
+- target-specific data correction
+- target-specific Soft Delete / Restore
+- target-specific Reopen
+- target-specific Hard Delete under Data Protection
+
+Core persisted writes are atomic in one PostgreSQL transaction where the command spans multiple affected facts/projections.
 
 ## ConfirmProcurementEntry
 
@@ -190,6 +210,21 @@ Must not:
 - rewrite Inventory
 - rewrite previous Payments
 
+## Finance data correction
+
+If a registered Payment / Receipt / Adjustment is wrong, correction is an ERP Control operation rather than a requirement to fabricate another business event.
+
+A target-specific Finance correction may:
+- amend the wrongly registered value/state
+- re-evaluate/rebuild the applicable Outstanding projection transactionally
+- use expected row-version / Outstanding concurrency protection
+- retain Audit before/after evidence
+- use persistent idempotency
+
+If money actually moves again in reality, that is a new Finance Business Fact and must be recorded as a new transaction rather than hidden inside a data correction.
+
+`FIN-003` and `FIN-005` therefore no longer block implementation as Business Rule gaps; their remaining work is target-specific ERP Control contract/implementation design.
+
 ## TransferInventory
 
 Same:
@@ -209,7 +244,11 @@ Atomic:
 
 Creates explicit `ADJUSTMENT` movement.
 Never directly updates balance.
-Must include business context/reason.
+Must include operational context/reason.
+
+Inventory Adjustment / stocktake is also the normal reconciliation mechanism when physical stock differs from ERP stock because of shrinkage, damage, weighing variance, handling loss, spoilage, missing stock, or other real-world discrepancy.
+
+Do not rewrite unrelated historical Procurement / Processing / Sales / Batch movements solely to make ERP inventory equal a later physical count.
 
 ## CloseProcurementBatch
 
@@ -230,23 +269,57 @@ Precondition:
 No reconciliation.
 Mark Closed.
 
-## Correction Framework
+## ERP lifecycle control
 
-Decision:
+Soft Delete, Restore, Activate/Deactivate, and Reopen are ERP Control operations.
+
+They do not require a new Business Rule for each target merely because an ERP state changes.
+
+Target-specific lifecycle commands still require:
+- authenticated actor
+- explicit capability authorization
+- target-specific route/command
+- Idempotency Key
+- expected row version where applicable
+- structural/dependency safety
+- Audit
+
+Restore removes the soft-deleted state; it does not automatically force `active = true`.
+
+Reopen makes the ERP object available for applicable operations again. Reopen does not erase prior Audit or rewrite immutable ledger history.
+
+For Closed Batch Reopen specifically:
+- do not delete prior Close Audit
+- do not delete prior `BATCH_RECONCILIATION` movements
+- do not reconstruct an imagined pre-close physical stock state
+- physical stock discrepancy is handled by stocktake / `AdjustInventory`
+
+`LIFE-001` therefore no longer blocks implementation as a Business Rule gap; its remaining work is lifecycle-control implementation and technical concurrency/Audit behavior.
+
+## Correction / control framework
+
+The older correction decision vocabulary remains useful where applicable:
 - `ALLOW_DIRECT_AMENDMENT`
 - `ALLOW_WITH_COMPENSATION`
 - `BLOCK`
 
-All confirmed-transaction corrections require:
-- dependency assessment
-- revalidation inside transaction
-- owning domain decision
-- compensating facts if required
-- audit
+But the decision is now interpreted according to the registration/control boundary:
+
+- **ERP registration error** → target-specific ERP Control correction may directly amend the registered fact when structurally safe, with Audit and affected projection rebuild.
+- **real later-world event** → record a new Business Fact; do not rewrite the earlier real event away.
+- **append-oriented technical history** → keep it append-oriented where already architected; do not rewrite immutable Inventory Movement history.
+
+All persisted corrections/control mutations require the applicable technical safeguards:
+- dependency/structural assessment
+- transaction-time revalidation
+- concurrency protection
+- Audit
 - idempotency
 - atomic commit
+- projection rebuild/update when applicable
 
 No generic Update Any Entity.
+No generic JSON Patch correction.
 No silent cascade correction.
 No generic Undo.
-No hard delete as correction.
+No Hard Delete masquerading as ordinary correction.

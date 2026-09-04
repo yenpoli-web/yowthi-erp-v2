@@ -1,23 +1,51 @@
 # Current Design Checkpoint — YowThi ERP V2
 
-Checkpoint status: **v0.1 implementation baseline through P6 V8 partial — Supplier Hard Delete, Customer Hard Delete, and Sales Allocation Correction are complete. P6 V8 remains IN PROGRESS because the remaining lifecycle / additional hard-delete / Finance correction work is still behind explicit Business Fact or security-architecture gates.**
+Checkpoint status: **v0.1 implementation baseline through P6 V8-C3 complete. The ERP Registration / Data Control boundary was formally clarified on 2026-09-04; previously blocked lifecycle / Finance correction / Reopen work may now proceed as ERP Control slices rather than being constrained by invented Business Rules.**
 
 Purpose: recover the current architecture and implementation state if conversational context is lost.
 
 ## 1. Highest-authority rules
 
-Business Rules come only from real YowThi operating facts. Technical convenience must not create a Business Rule.
+Business Rules come only from real YowThi operating facts.
+
+**Do not use Business Rules to unnecessarily constrain ERP data maintenance.** ERP registration of real operations and ERP control of system data/state are different logical concerns.
+
+Later clarification:
+- `docs/17-erp-registration-data-control-boundary-v0.1.md`
+
+Application writes are interpreted as:
+
+```text
+Application Write Command
+├─ Business Fact Command
+└─ ERP Control Command
+```
+
+Business Fact Command:
+- records an operation/result that actually happened
+- Business Rules must come from real YowThi facts
+
+ERP Control Command:
+- corrects or maintains ERP data/state because an authorized operator needs a system change
+- does not require inventing a Business Rule merely to justify the mutation
+- remains target-specific and technically controlled
+
+Physical Inventory Reconciliation:
+- physical stock may differ because of shrinkage, damage, weighing variance, handling loss, spoilage, missing stock, or other real-world discrepancy
+- reconcile through stocktake / `AdjustInventory`
+- do not rewrite unrelated historical business movements solely to force inventory to equal a later physical count
 
 Recovery precedence:
-1. Business Discovery / Command Contracts / Business Rule Gap Register / owning-domain facts
-2. this current checkpoint
-3. `docs/10-relational-model-consolidation-v0.1.md`
-4. `docs/11-ef-core-mapping-architecture-v0.1.md`
-5. `docs/12-rest-api-architecture-v0.1.md`
-6. `docs/13-implementation-sequencing-build-plan-v0.1.md`
-7. `docs/14-github-cost-governance-v0.1.md`
-8. `docs/15-authn-authz-implementation-architecture-v0.1.md`
-9. `docs/16-adaptive-web-ui-architecture-v0.1.md` and applicable ADRs
+1. Business Discovery / Command Contracts / Business Rule Gap Register for real Business Facts
+2. `docs/17-erp-registration-data-control-boundary-v0.1.md` for Business Fact vs ERP Control classification
+3. this current checkpoint
+4. `docs/10-relational-model-consolidation-v0.1.md`
+5. `docs/11-ef-core-mapping-architecture-v0.1.md`
+6. `docs/12-rest-api-architecture-v0.1.md`, interpreted through docs/17 where older wording labels every persisted write as a Business Write
+7. `docs/13-implementation-sequencing-build-plan-v0.1.md`
+8. `docs/14-github-cost-governance-v0.1.md`
+9. `docs/15-authn-authz-implementation-architecture-v0.1.md`
+10. `docs/16-adaptive-web-ui-architecture-v0.1.md` and applicable ADRs
 
 Earlier PostgreSQL Schema Parts remain design history. `docs/10` is the consolidated relational baseline when relational details conflict.
 
@@ -49,9 +77,9 @@ Protected Legacy ERP:
 - transactional Outbox
 - append-oriented Audit
 - typed real foreign keys
-- no Generic Repository / generic CRUD / generic command endpoint / generic hard-delete resolver
+- no Generic Repository / generic CRUD / generic command endpoint / generic `(type,id)` lifecycle/correction/hard-delete resolver
 
-Persistence invariants remain:
+Persistence invariants:
 - Inventory Movement is append-oriented ledger truth
 - Inventory Position is a transactional rebuildable projection
 - Inventory Position logical identity uses typed nullable dimensions and PostgreSQL `UNIQUE NULLS NOT DISTINCT`
@@ -60,14 +88,14 @@ Persistence invariants remain:
 - no Npgsql `xmin` substitution for row version
 - migration architecture never reverse-defines the domain model
 
-`InitialV01` remains:
+`InitialV01`:
 - migration: `20260828033151_InitialV01`
 - development PostgreSQL endpoint: `127.0.0.1:55432/yowthi_dev`
 - accepted PostgreSQL version: 18.6
 - P5 status: 1 applied / 0 pending
 - migration-state fingerprint: `9645A93DBC1642819210DFA99904A81776AF0CBE0116458945409A9611889E6E`
 
-## 4. Completed implementation phases
+## 4. Phase status
 
 ```text
 P0    Repository / solution scaffolding                  COMPLETE
@@ -77,7 +105,7 @@ P3    API technical shell                                COMPLETE
 P3.5  AuthN/AuthZ architecture hard gate                 COMPLETE
 P4    InitialV01 generation / static review              COMPLETE
 P5    PostgreSQL 18 persistence acceptance               COMPLETE
-P6    Business vertical slices                           IN PROGRESS
+P6    Business / ERP Control vertical slices             IN PROGRESS
   V1  ConfirmProcurementEntry                            COMPLETE
   V2  ConfirmOutsourcedSupplyDetail                      COMPLETE
   V3  ConfirmProcessingExecution                         COMPLETE
@@ -89,346 +117,298 @@ P6    Business vertical slices                           IN PROGRESS
       C1 Supplier Hard Delete                            COMPLETE
       C2 Customer Hard Delete                            COMPLETE
       C3 Sales Allocation Correction                     COMPLETE
-      remaining lifecycle / targets / finance            HARD GATE
+      control-boundary clarification                     CURRENT VALIDATION SLICE
+      C4 Supplier Soft Delete / Restore                  NEXT IMPLEMENTATION SLICE
 P7    React UI vertical slices                           NOT FORMALLY COMPLETE
 P8    CI / production hardening                          FUTURE
 ```
 
-Do not mark P6 or all of V8 COMPLETE until the remaining V8 set is implemented or explicitly deferred by a formal decision.
+Do not mark P6 or all of V8 COMPLETE until the remaining required V8 control slices are implemented or formally deferred.
 
-## 5. Current formal Git baseline and V8-C3 evidence
+## 5. Current formal Git baseline
 
-Formal implementation baseline immediately before this checkpoint-document commit:
+Formal baseline before the current control-boundary validation branch:
 - `main = origin/main`
-- SHA: `e5b92dcc8283f6f1f59e4452fc582718236e5a77`
-- commit: `feat: add sales allocation correction command`
-- promotion method: fast-forward only
+- SHA: `83318eceb514315cf4dcc173b6866d77403e9347`
+- commit: `docs: finalize sales allocation correction checkpoint`
+- promotion: fast-forward only
 - push: non-force
-- working tree: clean after remote fetch/read-back
+- working tree: clean
 
-V8-C3 validation branch:
-- `p6-v8-sales-allocation-correction-validation`
-- exact validated SHA: `e5b92dcc8283f6f1f59e4452fc582718236e5a77`
+V8-C3 implementation commit:
+- `e5b92dcc8283f6f1f59e4452fc582718236e5a77`
+- `feat: add sales allocation correction command`
 
-Local acceptance evidence:
-- Domain: 29 / 29 PASS
-- Architecture: 66 / 66 PASS
-- API Contract: 65 / 65 PASS
-- PostgreSQL Integration: 73 / 73 PASS
-- total: **233 / 233 PASS**
-- focused project builds: 0 warnings / 0 errors
-- full Release solution build: 0 errors
-- solution-level custom-output build only emitted the known `NETSDK1194` warning caused by applying one output directory to a solution
+V8-C3 local acceptance:
+- Domain 29/29 PASS
+- Architecture 66/66 PASS
+- API Contract 65/65 PASS
+- PostgreSQL Integration 73/73 PASS
+- total 233/233 PASS
 
-Self-hosted validation evidence:
-- workflow: `dotnet.yml` / `dotnet-self-hosted`
-- run ID: `33828986488`
-- head SHA: `e5b92dcc8283f6f1f59e4452fc582718236e5a77`
-- event: `push`
-- status: `completed`
-- conclusion: `success`
-- job: `build-test`
-- runner: `YowThi-ERP-V2`
-- required labels: `self-hosted`, `yowthi-erp-v2`
-- required labels present: true
+V8-C3 self-hosted evidence:
+- run `33828986488`
+- exact SHA `e5b92dcc8283f6f1f59e4452fc582718236e5a77`
+- runner `YowThi-ERP-V2`
+- labels `self-hosted`, `yowthi-erp-v2`
+- conclusion `success`
 - `eligibleForMainFastForward=true`
 
-V8-C3 introduced no relation, schema, snapshot, or EF migration change.
+C3 checkpoint docs validation:
+- commit `83318eceb514315cf4dcc173b6866d77403e9347`
+- run `33831020391`
+- conclusion `success`
+- `main = origin/main = 83318eceb514315cf4dcc173b6866d77403e9347`
 
-## 6. Source-batch / processing baseline
+## 6. ERP Registration / Data Control boundary — CONFIRMED 2026-09-04
 
-IN_HOUSE batch identity:
-- Procurement Batch = same Procurement Date + same Procurement Product
+Authoritative later decision:
+- `docs/17-erp-registration-data-control-boundary-v0.1.md`
 
-OUTSOURCED batch identity:
-- Outsourced Supply Batch = same Supply Date + same Outsourced Vendor
-- Product is not part of Outsourced Supply Batch identity
+### 6.1 Business Fact Registration
 
-Processing modes remain:
-- `SOURCE_TRACKED`
-- `POOLED_OUTPUT`
-- `FINAL_PACKAGING`
+Examples:
+- Procurement
+- Processing
+- Sales
+- Payment
+- Receipt
+- Employee Work
 
-Final Packaging may consume source into negative inventory under the confirmed mode semantics. Packaging Weight and Sales Weight remain distinct.
+When these operations are registered, Business Rules must represent real YowThi operating facts.
 
-## 7. Inventory / Batch lifecycle baseline
+If reality later contains another event, register another Business Fact.
 
-Inventory identity dimensions:
-- Origin
-- Source Batch
-- Inventory Object
-- Storage Location
-- optional Raw Source Segment
+### 6.2 ERP Data Control / Maintenance
 
-Relevant movement types include receipts, processing consume/produce, final-package consume/produce, transfers, `SALES_ISSUE`, `SALES_ALLOCATION_ADJUSTMENT`, manual adjustment, and batch reconciliation.
+Examples:
+- correction of wrongly entered data
+- Soft Delete
+- Restore
+- Activate / Deactivate
+- Reopen
+- Hard Delete under Data Protection
 
-Batch lifecycle concurrency protection:
-- `TransferInventory`, `AdjustInventory`, and `ConfirmProcessingExecution` use the shared Batch lifecycle guard
-- shared writer lock uses PostgreSQL `FOR SHARE`
-- Batch Close uses a conflicting exclusive lifecycle lock/update
-- Closed/deleted Batch rejects later inventory/processing writes
-- Close never silently reopens a Batch
+These do not require a separate Business Rule merely to permit an ERP state/data change.
 
-Procurement Close:
-- sellable inventory must be zero
-- remaining nonzero positions are reconciled with `BATCH_RECONCILIATION = -current balance`
-- whole batch positions must then be zero
-- mark Closed
+They still require the applicable technical controls:
+- authenticated actor
+- explicit capability authorization
+- target-specific endpoint/command
+- Idempotency Key
+- expected row version where applicable
+- structural/dependency safety
+- Audit
+- transaction/projection consistency
 
-Outsourced Close:
-- sellable inventory must be zero
-- no Procurement-style reconciliation
-- mark Closed
+No generic CRUD is introduced.
 
-Still unresolved:
-- BATCH-001 automatic vs user-confirmed Close
-- LIFE-001 Closed Batch reopen
+### 6.3 Registration error vs later real event
 
-## 8. Sales baseline
+If ERP registration is wrong:
+- correct the registered fact through an ERP Control command
+- Audit before/after
+- rebuild/update affected projection transactionally
 
-Sales Header:
-- Sales Date + Customer
+If reality later contains another real event:
+- record the new Business Fact
+- do not rewrite the earlier real event away
 
-Sales Detail includes Sales Product, quantity, pricing basis snapshot, Sales Weight snapshot when applicable, Unit Price, and amount.
+Example:
+- wrong Payment amount entered → Finance Data Correction
+- real later Refund/payment movement → new Finance Business Fact
 
-Allocation priority v0.1:
-1. OUTSOURCED oldest → newest
-2. IN_HOUSE oldest → newest
-3. authorized manual override
+### 6.4 Inventory reality
 
-Confirmed Sales atomically creates:
-- Allocation Revision 0
-- immutable Allocation Revision Items
-- pointer-only current `sales_allocations`
-- `SALES_ISSUE`
-- Receivable
+Physical stock is not assumed to be perfectly determined by historical ERP transactions.
 
-### SALES-003 — RESOLVED 2026-09-04
+Physical discrepancy is reconciled through stocktake / `AdjustInventory`.
 
-Confirmed Sales Allocation correction supports two explicit operating modes. The caller selects the mode; the system does not infer it.
+Do not invent reversal Business Facts or rewrite unrelated historical transactions solely to solve physical inventory mismatch.
 
-`COMPLETE_REPLACEMENT`:
-- user submits the complete official replacement allocation set
-- each Sales Detail submitted total must equal its Sales Detail quantity
-- no automatic remainder allocation occurs
+## 7. Business Rule Gap Register classification
 
-`OVERRIDE_AND_REALLOCATE`:
-- explicit user overrides are applied first
-- remaining quantity is allocated using the established priority: OUTSOURCED oldest→newest, then IN_HOUSE oldest→newest
+`docs/06-business-rule-gap-register-v0.1.md` now includes `CONTROL`.
 
-### V8-C3 — CorrectSalesAllocation COMPLETE
+`CONTROL` means:
+- ERP Data Control / maintenance concern
+- not a Business Rule blocker
+- implementation governed by technical safety and authorization
+
+Reclassified on 2026-09-04:
+- `FIN-003` → CONTROL
+- `FIN-005` → CONTROL
+- `LIFE-001` → CONTROL
+
+`SALES-003` remains RESOLVED Business Fact history.
+
+Business Rule gaps that still genuinely govern real operating-fact registration remain unchanged, including PROC / PROCESS / OUT / SALES location / BATCH automatic-close / LABOR / FIN settlement and Transport facts where applicable.
+
+## 8. Sales Allocation Correction — V8-C3 COMPLETE
 
 Endpoint:
 - `POST /api/v1/sales/{salesId}/allocation-revisions`
 
-Operation-specific capability policy:
+Capability:
 - `sales.correct-allocation`
 
-Authorization remains capability-based and deployment-configured by Account UUID. This policy does not create a business role hierarchy or new authorization persistence.
+Modes:
+- `COMPLETE_REPLACEMENT`
+- `OVERRIDE_AND_REALLOCATE`
 
-Correction semantics:
-- only CONFIRMED Sales can be corrected by this command
-- append next immutable Allocation Revision + Revision Items
-- replace only current `sales_allocations` pointers
-- compare old official allocation with new official allocation
-- create `SALES_ALLOCATION_ADJUSTMENT` movements only for actual net position deltas
+Persistence/control semantics:
+- append immutable Allocation Revision + Items
+- replace current allocation pointers
+- `SALES_ALLOCATION_ADJUSTMENT` only for net allocation delta
 - update Inventory Positions transactionally
 - increment Sales row version
-- never rewrite prior `SALES_ISSUE` or other movement history
-- persistent CommandId replay/conflict handling
-- correction Audit + correction lineage
+- correction Audit + `audit.correction_links`
+- persistent idempotency
 - transactional Outbox
-
-Audit semantics:
-- Audit event kind = `CORRECTION`
-- changed subject = Sales row
-- subject `change_kind` = existing controlled value `UPDATE`
-- `audit.correction_links.correction_mode = COMPENSATION`
-
-Lifecycle invariant:
-- correction must not silently reopen a Closed/deleted source Batch
-- if correction requires a nonzero inventory delta on a Closed/deleted source Batch, block it
-- unchanged allocation on a closed source does not create an artificial movement
-
-SALES-001 remains unresolved: ambiguous Storage Location for one source batch still requires explicit resolution; C3 does not invent a location-selection Business Rule.
+- no rewrite of prior `SALES_ISSUE` / Inventory Movement history
 
 ## 9. Hard Delete baseline
 
-Hard Delete remains:
-- highest-authority data-protection boundary
-- target-specific command / route only
-- dependency assessment by owning-domain knowledge
-- no silent cascade across core traceability
-- physical deletion with retained same-transaction `HARD_DELETE` Audit
-- replay resolved from CommandExecution before current target lookup
+Hard Delete remains the highest-authority Data Protection operation.
 
-### V8-C1 Supplier Hard Delete — COMPLETE
-
-Endpoint:
-- `POST /api/v1/data-protection/suppliers/{supplierId}/hard-delete`
-
-Capability:
+It is controlled by:
+- explicit target support
+- dependency closure
 - `data-protection.hard-delete`
+- expected row version where applicable
+- retained same-transaction `HARD_DELETE` Audit
+- replay before target lookup
 
-Dependency closure checks Supplier references in Procurement Entry, SOURCE_TRACKED Processing, raw Supplier Inventory lineage, and Procurement Supplier Payable. Any dependency blocks physical deletion.
+Completed targets:
+- Supplier — V8-C1 COMPLETE
+- Customer — V8-C2 COMPLETE
 
-### V8-C2 Customer Hard Delete — COMPLETE
+Additional Hard Delete targets no longer need a Business Rule merely to be considered. They still require target-specific structural dependency closure before physical deletion is implemented.
 
-Endpoint:
-- `POST /api/v1/data-protection/customers/{customerId}/hard-delete`
+No generic `/data-protection/entities/{type}/{id}` endpoint.
 
-Capability:
-- `data-protection.hard-delete`
+## 10. Finance correction baseline after control-boundary clarification
 
-Direct typed-FK dependency is `sales.sales.customer_id`. Any Sale blocks physical deletion.
+Finance truth/projection remains:
 
-Do not infer Hard Delete support for Farmer, Employee, Outsourced Vendor, product/configuration, transactions, or other entities. Each target requires explicit support and dependency closure.
+```text
+Original Obligation + Adjustments - Settlements = Outstanding
+```
 
-## 10. Finance / Labor baseline
+If Payment / Receipt / Adjustment registration is wrong:
+- target-specific correction may amend the wrongly registered data
+- re-evaluate/rebuild affected Outstanding transactionally
+- preserve concurrency protection
+- Audit before/after
+- idempotency
 
-Labor:
-- Processing Execution + Sales Packaging Work → Employee Daily Wage → Employee Payable → Payment
-- Daily Wage aggregates quantity before applying the wage rate
-- Sales Packaging/Handling is day-rate in v0.1
-- HANDLING-001 resolved 2026-09-03: handling work may be recorded while Sales is DRAFT or CONFIRMED
-- LABOR-001 late work after confirmed Daily Wage remains unresolved
+Do not fabricate a fake reversal business event merely to justify correcting an ERP registration error.
 
-Finance:
-- Original Obligation + Adjustments - Settlements = Outstanding
-- obligations / adjustments / settlements are truth
-- Outstanding is a rebuildable transactional projection
-- partial settlements are supported
-- Supplier quality/weight deduction is a Payable Adjustment and never rewrites Procurement
-- no generic edit/delete of confirmed Finance facts
+If money actually moves again, record the new real Finance Business Fact.
 
-FIN-003 Payment/Receipt correction and FIN-005 adjustment correction/reversal remain unresolved. Do not expose generic reversal/edit/delete APIs.
+`FIN-003` / `FIN-005` are therefore implementation/control design items, not Business Rule hard gates.
 
-## 11. AuthN/AuthZ baseline
+## 11. Closed Batch Reopen after control-boundary clarification
 
-Authentication:
-- provider-neutral external OIDC Authorization Code + PKCE
-- ASP.NET Core encrypted Cookie session
-- pre-provisioned `system.accounts`
-- exact validated `(issuer, subject)` resolves Actor Account
-- account must remain active
-- no ERP password store
-- React does not own access/refresh tokens
+Reopen is an ERP lifecycle control.
 
-Authorization:
-- explicit operation/capability policy names
-- grants deployment-configured by persistent Account UUID
-- no invented Admin/Manager/SuperAdmin business roles
-- no roles/permissions/account-role relations in v0.1
+Reopen means:
+- Batch lifecycle becomes open for applicable ERP operations again
 
-Current examples include:
+Reopen does **not** mean:
+- erase prior Close Audit
+- delete prior `BATCH_RECONCILIATION`
+- rewrite immutable Inventory Movement history
+- reconstruct an imagined pre-close physical inventory state
+
+Physical inventory mismatch after any operational history is handled through stocktake / `AdjustInventory`.
+
+`LIFE-001` is therefore no longer a Business Rule hard gate.
+
+## 12. AuthN/AuthZ interpretation
+
+Capability policies are technical ERP Control / security identifiers, not Business Rules.
+
+Existing examples:
 - `sales.confirm`
 - `sales.correct-allocation`
 - `finance.pay`
 - `inventory.adjust`
 - `data-protection.hard-delete`
 
-`data-protection.hard-delete` must not be reused as ordinary Soft Delete / Restore permission.
+A target-specific lifecycle/correction slice may introduce its own explicit capability name without inventing a YowThi business role. Grants remain deployment-configured by persistent Account UUID.
 
-## 12. React/UI baseline
+`data-protection.hard-delete` remains highest authority and must not be reused for ordinary lifecycle/data correction.
 
-One React application: `src/YowThi.Erp.Web`.
+## 13. React/UI baseline
+
+One React application:
+- `src/YowThi.Erp.Web`
 
 Presentation experiences:
 - Desktop
 - Tablet
 - Mobile
 
-They share REST contracts, server-state/query core, authentication, locale, Problem Details, idempotency, concurrency, and Business Command semantics.
-
 Implemented routes currently include:
 - `/procurement/entries/new`
 - `/outsourced/supply-details/new`
 - `/processing/executions/new`
 
-The complete ERP UI is not finished. Broad formal UI sequencing remains P7 after required P6 backend gates.
+The complete ERP UI is not finished. Broad formal UI sequencing remains P7 after the required backend/control slices are stable.
 
-## 13. Important unresolved Business Rule gaps
+## 14. Next focused V8 slice
 
-Authoritative source: `docs/06-business-rule-gap-register-v0.1.md`.
+After this control-boundary documentation is validated and promoted, continue with:
 
-High-impact unresolved items include:
-- PROC-001 completed Procurement Batch late entry
-- PROC-003 Procurement Entry zero Net Quantity confirmation
-- PROCESS-001 multi-location input resolution
-- OUT-002 Outsourced Supply Detail zero Quantity confirmation
-- OUT-003 late detail after Outsourced Batch Closed
-- SALES-001 Sales issue location when stock spans locations
-- BATCH-001 automatic vs user-confirmed Batch Close
-- LABOR-001 late work after Daily Wage confirmation
-- FIN-001/002 over-settlement controls
-- FIN-003 confirmed Payment/Receipt correction method
-- FIN-004 deduction causing negative Payable Outstanding
-- FIN-005 Payable Adjustment correction/reversal
-- FIN-007/008/009 Company Pickup Transport amount/grouping/payee semantics
-- LIFE-001 Closed Batch reopen
+**V8-C4 — Supplier Soft Delete / Restore**
 
-`SALES-003` is no longer unresolved; it is retained as RESOLVED history in the Gap Register.
+Reason for selecting Supplier:
+- existing formal Party master
+- already has established row-version / soft-delete metadata
+- Supplier Hard Delete dependency closure already exists and provides useful structural knowledge
+- validates the new ERP lifecycle-control boundary without inventing Business Rules
 
-Safe/deferred handling in the Gap Register must not be silently promoted into permanent Business Rules.
+C4 must remain target-specific and include:
+- explicit Soft Delete endpoint/command
+- explicit Restore endpoint/command
+- operation-specific ordinary lifecycle authorization capability; do not reuse `data-protection.hard-delete`
+- Idempotency Key
+- expected Supplier row version
+- same-key replay before current lifecycle lookup
+- lifecycle Audit
+- concurrency acceptance
+- structural/dependency safety where applicable
+- PostgreSQL integration tests
+- no schema/migration change unless implementation proves the existing model insufficient
 
-## 14. Remaining V8 hard gates
+Restore clears soft-deleted lifecycle metadata but does not automatically force `active = true`.
 
-### A. Soft Delete / Restore
+After C4, additional lifecycle/Finance/Reopen slices may proceed using the same ERP Control principle without reopening Business Rule questions that are only data-maintenance concerns.
 
-Need target-specific facts:
-- which target is applicable next
-- owning-domain Restore eligibility and dependency behavior
+## 15. Validation / cost governance
 
-Also requires an explicit security-architecture capability decision for ordinary lifecycle management. Do not reuse `data-protection.hard-delete`.
-
-### B. Additional Hard Delete targets
-
-Need explicit target support plus owning-domain dependency closure before adding another target-specific route.
-
-Do not create a generic `/data-protection/entities/{type}/{id}` endpoint.
-
-### C. Finance correction / reversal
-
-Blocked by FIN-003 and FIN-005.
-
-### D. Closed Batch reopen
-
-Deferred under LIFE-001. Do not implement.
-
-## 15. GitHub validation / cost governance
-
-Routine validation uses the Windows self-hosted runner only.
+Routine validation uses only the Windows self-hosted runner.
 
 Required labels:
 - `self-hosted`
 - `yowthi-erp-v2`
 
-Validation branches:
-- `m*-validation`
-- `p*-validation`
+Formal main advances only after exact validation-branch SHA success and `eligibleForMainFastForward=true`.
 
-Formal main advances only after the exact validation-branch SHA has a successful self-hosted `dotnet.yml` run and `eligibleForMainFastForward=true`.
+Use ff-only promotion and non-force push.
 
-No routine GitHub-hosted runner, larger/paid runner, Codespaces, force push, or unconfirmed metered service is required.
+Do not require routine GitHub-hosted runners, paid/larger runners, Codespaces, or unconfirmed metered services.
 
-## 16. Recovery / next step
-
-Formal implementation state immediately before this checkpoint-document commit:
+## 16. Recovery
 
 ```text
-main@e5b92dcc8283f6f1f59e4452fc582718236e5a77
+main@83318eceb514315cf4dcc173b6866d77403e9347
 → V8-C1 Supplier Hard Delete COMPLETE
 → V8-C2 Customer Hard Delete COMPLETE
-→ SALES-003 RESOLVED 2026-09-04
-→ V8-C3 CorrectSalesAllocation COMPLETE
-→ local hard gates 233/233 PASS
-→ self-hosted run 33828986488 SUCCESS
-→ eligibleForMainFastForward=true
-→ ff-only main promotion + non-force push/read-back COMPLETE
+→ V8-C3 Sales Allocation Correction COMPLETE
+→ ERP Registration / Data Control boundary CONFIRMED 2026-09-04
+→ FIN-003 / FIN-005 / LIFE-001 reclassified as CONTROL
+→ current: p6-v8-control-boundary-validation
+→ next after formal docs promotion: V8-C4 Supplier Soft Delete / Restore
 ```
-
-The next action is **not** to invent another V8 command.
-
-Select the next focused slice only after at least one remaining hard-gate decision in section 14 is confirmed using real YowThi operating facts or an explicit security-architecture decision. Until then:
-- P6 V8 = **IN PROGRESS / HARD GATE**
-- P6 = **IN PROGRESS**
