@@ -142,6 +142,7 @@ Confirmed examples:
 | `PayPayable` | `POST /api/v1/finance/payables/{payableId}/payments` |
 | `ReceiveReceivable` | `POST /api/v1/finance/receivables/{receivableId}/receipts` |
 | `CorrectPaymentAmount` | `POST /api/v1/finance/payables/{payableId}/payments/{paymentId}/correct-amount` |
+| `CorrectReceiptAmount` | `POST /api/v1/finance/receivables/{receivableId}/receipts/{receiptId}/correct-amount` |
 | `TransferInventory` | `POST /api/v1/inventory/transfers` |
 | `AdjustInventory` | `POST /api/v1/inventory/adjustments` |
 | `CloseProcurementBatch` | `POST /api/v1/procurement/batches/{batchId}/close` |
@@ -745,7 +746,15 @@ POST /api/v1/finance/payables/{payableId}/payments/{paymentId}/correct-amount
 
 This is an ERP Control direct amendment with correction Audit, idempotency, and Outstanding concurrency/rebuild. It is not a fabricated reversal Business Fact.
 
-Receipt correction and Payable Adjustment correction remain separate target-specific future ERP Control operations. Do not expose a generic Payment/Receipt/Adjustment correction or reversal endpoint.
+V8-C7 also implements the target-specific Receipt amount correction endpoint:
+
+```text
+POST /api/v1/finance/receivables/{receivableId}/receipts/{receiptId}/correct-amount
+```
+
+It uses the same `finance.correct` capability and the Receivable Outstanding Position version as its monetary concurrency boundary.
+
+Payable Adjustment correction remains the pending target-specific future ERP Control operation. Do not expose a generic Payment/Receipt/Adjustment correction or reversal endpoint.
 
 ## 33. Authentication baseline
 

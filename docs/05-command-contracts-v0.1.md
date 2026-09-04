@@ -268,7 +268,48 @@ Audit/control:
 
 V8-C6 requires no relation, schema, snapshot, or EF migration change.
 
-Receipt correction and Payable Adjustment correction remain separate target-specific ERP Control slices; V8-C6 does not claim those are implemented.
+Receipt correction is implemented by V8-C7 `CorrectReceiptAmount`. Payable Adjustment correction remains a separate target-specific ERP Control slice.
+
+### CorrectReceiptAmount - V8-C7 COMPLETE
+
+Command:
+- `CorrectReceiptAmount`
+
+Route:
+- `POST /api/v1/finance/receivables/{receivableId}/receipts/{receiptId}/correct-amount`
+
+Capability:
+- `finance.correct`
+
+Input:
+- Receivable
+- Receipt
+- Corrected Amount THB
+- Expected Receivable Outstanding Version
+- optional correction reason
+- Command Identity
+
+Correction semantics:
+- directly amend the wrongly registered `finance.receipts.amount_thb`
+- preserve the original Receipt `confirmed_at` and `confirmed_by_account_id`
+- Receipt itself does not gain a new row-version column
+- the applicable `receivable_outstanding_positions.row_version` remains the monetary concurrency boundary
+- apply the correction delta to `settlement_total_thb` and `outstanding_thb` atomically
+- block a correction that would make Outstanding negative
+- a same-amount request is a semantic no-change failure, not a new business event
+
+Audit/control:
+- `CORRECTION` Audit Event
+- subject `finance.receipt`
+- change kind `UPDATE`
+- audit-safe before/after amount summary
+- `DIRECT_AMENDMENT` correction link to the latest audited Receipt state
+- persistent CommandId replay
+- `finance.receipt-corrected` Outbox message
+
+V8-C7 requires no relation, schema, snapshot, or EF migration change.
+
+Payable Adjustment correction remains the pending target-specific Finance ERP Control slice under FIN-005.
 
 ## TransferInventory
 
