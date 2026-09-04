@@ -97,6 +97,13 @@ internal sealed class PostgreSqlRecordSalesPackagingWorkExecutor : IRecordSalesP
                         SalesHandlingApplicationErrorCodes.EmployeeNotFound);
                 }
 
+                if (!employeeState.Active || employeeState.Deleted)
+                {
+                    return RollbackFailure(
+                        ApplicationErrorKind.Conflict,
+                        SalesHandlingApplicationErrorCodes.EmployeeInactive);
+                }
+
                 // LABOR-001 safe v0.1 control: normal late work is blocked once the day wage exists.
                 if (await _dbContext.Set<EmployeeDailyWage>()
                     .AsNoTracking()

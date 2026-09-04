@@ -73,6 +73,11 @@ internal sealed class PostgreSqlConfirmEmployeeDailyWageExecutor : IConfirmEmplo
                     return RollbackFailure(ApplicationErrorKind.NotFound, LaborApplicationErrorCodes.EmployeeNotFound);
                 }
 
+                if (!employeeState.Active || employeeState.Deleted)
+                {
+                    return RollbackFailure(ApplicationErrorKind.Conflict, LaborApplicationErrorCodes.EmployeeInactive);
+                }
+
                 if (await _dbContext.Set<EmployeeDailyWage>()
                     .AsNoTracking()
                     .AnyAsync(

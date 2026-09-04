@@ -40,6 +40,7 @@ public static class LaborApplicationErrorCodes
 {
     public const string InvalidInput = "labor.invalid-input";
     public const string EmployeeNotFound = "labor.employee-not-found";
+    public const string EmployeeInactive = "labor.employee-inactive";
     public const string DailyWageAlreadyConfirmed = "labor.daily-wage-already-confirmed";
     public const string ProcessingRateOverrideInvalid = "labor.processing-rate-override-invalid";
     public const string ProcessingRateOverrideTargetNotFound = "labor.processing-rate-override-target-not-found";

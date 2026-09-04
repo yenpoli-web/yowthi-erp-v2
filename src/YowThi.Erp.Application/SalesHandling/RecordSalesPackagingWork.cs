@@ -34,6 +34,7 @@ public static class SalesHandlingApplicationErrorCodes
     public const string InvalidInput = "sales-handling.invalid-input";
     public const string SalesNotFound = "sales-handling.sales-not-found";
     public const string EmployeeNotFound = "sales-handling.employee-not-found";
+    public const string EmployeeInactive = "sales-handling.employee-inactive";
     public const string ItemNotFound = "sales-handling.item-not-found";
     public const string ItemInactive = "sales-handling.item-inactive";
     public const string SalesStateNotAllowed = "sales-handling.sales-state-not-allowed";
