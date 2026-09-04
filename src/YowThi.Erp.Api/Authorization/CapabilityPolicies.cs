@@ -11,5 +11,6 @@ public static class CapabilityPolicies
     public const string LaborDailyWageConfirm = "labor.daily-wage.confirm";
     public const string FinancePay = "finance.pay";
     public const string InventoryAdjust = "inventory.adjust";
+    public const string SupplierLifecycle = "party.supplier.lifecycle";
     public const string DataProtectionHardDelete = "data-protection.hard-delete";
 }
