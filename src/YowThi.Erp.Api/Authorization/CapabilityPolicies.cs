@@ -14,6 +14,7 @@ public static class CapabilityPolicies
     public const string FinanceCorrect = "finance.correct";
     public const string InventoryAdjust = "inventory.adjust";
     public const string SupplierLifecycle = "party.supplier.lifecycle";
+    public const string FarmerLifecycle = "party.farmer.lifecycle";
     public const string CustomerLifecycle = "party.customer.lifecycle";
     public const string OutsourcedVendorLifecycle = "party.outsourced-vendor.lifecycle";
     public const string DataProtectionHardDelete = "data-protection.hard-delete";
