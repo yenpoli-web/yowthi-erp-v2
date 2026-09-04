@@ -1,14 +1,14 @@
 # Current Design Checkpoint — YowThi ERP V2
 
-Checkpoint status: **v0.1 implementation baseline through P6 V8-C8 complete. Supplier/Customer Hard Delete, Sales Allocation Correction, ERP Registration / Data Control clarification, Supplier/Customer lifecycle, Payment Amount Correction, Receipt Amount Correction, and Payable Adjustment Correction are formally implemented and validated. P6 V8 remains IN PROGRESS for remaining focused ERP Control slices.**
+Checkpoint status: **v0.1 implementation baseline through P6 V8-C9 complete. P6/V8 remains IN PROGRESS until remaining required ERP Control scope is implemented or explicitly deferred.**
 
 Purpose: recover the current architecture and implementation state if conversational context is lost.
 
-## 1. Highest-authority rules
+## 1. Highest-authority interpretation
 
 Business Rules come only from real YowThi operating facts.
 
-**Do not use Business Rules to unnecessarily constrain ERP data maintenance.** ERP registration of real operations and ERP control of system data/state are different logical concerns.
+Do **not** use a business model to unnecessarily constrain ERP data maintenance. Registration of real operations and ERP control of system data/state are different logical concerns.
 
 Authoritative classification:
 - `docs/17-erp-registration-data-control-boundary-v0.1.md`
@@ -30,7 +30,7 @@ ERP Control Command:
 - does not require inventing a Business Rule merely to justify the mutation
 - remains target-specific and technically controlled
 
-Physical Inventory Reconciliation:
+Physical inventory reconciliation:
 - physical stock may differ because of shrinkage, damage, weighing variance, handling loss, spoilage, missing stock, or other real-world discrepancy
 - reconcile through stocktake / `AdjustInventory`
 - do not rewrite unrelated historical business movements solely to force inventory to equal a later physical count
@@ -41,11 +41,16 @@ Recovery precedence:
 3. this current checkpoint
 4. `docs/10-relational-model-consolidation-v0.1.md`
 5. `docs/11-ef-core-mapping-architecture-v0.1.md`
-6. `docs/12-rest-api-architecture-v0.1.md`, interpreted through docs/17 where older wording labels every persisted write as a Business Write
+6. `docs/12-rest-api-architecture-v0.1.md`
 7. `docs/13-implementation-sequencing-build-plan-v0.1.md`
 8. `docs/14-github-cost-governance-v0.1.md`
 9. `docs/15-authn-authz-implementation-architecture-v0.1.md`
 10. `docs/16-adaptive-web-ui-architecture-v0.1.md` and applicable ADRs
+
+C9-specific later implementation supplement:
+- `docs/18-procurement-batch-reopen-control-v0.1.md`
+- for V8-C9 only, docs/18 supplements older omissions in `docs/05-command-contracts-v0.1.md` and `docs/12-rest-api-architecture-v0.1.md`
+- this does not supersede their broader Command/REST architecture
 
 Earlier PostgreSQL Schema Parts remain design history. `docs/10` is the consolidated relational baseline when relational details conflict.
 
@@ -67,10 +72,7 @@ Protected Legacy ERP:
 - PostgreSQL 18
 - Modular Monolith
 - one write `ErpDbContext`
-- React + TypeScript + Vite
-- React Router
-- TanStack Query
-- pnpm
+- React + TypeScript + Vite + React Router + TanStack Query + pnpm
 - UUID v7 internal IDs
 - explicit `row_version bigint`
 - persistent CommandId idempotency
@@ -90,9 +92,9 @@ Persistence invariants:
 
 `InitialV01`:
 - migration: `20260828033151_InitialV01`
-- development PostgreSQL endpoint: `127.0.0.1:55432/yowthi_dev`
-- accepted PostgreSQL version: 18.6
-- P5 status: 1 applied / 0 pending
+- development PostgreSQL: `127.0.0.1:55432/yowthi_dev`
+- PostgreSQL 18.6
+- P5: 1 applied / 0 pending
 - migration-state fingerprint: `9645A93DBC1642819210DFA99904A81776AF0CBE0116458945409A9611889E6E`
 
 ## 4. Phase status
@@ -123,84 +125,44 @@ P6    Business / ERP Control vertical slices             IN PROGRESS
       C6 Payment Amount Correction                       COMPLETE
       C7 Receipt Amount Correction                       COMPLETE
       C8 Payable Adjustment Correction                   COMPLETE
-      remaining focused ERP Control slices               IN PROGRESS
+      C9 Procurement Batch Reopen                       COMPLETE
+      remaining focused ERP Control scope               IN PROGRESS
 P7    React UI vertical slices                           NOT FORMALLY COMPLETE
 P8    CI / production hardening                          FUTURE
 ```
 
-Do not mark P6 or all of V8 COMPLETE until the remaining required V8 control scope is implemented or formally deferred.
+Do not mark P6 or all V8 COMPLETE until remaining required control scope is implemented or explicitly deferred.
 
 ## 5. Current formal Git baseline
 
-Formal code baseline immediately before this checkpoint-document commit:
+Formal implementation baseline immediately before this checkpoint-document commit:
 - `main = origin/main`
-- SHA: `8b660b677eef4463645496140eff5dd471432cca`
-- commit: `feat: add payable adjustment correction`
-- promotion: fast-forward only
+- SHA: `12e05a69b9365b09e39da48451f0428475c29289`
+- commit: `feat: add procurement batch reopen control`
+- promotion: ff-only
 - push: non-force
 - remote fetch/read-back: clean
 
-C4 docs checkpoint:
-- commit: `f81cfb97eea4fecdb99a2e556dd746e0dac9ab9c`
-- commit: `docs: checkpoint supplier lifecycle completion`
-- validation branch: `p6-v8-c4-checkpoint-validation`
-- self-hosted run: `33841667574`
-- conclusion: `success`
-- ff-only main promotion complete
+Current docs checkpoint branch:
+- `p6-v8-c9-checkpoint-validation`
 
-C5 docs checkpoint:
-- commit: `85b3c21f7e25ee8847b894d08f23c5bf595fe246`
-- commit: `docs: checkpoint customer lifecycle completion`
-- validation branch: `p6-v8-c5-checkpoint-validation`
-- self-hosted run: `33845174504`
-- conclusion: `success`
-- ff-only main promotion complete
-
-C6 Payment Amount Correction implementation:
-- commit: `cdd652b639a56c9896d7403cbbf501331ce7aca0`
-- commit: `feat: add payment amount correction`
-- validation branch: `p6-v8-payment-correction-validation`
-- local hard gates: 251/251 PASS
-- self-hosted run: `33850492563`
+C9 implementation validation:
+- branch: `p6-v8-procurement-batch-reopen-validation`
+- exact SHA: `12e05a69b9365b09e39da48451f0428475c29289`
+- local hard gates: **270/270 PASS**
+- Domain 29/29
+- Architecture 66/66
+- API Contract 83/83
+- PostgreSQL Integration 92/92
+- final Release solution build: 0 errors; only known solution custom-output `NETSDK1194`
+- self-hosted run: `33862502433`
 - runner: `YowThi-ERP-V2`
 - required labels: `self-hosted`, `yowthi-erp-v2`
 - conclusion: `success`
 - `eligibleForMainFastForward=true`
-- ff-only main promotion + non-force push/read-back: COMPLETE
-
-C7 Receipt Amount Correction implementation:
-- commit: `768c9673f242cfbc0c53b1cd7ecd6e3fa273f770`
-- commit: `feat: add receipt amount correction`
-- validation branch: `p6-v8-receipt-correction-validation`
-- local hard gates: 257/257 PASS
-- self-hosted run: `33854672829`
-- runner: `YowThi-ERP-V2`
-- required labels: `self-hosted`, `yowthi-erp-v2`
-- conclusion: `success`
-- `eligibleForMainFastForward=true`
-- ff-only main promotion + non-force push/read-back: COMPLETE
-
-C8 Payable Adjustment Correction implementation:
-- commit: `8b660b677eef4463645496140eff5dd471432cca`
-- commit: `feat: add payable adjustment correction`
-- validation branch: `p6-v8-payable-adjustment-correction-validation`
-- local hard gates: 264/264 PASS
-- self-hosted run: `33858815725`
-- runner: `YowThi-ERP-V2`
-- required labels: `self-hosted`, `yowthi-erp-v2`
-- conclusion: `success`
-- `eligibleForMainFastForward=true`
-- ff-only main promotion + non-force push/read-back: COMPLETE
-
-ERP Registration / Data Control clarification:
-- commit: `53e9122b440209a9734697dd36a0f104dc59176c`
-- self-hosted run: `33838713391`
-- conclusion: `success`
+- ff-only main promotion + non-force push + fetch/read-back: COMPLETE
 
 ## 6. ERP Registration / Data Control boundary — CONFIRMED 2026-09-04
-
-Authoritative decision:
-- `docs/17-erp-registration-data-control-boundary-v0.1.md`
 
 Business Fact Registration examples:
 - Procurement
@@ -210,8 +172,6 @@ Business Fact Registration examples:
 - Receipt
 - Employee Work
 
-When these operations are registered, Business Rules must represent real YowThi operating facts. If reality later contains another event, register another Business Fact.
-
 ERP Data Control / Maintenance examples:
 - correction of wrongly entered data
 - Soft Delete
@@ -220,7 +180,7 @@ ERP Data Control / Maintenance examples:
 - Reopen
 - Hard Delete under Data Protection
 
-These do not require a separate Business Rule merely to permit an ERP state/data change. They still require the applicable technical controls:
+ERP Control does not require a separate Business Rule merely to permit a state/data change. It still requires applicable technical controls:
 - authenticated actor
 - explicit capability authorization
 - target-specific endpoint/command
@@ -243,7 +203,7 @@ If reality later contains another real event:
 
 Physical inventory discrepancy is reconciled through stocktake / `AdjustInventory`.
 
-## 7. Business Rule Gap Register classification
+## 7. Gap classification
 
 `docs/06-business-rule-gap-register-v0.1.md` includes `CONTROL`.
 
@@ -252,12 +212,13 @@ Physical inventory discrepancy is reconciled through stocktake / `AdjustInventor
 - not a Business Rule blocker
 - implementation governed by technical safety and authorization
 
-Reclassified on 2026-09-04:
-- `FIN-003` → CONTROL
-- `FIN-005` → CONTROL
-- `LIFE-001` → CONTROL
+Current control history:
+- `FIN-003` → CONTROL; Payment and Receipt amount correction complete in C6/C7
+- `FIN-005` → CONTROL; Payable Adjustment correction complete in C8
+- `LIFE-001` → CONTROL; Procurement Batch Reopen complete in C9; other Batch types are separate target-specific scope
+- `SALES-003` remains RESOLVED Business Fact history
 
-`SALES-003` remains RESOLVED Business Fact history.
+Important unresolved Business Rule gaps remain authoritative, including applicable Procurement, Processing, Outsourced, Sales location, Labor, Finance transport, and deferred extension gaps. Do not invent values for them.
 
 ## 8. Sales Allocation Correction — V8-C3 COMPLETE
 
@@ -277,9 +238,8 @@ Persistence/control semantics:
 - `SALES_ALLOCATION_ADJUSTMENT` only for net allocation delta
 - update Inventory Positions transactionally
 - increment Sales row version
-- correction Audit + `audit.correction_links`
-- persistent idempotency
-- transactional Outbox
+- correction Audit + lineage
+- persistent idempotency + Outbox
 - no rewrite of prior `SALES_ISSUE` / Inventory Movement history
 
 Formal implementation:
@@ -291,284 +251,121 @@ Formal implementation:
 
 Hard Delete remains the highest-authority Data Protection operation.
 
-It is controlled by:
-- explicit target support
-- dependency closure
+Capability:
 - `data-protection.hard-delete`
-- expected row version where applicable
-- retained same-transaction `HARD_DELETE` Audit
-- replay before target lookup
 
 Completed targets:
-- Supplier — V8-C1 COMPLETE
-- Customer — V8-C2 COMPLETE
+- Supplier — V8-C1
+- Customer — V8-C2
 
-Additional Hard Delete targets do not need a Business Rule merely to be considered. They still require target-specific structural dependency closure before physical deletion is implemented.
+Requirements:
+- explicit target support
+- structural dependency closure
+- expected row version where applicable
+- same-transaction `HARD_DELETE` Audit
+- replay before target lookup
+- no silent cascade
+
+Additional Hard Delete targets do not need a Business Rule merely to be considered, but they require target-specific dependency closure before implementation.
 
 No generic `/data-protection/entities/{type}/{id}` endpoint.
 
-## 10. Supplier lifecycle — V8-C4 COMPLETE
+## 10. Party lifecycle baseline
 
-Commands:
-- `SoftDeleteSupplier`
-- `RestoreSupplier`
-
-Endpoints:
-- `POST /api/v1/party/suppliers/{supplierId}/soft-delete`
-- `POST /api/v1/party/suppliers/{supplierId}/restore`
-
-Capability:
-- `party.supplier.lifecycle`
-
-Semantics:
-- Soft Delete keeps the Supplier row and historical typed FKs
-- sets deleted metadata and increments `row_version`
-- preserves `active`
-- current-use Supplier selectors exclude deleted rows
-- historical dependencies do not by themselves block Soft Delete because the row remains for FK/traceability history
-- Restore clears deleted metadata, increments `row_version`, preserves `active`, and does not automatically reactivate an inactive Supplier
-
-Technical controls:
-- acquire/replay CommandId before current lifecycle/version lookup
-- idempotency/concurrency/state conflicts roll back CommandExecution acquisition and Audit
-- Audit event kind `DATA_LIFECYCLE`, subject `party.supplier`, change kind `SOFT_DELETE` / `RESTORE`
-
-Acceptance:
-- Domain 29/29
-- Architecture 66/66
-- API Contract 68/68
-- PostgreSQL Integration 76/76
-- total 239/239 PASS
+Supplier C4:
+- `SoftDeleteSupplier` / `RestoreSupplier`
+- capability `party.supplier.lifecycle`
+- historical dependencies do not themselves block Soft Delete because the row remains for FK/traceability
+- Restore preserves original `active`
+- local hard gates 239/239 PASS
 - implementation SHA `22fd7770445d915fd428591dff3d7d1490911922`
 - self-hosted run `33840747740` SUCCESS
 
-No relation, schema, model snapshot, or EF migration change.
+Customer C5:
+- `SoftDeleteCustomer` / `RestoreCustomer`
+- capability `party.customer.lifecycle`
+- existing Sale FK does not block Soft Delete; it does block Hard Delete
+- Restore preserves original `active`
+- local hard gates 245/245 PASS
+- implementation SHA `e22d281e4c1c92bca6d57e6a301e2ea1cacc5cbb`
+- self-hosted run `33842998109` SUCCESS
 
-## 11. Customer lifecycle — V8-C5 COMPLETE
+Ordinary lifecycle capabilities do not imply `data-protection.hard-delete`.
 
-Commands:
-- `SoftDeleteCustomer`
-- `RestoreCustomer`
+## 11. Finance correction baseline
 
-Endpoints:
-- `POST /api/v1/party/customers/{customerId}/soft-delete`
-- `POST /api/v1/party/customers/{customerId}/restore`
-
-Capability:
-- `party.customer.lifecycle`
-
-Semantics:
-- Soft Delete keeps the Customer row and all historical Sale references
-- sets `deleted_at` / `deleted_by_account_id`
-- increments `row_version`
-- preserves `active`
-- does not cascade/delete `sales.sales.customer_id` history
-- an existing Sale dependency does **not** block Soft Delete because Customer remains present for FK/traceability history
-- Restore clears deleted metadata, increments `row_version`, and preserves the existing `active` value
-- Restore does not automatically reactivate an inactive Customer
-
-Idempotency/concurrency:
-- acquire/replay CommandId before current lifecycle/version lookup
-- same actor + command type + canonical hash replays committed result
-- changed actor/type/hash → `idempotency.key-reused`
-- stale expected row version → `concurrency.stale-row-version`
-- already deleted Soft Delete → `party.customer-already-deleted`
-- Restore of a current Customer → `party.customer-not-deleted`
-- failed state/concurrency attempts roll back CommandExecution acquisition and Audit
-
-Audit:
-- event kind `DATA_LIFECYCLE`
-- subject kind `party.customer`
-- subject change kind `SOFT_DELETE` / `RESTORE`
-- before/after row versions retained
-
-C5 local acceptance:
-- Domain: 29/29 PASS
-- Architecture: 66/66 PASS
-- API Contract: 71/71 PASS
-- PostgreSQL Integration: 79/79 PASS
-- total: **245/245 PASS**
-- focused project builds: 0 warnings / 0 errors
-- full Release solution build: 0 errors; only the known solution custom-output `NETSDK1194` warning
-
-C5 formal implementation evidence:
-- branch: `p6-v8-customer-lifecycle-validation`
-- exact SHA: `e22d281e4c1c92bca6d57e6a301e2ea1cacc5cbb`
-- commit: `feat: add customer lifecycle control`
-- workflow: `dotnet.yml` / `dotnet-self-hosted`
-- run: `33842998109`
-- runner: `YowThi-ERP-V2`
-- required labels: `self-hosted`, `yowthi-erp-v2`
-- conclusion: `success`
-- `eligibleForMainFastForward=true`
-- ff-only main promotion + non-force push/read-back: COMPLETE
-
-C5 introduced no relation, schema, model snapshot, or EF migration change.
-
-## 12. Finance correction baseline
-
-Finance truth/projection remains:
+Finance truth/projection:
 
 ```text
 Original Obligation + Adjustments - Settlements = Outstanding
 ```
 
-If Payment / Receipt / Adjustment registration is wrong:
-- target-specific correction may amend the wrongly registered data
-- re-evaluate/rebuild affected Outstanding transactionally
-- preserve concurrency protection
-- Audit before/after
-- idempotency
+Registration error:
+- target-specific direct amendment is valid ERP Control when structurally safe
+- rebuild affected Outstanding transactionally
+- preserve original event metadata where designed
+- Audit before/after + idempotency + concurrency
+- do not fabricate a reversal Business Fact
 
-Do not fabricate a fake reversal business event merely to justify correcting an ERP registration error.
-
-If money actually moves again, record the new real Finance Business Fact.
-
-`FIN-003` / `FIN-005` are ERP Control items, not Business Rule hard gates. V8-C6 completes Payment amount correction and V8-C7 completes Receipt amount correction under FIN-003. V8-C8 completes Payable Adjustment correction under FIN-005.
-
-### Payment Amount Correction - V8-C6 COMPLETE
-
-Command:
-- `CorrectPaymentAmount`
-
-Endpoint:
-- `POST /api/v1/finance/payables/{payableId}/payments/{paymentId}/correct-amount`
+Completed:
+- C6 `CorrectPaymentAmount` — SHA `cdd652b639a56c9896d7403cbbf501331ce7aca0`, 251/251, run `33850492563`
+- C7 `CorrectReceiptAmount` — SHA `768c9673f242cfbc0c53b1cd7ecd6e3fa273f770`, 257/257, run `33854672829`
+- C8 `CorrectPayableAdjustment` — SHA `8b660b677eef4463645496140eff5dd471432cca`, 264/264, run `33858815725`
 
 Capability:
 - `finance.correct`
 
-Semantics:
-- direct amendment of a wrongly registered Payment amount
-- preserve original `confirmed_at` and `confirmed_by_account_id`
-- Payable Outstanding Position row version is the monetary concurrency boundary
-- update Payment, `settlement_total_thb`, and `outstanding_thb` atomically by the correction delta
-- block a correction that would make Outstanding negative
-- no fabricated reversal Business Fact
+If money actually moves again, record a new real Finance Business Fact.
 
-Audit/idempotency:
-- `CORRECTION` event
-- subject `finance.payment`
-- change kind `UPDATE`
-- before/after amount summary
-- correction link mode `DIRECT_AMENDMENT`
-- persistent CommandId replay before current-state validation
-- Outbox `finance.payment-corrected`
+## 12. Procurement Batch Reopen — V8-C9 COMPLETE
 
-Acceptance:
-- Domain 29/29 PASS
-- Architecture 66/66 PASS
-- API Contract 74/74 PASS
-- PostgreSQL Integration 82/82 PASS
-- total **251/251 PASS**
-- final Release solution build: 0 errors; only known `NETSDK1194`
-- exact SHA `cdd652b639a56c9896d7403cbbf501331ce7aca0`
-- self-hosted run `33850492563` SUCCESS
-
-No relation, schema, model snapshot, or EF migration change.
-
-Receipt amount correction is complete in V8-C7. Payable Adjustment correction remains the pending target-specific Finance ERP Control slice.
-
-### Receipt Amount Correction - V8-C7 COMPLETE
+Authoritative C9 supplement:
+- `docs/18-procurement-batch-reopen-control-v0.1.md`
 
 Command:
-- `CorrectReceiptAmount`
+- `ReopenProcurementBatch`
 
 Endpoint:
-- `POST /api/v1/finance/receivables/{receivableId}/receipts/{receiptId}/correct-amount`
+- `POST /api/v1/procurement/batches/{procurementBatchId}/reopen`
+
+OperationId:
+- `Procurement_ReopenBatch`
 
 Capability:
-- `finance.correct`
+- `procurement.batch.lifecycle`
 
-Semantics:
-- direct amendment of a wrongly registered Receipt amount
-- preserve original `confirmed_at` and `confirmed_by_account_id`
-- Receivable Outstanding Position row version is the monetary concurrency boundary
-- update Receipt, `settlement_total_thb`, and `outstanding_thb` atomically by the correction delta
-- block a correction that would make Outstanding negative
-- no fabricated reversal Business Fact
+Current-state semantics:
+- require current non-deleted `CLOSED` Procurement Batch
+- compare expected Procurement Batch row version
+- set `lifecycle_status = ACTIVE`
+- clear current-state `closed_at` / `closed_by_account_id` because the existing structural closing-state constraint requires ACTIVE rows to have null close markers
+- increment row version
+- preserve `procurement_status` and completion metadata
 
-Audit/idempotency:
-- `CORRECTION` event
-- subject `finance.receipt`
-- change kind `UPDATE`
-- before/after amount summary
-- correction link mode `DIRECT_AMENDMENT`
-- persistent CommandId replay before current-state validation
-- Outbox `finance.receipt-corrected`
-
-Acceptance:
-- Domain 29/29 PASS
-- Architecture 66/66 PASS
-- API Contract 77/77 PASS
-- PostgreSQL Integration 85/85 PASS
-- total **257/257 PASS**
-- final Release solution build: 0 errors; only known `NETSDK1194`
-- exact SHA `768c9673f242cfbc0c53b1cd7ecd6e3fa273f770`
-- self-hosted run `33854672829` SUCCESS
-
-No relation, schema, model snapshot, or EF migration change.
-
-### Payable Adjustment Correction - V8-C8 COMPLETE
-
-Command:
-- `CorrectPayableAdjustment`
-
-Endpoint:
-- `POST /api/v1/finance/payables/{payableId}/adjustments/{adjustmentId}/correct`
-
-Capability:
-- `finance.correct`
-
-Semantics:
-- complete corrected state for Adjustment amount delta and reason text
-- preserve original `adjustment_type`, `recorded_at`, and `recorded_by_account_id`
-- Payable Outstanding Position row version is the concurrency boundary
-- update Adjustment, `adjustment_total_thb`, and `outstanding_thb` atomically by the correction difference
-- reason-only correction keeps monetary projection values unchanged but advances Outstanding row version
-- block a correction that would make Outstanding negative
-- no fabricated reversal Business Fact
+Historical/inventory semantics:
+- prior Close Audit remains
+- prior `BATCH_RECONCILIATION` Operation/Movements remain immutable
+- Reopen creates no reversal Inventory Movement
+- Inventory Position remains at post-Close value
+- actual physical discrepancy after reopen is registered through stocktake / `AdjustInventory`
 
 Audit/idempotency:
-- `CORRECTION` event
-- subject `finance.payable-adjustment`
-- change kind `UPDATE`
-- before/after amount and reason summary
-- correction link mode `DIRECT_AMENDMENT`
-- persistent CommandId replay before current-state validation
-- Outbox `finance.payable-adjustment-corrected`
+- `DATA_LIFECYCLE`
+- subject `procurement.batch`
+- structural change kind `UPDATE`
+- `change_summary` records `CLOSED -> ACTIVE`
+- persistent CommandId replay before current-state lookup
+- Outbox `procurement.batch.reopened`
 
-Acceptance:
-- Domain 29/29 PASS
-- Architecture 66/66 PASS
-- API Contract 80/80 PASS
-- PostgreSQL Integration 89/89 PASS
-- total **264/264 PASS**
-- final Release solution build: 0 errors; only known `NETSDK1194`
-- exact SHA `8b660b677eef4463645496140eff5dd471432cca`
-- self-hosted run `33858815725` SUCCESS
+Security:
+- `procurement.batch.lifecycle` is separate from `procurement.confirm`
+- it does not imply Hard Delete or permission to rewrite Inventory history
 
-No relation, schema, model snapshot, or EF migration change.
+No relation/schema/model snapshot/migration change.
 
-FIN-005 target-specific correction is complete in V8-C8.
+C9 completes Procurement Batch Reopen only. Outsourced Supply Batch Reopen, if required, remains a separate target-specific ERP Control slice.
 
-## 13. Closed Batch Reopen baseline
-
-Reopen is an ERP lifecycle control.
-
-Reopen means:
-- Batch lifecycle becomes open for applicable ERP operations again
-
-Reopen does **not** mean:
-- erase prior Close Audit
-- delete prior `BATCH_RECONCILIATION`
-- rewrite immutable Inventory Movement history
-- reconstruct an imagined pre-close physical inventory state
-
-Physical inventory mismatch after operational history is handled through stocktake / `AdjustInventory`.
-
-`LIFE-001` is an implementation/control item, not a Business Rule hard gate.
-
-## 14. AuthN/AuthZ interpretation
+## 13. AuthN/AuthZ interpretation
 
 Capability policies are technical ERP Control / security identifiers, not Business Rules.
 
@@ -578,6 +375,7 @@ Current examples include:
 - `finance.pay`
 - `finance.correct`
 - `inventory.adjust`
+- `procurement.batch.lifecycle`
 - `party.supplier.lifecycle`
 - `party.customer.lifecycle`
 - `data-protection.hard-delete`
@@ -586,7 +384,7 @@ Capability grants remain deployment-configured by persistent Account UUID.
 
 `data-protection.hard-delete` remains highest authority and must not be reused for ordinary lifecycle/data correction.
 
-## 15. React/UI baseline
+## 14. React/UI baseline
 
 One React application:
 - `src/YowThi.Erp.Web`
@@ -601,22 +399,22 @@ Implemented routes currently include:
 - `/outsourced/supply-details/new`
 - `/processing/executions/new`
 
-The complete ERP UI is not finished. Broad formal UI sequencing remains P7 after required backend/control slices are stable.
+Broad P7 UI is not formally complete.
 
-## 16. Remaining V8 sequencing
+## 15. Remaining V8 sequencing
 
-The old Business Rule hard gates for Finance correction and Batch Reopen are removed by docs/17. Remaining work should proceed as focused, target-specific ERP Control slices rather than reopening business-mode questions that are merely data-maintenance concerns.
+Do not reopen business-mode questions for operations that are merely ERP maintenance/control.
 
 Candidate next slices include:
-- additional Party lifecycle targets using explicit target-specific commands/capabilities
-- Closed Batch Reopen
+- Outsourced Supply Batch Reopen if required as a target-specific lifecycle operation
+- additional Party lifecycle targets using explicit commands/capabilities
 - additional Hard Delete targets after structural dependency closure
 
 Do not introduce a generic lifecycle/correction resolver to accelerate this sequence.
 
-P6 V8 remains **IN PROGRESS** until the required remaining control scope is implemented or explicitly deferred.
+P6/V8 remains **IN PROGRESS** until remaining required control scope is implemented or explicitly deferred.
 
-## 17. Validation / cost governance
+## 16. Validation / cost governance
 
 Routine validation uses only the Windows self-hosted runner.
 
@@ -630,30 +428,26 @@ Use ff-only promotion and non-force push.
 
 Do not require routine GitHub-hosted runners, paid/larger runners, Codespaces, or unconfirmed metered services.
 
-## 18. Recovery
+## 17. Recovery
 
 ```text
-main@8b660b677eef4463645496140eff5dd471432cca
+main@12e05a69b9365b09e39da48451f0428475c29289
+-> P5 PostgreSQL 18 persistence acceptance COMPLETE
+-> P6 V1-V7 COMPLETE
 -> V8-C1 Supplier Hard Delete COMPLETE
 -> V8-C2 Customer Hard Delete COMPLETE
 -> V8-C3 Sales Allocation Correction COMPLETE
 -> ERP Registration / Data Control boundary COMPLETE
--> FIN-003 / FIN-005 / LIFE-001 classified as CONTROL
 -> V8-C4 Supplier Soft Delete / Restore COMPLETE
--> C4 docs checkpoint f81cfb97eea4fecdb99a2e556dd746e0dac9ab9c COMPLETE
 -> V8-C5 Customer Soft Delete / Restore COMPLETE
--> C5 docs checkpoint 85b3c21f7e25ee8847b894d08f23c5bf595fe246 COMPLETE
 -> V8-C6 CorrectPaymentAmount COMPLETE
--> local C6 hard gates 251/251 PASS
--> C6 self-hosted run 33850492563 SUCCESS
--> C6 ff-only main promotion + non-force push/read-back COMPLETE
 -> V8-C7 CorrectReceiptAmount COMPLETE
--> local C7 hard gates 257/257 PASS
--> C7 self-hosted run 33854672829 SUCCESS
--> C7 ff-only main promotion + non-force push/read-back COMPLETE
 -> V8-C8 CorrectPayableAdjustment COMPLETE
--> local C8 hard gates 264/264 PASS
--> C8 self-hosted run 33858815725 SUCCESS
--> C8 ff-only main promotion + non-force push/read-back COMPLETE
--> current docs checkpoint branch: p6-v8-c8-checkpoint-validation
+-> V8-C9 ReopenProcurementBatch COMPLETE
+-> local C9 hard gates 270/270 PASS
+-> C9 self-hosted run 33862502433 SUCCESS
+-> C9 ff-only main promotion + non-force push/read-back COMPLETE
+-> current docs checkpoint branch: p6-v8-c9-checkpoint-validation
+-> P6/V8 still IN PROGRESS for remaining required focused ERP Control scope
+-> P7 broad React UI NOT FORMALLY COMPLETE
 ```

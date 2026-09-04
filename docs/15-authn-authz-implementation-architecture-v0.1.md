@@ -259,6 +259,7 @@ Current examples include:
 - `finance.pay`
 - `finance.correct`
 - `inventory.adjust`
+- `procurement.batch.lifecycle`
 - `party.supplier.lifecycle`
 - `party.customer.lifecycle`
 - `data-protection.hard-delete`
@@ -270,7 +271,9 @@ They do not define a YowThi job-title or role hierarchy.
 
 `party.customer.lifecycle` is the ordinary target-specific ERP lifecycle capability used by V8-C5 Customer Soft Delete / Restore.
 
-Neither ordinary lifecycle capability implies permission for physical deletion.
+`procurement.batch.lifecycle` is the target-specific ERP lifecycle capability used by V8-C9 Procurement Batch Reopen. It is deliberately distinct from `procurement.confirm`: authority to register or close normal Procurement work does not automatically imply authority to reopen a Closed Procurement Batch.
+
+None of these ordinary lifecycle capabilities implies permission for physical deletion.
 
 ## 15. Capability assignment v0.1
 
@@ -290,6 +293,9 @@ party.supplier.lifecycle
   → account UUID B
 
 party.customer.lifecycle
+  → account UUID B
+
+procurement.batch.lifecycle
   → account UUID B
 ```
 
@@ -320,7 +326,7 @@ It does not invent a `SuperAdmin` role.
 
 Who receives this capability is a controlled security configuration decision, not a new Business Rule encoded in the domain model.
 
-`data-protection.hard-delete` is deliberately separate from ordinary lifecycle capabilities such as `party.supplier.lifecycle` and `party.customer.lifecycle`. Possession of an ordinary Soft Delete / Restore capability must not imply Hard Delete authority, and Hard Delete authority must not be reused as the normal lifecycle permission.
+`data-protection.hard-delete` is deliberately separate from ordinary lifecycle capabilities such as `party.supplier.lifecycle`, `party.customer.lifecycle`, and `procurement.batch.lifecycle`. Possession of an ordinary lifecycle capability must not imply Hard Delete authority, and Hard Delete authority must not be reused as the normal lifecycle permission.
 
 ## 17. Authentication token storage
 
@@ -464,21 +470,24 @@ Ordinary ERP lifecycle authorization is target-specific:
 ```text
 party.supplier.lifecycle
 party.customer.lifecycle
+procurement.batch.lifecycle
 ```
 
 Confirmed operations:
 - `party.supplier.lifecycle` → V8-C4 Supplier Soft Delete / Restore
 - `party.customer.lifecycle` → V8-C5 Customer Soft Delete / Restore
+- `procurement.batch.lifecycle` → V8-C9 Procurement Batch Reopen
 
 Confirmed security consequences:
 - capability grants remain deployment-configured by persistent Account UUID
 - no `roles`, `permissions`, `account_roles`, or other new authorization relations are introduced
 - no YowThi business-role hierarchy is inferred
-- neither ordinary lifecycle capability grants Hard Delete
+- ordinary lifecycle capabilities do not grant Hard Delete
+- `procurement.batch.lifecycle` is separate from `procurement.confirm`
 - `data-protection.hard-delete` remains the separate highest-authority physical-delete capability
 - future target-specific lifecycle/correction capabilities may follow the same technical pattern without being treated as Business Rules
 
-V8-C4 and V8-C5 therefore require no AuthN/AuthZ persistence revision and no EF migration.
+V8-C4, V8-C5, and V8-C9 therefore require no AuthN/AuthZ persistence revision and no EF migration.
 
 ## 28. V8-C6 Finance correction capability confirmation - 2026-09-04
 
