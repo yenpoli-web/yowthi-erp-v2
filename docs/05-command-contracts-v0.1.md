@@ -309,7 +309,50 @@ Audit/control:
 
 V8-C7 requires no relation, schema, snapshot, or EF migration change.
 
-Payable Adjustment correction remains the pending target-specific Finance ERP Control slice under FIN-005.
+Payable Adjustment correction is implemented by V8-C8 `CorrectPayableAdjustment`.
+
+### CorrectPayableAdjustment - V8-C8 COMPLETE
+
+Command:
+- `CorrectPayableAdjustment`
+
+Route:
+- `POST /api/v1/finance/payables/{payableId}/adjustments/{adjustmentId}/correct`
+
+Capability:
+- `finance.correct`
+
+Input:
+- Payable
+- Payable Adjustment
+- complete corrected `amount_delta_thb`
+- complete corrected `reason_text`
+- Expected Payable Outstanding Version
+- optional correction reason for Audit
+- Command Identity
+
+Correction semantics:
+- directly amend the wrongly registered `finance.payable_adjustments.amount_delta_thb` and/or `reason_text`
+- preserve original `adjustment_type`, `recorded_at`, and `recorded_by_account_id`
+- Payable Adjustment itself does not gain a row-version column
+- `payable_outstanding_positions.row_version` is the correction concurrency boundary
+- apply the difference between corrected and previous amount delta to `adjustment_total_thb` and `outstanding_thb` atomically
+- reason-only correction leaves monetary projection values unchanged but still advances the Outstanding row version to serialize the correction
+- block a correction that would make Outstanding negative
+- a request where amount and reason are both unchanged is a semantic no-change failure
+
+Audit/control:
+- `CORRECTION` Audit Event
+- subject `finance.payable-adjustment`
+- change kind `UPDATE`
+- audit-safe before/after amount and reason summary
+- `DIRECT_AMENDMENT` correction link to the latest audited Adjustment state
+- persistent CommandId replay
+- `finance.payable-adjustment-corrected` Outbox message
+
+V8-C8 requires no relation, schema, snapshot, or EF migration change.
+
+FIN-005 target-specific Payable Adjustment correction is implemented by V8-C8.
 
 ## TransferInventory
 

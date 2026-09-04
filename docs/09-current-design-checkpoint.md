@@ -1,6 +1,6 @@
 # Current Design Checkpoint — YowThi ERP V2
 
-Checkpoint status: **v0.1 implementation baseline through P6 V8-C7 complete. Supplier/Customer Hard Delete, Sales Allocation Correction, ERP Registration / Data Control clarification, Supplier/Customer lifecycle, Payment Amount Correction, and Receipt Amount Correction are formally implemented and validated. P6 V8 remains IN PROGRESS for remaining focused ERP Control slices.**
+Checkpoint status: **v0.1 implementation baseline through P6 V8-C8 complete. Supplier/Customer Hard Delete, Sales Allocation Correction, ERP Registration / Data Control clarification, Supplier/Customer lifecycle, Payment Amount Correction, Receipt Amount Correction, and Payable Adjustment Correction are formally implemented and validated. P6 V8 remains IN PROGRESS for remaining focused ERP Control slices.**
 
 Purpose: recover the current architecture and implementation state if conversational context is lost.
 
@@ -122,6 +122,7 @@ P6    Business / ERP Control vertical slices             IN PROGRESS
       C5 Customer Soft Delete / Restore                  COMPLETE
       C6 Payment Amount Correction                       COMPLETE
       C7 Receipt Amount Correction                       COMPLETE
+      C8 Payable Adjustment Correction                   COMPLETE
       remaining focused ERP Control slices               IN PROGRESS
 P7    React UI vertical slices                           NOT FORMALLY COMPLETE
 P8    CI / production hardening                          FUTURE
@@ -133,8 +134,8 @@ Do not mark P6 or all of V8 COMPLETE until the remaining required V8 control sco
 
 Formal code baseline immediately before this checkpoint-document commit:
 - `main = origin/main`
-- SHA: `768c9673f242cfbc0c53b1cd7ecd6e3fa273f770`
-- commit: `feat: add receipt amount correction`
+- SHA: `8b660b677eef4463645496140eff5dd471432cca`
+- commit: `feat: add payable adjustment correction`
 - promotion: fast-forward only
 - push: non-force
 - remote fetch/read-back: clean
@@ -173,6 +174,18 @@ C7 Receipt Amount Correction implementation:
 - validation branch: `p6-v8-receipt-correction-validation`
 - local hard gates: 257/257 PASS
 - self-hosted run: `33854672829`
+- runner: `YowThi-ERP-V2`
+- required labels: `self-hosted`, `yowthi-erp-v2`
+- conclusion: `success`
+- `eligibleForMainFastForward=true`
+- ff-only main promotion + non-force push/read-back: COMPLETE
+
+C8 Payable Adjustment Correction implementation:
+- commit: `8b660b677eef4463645496140eff5dd471432cca`
+- commit: `feat: add payable adjustment correction`
+- validation branch: `p6-v8-payable-adjustment-correction-validation`
+- local hard gates: 264/264 PASS
+- self-hosted run: `33858815725`
 - runner: `YowThi-ERP-V2`
 - required labels: `self-hosted`, `yowthi-erp-v2`
 - conclusion: `success`
@@ -411,7 +424,7 @@ Do not fabricate a fake reversal business event merely to justify correcting an 
 
 If money actually moves again, record the new real Finance Business Fact.
 
-`FIN-003` / `FIN-005` are ERP Control items, not Business Rule hard gates. V8-C6 completes Payment amount correction and V8-C7 completes Receipt amount correction under FIN-003. FIN-005 Payable Adjustment correction remains pending.
+`FIN-003` / `FIN-005` are ERP Control items, not Business Rule hard gates. V8-C6 completes Payment amount correction and V8-C7 completes Receipt amount correction under FIN-003. V8-C8 completes Payable Adjustment correction under FIN-005.
 
 ### Payment Amount Correction - V8-C6 COMPLETE
 
@@ -495,7 +508,48 @@ Acceptance:
 
 No relation, schema, model snapshot, or EF migration change.
 
-FIN-005 Payable Adjustment correction remains pending.
+### Payable Adjustment Correction - V8-C8 COMPLETE
+
+Command:
+- `CorrectPayableAdjustment`
+
+Endpoint:
+- `POST /api/v1/finance/payables/{payableId}/adjustments/{adjustmentId}/correct`
+
+Capability:
+- `finance.correct`
+
+Semantics:
+- complete corrected state for Adjustment amount delta and reason text
+- preserve original `adjustment_type`, `recorded_at`, and `recorded_by_account_id`
+- Payable Outstanding Position row version is the concurrency boundary
+- update Adjustment, `adjustment_total_thb`, and `outstanding_thb` atomically by the correction difference
+- reason-only correction keeps monetary projection values unchanged but advances Outstanding row version
+- block a correction that would make Outstanding negative
+- no fabricated reversal Business Fact
+
+Audit/idempotency:
+- `CORRECTION` event
+- subject `finance.payable-adjustment`
+- change kind `UPDATE`
+- before/after amount and reason summary
+- correction link mode `DIRECT_AMENDMENT`
+- persistent CommandId replay before current-state validation
+- Outbox `finance.payable-adjustment-corrected`
+
+Acceptance:
+- Domain 29/29 PASS
+- Architecture 66/66 PASS
+- API Contract 80/80 PASS
+- PostgreSQL Integration 89/89 PASS
+- total **264/264 PASS**
+- final Release solution build: 0 errors; only known `NETSDK1194`
+- exact SHA `8b660b677eef4463645496140eff5dd471432cca`
+- self-hosted run `33858815725` SUCCESS
+
+No relation, schema, model snapshot, or EF migration change.
+
+FIN-005 target-specific correction is complete in V8-C8.
 
 ## 13. Closed Batch Reopen baseline
 
@@ -555,7 +609,6 @@ The old Business Rule hard gates for Finance correction and Batch Reopen are rem
 
 Candidate next slices include:
 - additional Party lifecycle targets using explicit target-specific commands/capabilities
-- remaining target-specific Finance data correction (Payable Adjustment / FIN-005)
 - Closed Batch Reopen
 - additional Hard Delete targets after structural dependency closure
 
@@ -580,7 +633,7 @@ Do not require routine GitHub-hosted runners, paid/larger runners, Codespaces, o
 ## 18. Recovery
 
 ```text
-main@768c9673f242cfbc0c53b1cd7ecd6e3fa273f770
+main@8b660b677eef4463645496140eff5dd471432cca
 -> V8-C1 Supplier Hard Delete COMPLETE
 -> V8-C2 Customer Hard Delete COMPLETE
 -> V8-C3 Sales Allocation Correction COMPLETE
@@ -598,5 +651,9 @@ main@768c9673f242cfbc0c53b1cd7ecd6e3fa273f770
 -> local C7 hard gates 257/257 PASS
 -> C7 self-hosted run 33854672829 SUCCESS
 -> C7 ff-only main promotion + non-force push/read-back COMPLETE
--> current docs checkpoint branch: p6-v8-c7-checkpoint-validation
+-> V8-C8 CorrectPayableAdjustment COMPLETE
+-> local C8 hard gates 264/264 PASS
+-> C8 self-hosted run 33858815725 SUCCESS
+-> C8 ff-only main promotion + non-force push/read-back COMPLETE
+-> current docs checkpoint branch: p6-v8-c8-checkpoint-validation
 ```
