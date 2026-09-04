@@ -19,10 +19,12 @@ public static class FinanceEndpoints
     public const string AddPayableAdjustmentOperationId = "Finance_AddPayableAdjustment";
     public const string PayPayableOperationId = "Finance_PayPayable";
     public const string ReceiveReceivableOperationId = "Finance_ReceiveReceivable";
+    public const string CorrectPaymentAmountOperationId = "Finance_CorrectPaymentAmount";
 
     public const string AddPayableAdjustmentCommandType = "AddPayableAdjustment";
     public const string PayPayableCommandType = "PayPayable";
     public const string ReceiveReceivableCommandType = "ReceiveReceivable";
+    public const string CorrectPaymentAmountCommandType = "CorrectPaymentAmount";
 
     private static readonly JsonSerializerOptions CanonicalCommandJsonOptions = CreateCanonicalCommandJsonOptions();
 
@@ -61,6 +63,20 @@ public static class FinanceEndpoints
             .RequireAuthorization(CapabilityPolicies.FinancePay)
             .RequireIdempotencyKey()
             .Produces<ReceiveReceivableResponse>(StatusCodes.Status201Created)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict)
+            .ProducesProblem(StatusCodes.Status422UnprocessableEntity);
+
+        finance.MapPost(
+                "/payables/{payableId:guid}/payments/{paymentId:guid}/correct-amount",
+                CorrectPaymentAmountAsync)
+            .WithName(CorrectPaymentAmountOperationId)
+            .RequireAuthorization(CapabilityPolicies.FinanceCorrect)
+            .RequireIdempotencyKey()
+            .Produces<CorrectPaymentAmountResponse>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status403Forbidden)
@@ -202,6 +218,49 @@ public static class FinanceEndpoints
         return FinanceFailure(httpContext, result.Error, "Receivable receipt failed.");
     }
 
+    private static async Task<IResult> CorrectPaymentAmountAsync(
+        Guid payableId,
+        Guid paymentId,
+        CorrectPaymentAmountRequest request,
+        HttpContext httpContext,
+        [FromServices] IActorContext actorContext,
+        [FromServices] ICommandRequestHasher requestHasher,
+        [FromServices] ICorrectPaymentAmountExecutor executor,
+        CancellationToken cancellationToken)
+    {
+        if (payableId == Guid.Empty || paymentId == Guid.Empty || request.ExpectedOutstandingVersion < 1)
+        {
+            return TransportValidationFailure(httpContext);
+        }
+
+        var command = new CorrectPaymentAmountCommand(
+            payableId,
+            paymentId,
+            request.CorrectedAmountThb,
+            request.ExpectedOutstandingVersion,
+            request.ReasonText);
+        var execution = new CorrectPaymentAmountExecution(
+            httpContext.GetRequiredCommandId(),
+            requestHasher.Compute(CanonicalPayload(CorrectPaymentAmountCommandType, command)),
+            actorContext.ActorAccountId,
+            command);
+
+        var result = await executor.ExecuteAsync(execution, cancellationToken);
+        if (result.IsSuccess)
+        {
+            return TypedResults.Ok(new CorrectPaymentAmountResponse(
+                result.Value.PaymentId,
+                result.Value.PayableId,
+                result.Value.PreviousAmountThb,
+                result.Value.CorrectedAmountThb,
+                result.Value.OutstandingThb,
+                result.Value.OutstandingVersion,
+                result.Value.CorrectedAt));
+        }
+
+        return FinanceFailure(httpContext, result.Error, "Payment amount correction failed.");
+    }
+
     private static JsonPayload CanonicalPayload<TCommand>(string commandType, TCommand command) =>
         JsonPayload.FromUtf8Json(
             JsonSerializer.SerializeToUtf8Bytes(
@@ -262,6 +321,11 @@ public sealed record ReceiveReceivableRequest(
     long? AmountThb,
     long ExpectedOutstandingVersion);
 
+public sealed record CorrectPaymentAmountRequest(
+    long CorrectedAmountThb,
+    long ExpectedOutstandingVersion,
+    string? ReasonText);
+
 public sealed record AddPayableAdjustmentResponse(
     Guid PayableAdjustmentId,
     Guid PayableId,
@@ -285,3 +349,12 @@ public sealed record ReceiveReceivableResponse(
     long OutstandingThb,
     long OutstandingVersion,
     DateTimeOffset ConfirmedAt);
+
+public sealed record CorrectPaymentAmountResponse(
+    Guid PaymentId,
+    Guid PayableId,
+    long PreviousAmountThb,
+    long CorrectedAmountThb,
+    long OutstandingThb,
+    long OutstandingVersion,
+    DateTimeOffset CorrectedAt);

@@ -10,6 +10,7 @@ public static class CapabilityPolicies
     public const string SalesHandlingWorkRecord = "sales-handling.work-record.record";
     public const string LaborDailyWageConfirm = "labor.daily-wage.confirm";
     public const string FinancePay = "finance.pay";
+    public const string FinanceCorrect = "finance.correct";
     public const string InventoryAdjust = "inventory.adjust";
     public const string SupplierLifecycle = "party.supplier.lifecycle";
     public const string CustomerLifecycle = "party.customer.lifecycle";
