@@ -1,3 +1,4 @@
+using YowThi.Erp.Api.DataProtection;
 using YowThi.Erp.Api.Finance;
 using YowThi.Erp.Api.Hosting;
 using YowThi.Erp.Api.Inventory;
@@ -27,6 +28,7 @@ app.MapSalesEndpoints();
 app.MapSalesHandlingEndpoints();
 app.MapLaborEndpoints();
 app.MapFinanceEndpoints();
+app.MapDataProtectionEndpoints();
 
 app.Run();
 

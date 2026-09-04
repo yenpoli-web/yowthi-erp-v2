@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using YowThi.Erp.Application.Common.Idempotency;
 using YowThi.Erp.Application.Common.Transactions;
+using YowThi.Erp.Application.DataProtection;
 using YowThi.Erp.Application.Finance;
 using YowThi.Erp.Application.Inventory;
 using YowThi.Erp.Application.Labor;
@@ -11,6 +12,7 @@ using YowThi.Erp.Application.Processing;
 using YowThi.Erp.Application.Sales;
 using YowThi.Erp.Application.SalesHandling;
 using YowThi.Erp.Infrastructure.Persistence.Concurrency;
+using YowThi.Erp.Infrastructure.Persistence.DataProtection;
 using YowThi.Erp.Infrastructure.Persistence.Finance;
 using YowThi.Erp.Infrastructure.Persistence.Idempotency;
 using YowThi.Erp.Infrastructure.Persistence.Inventory;
@@ -52,6 +54,7 @@ public static class PersistenceServiceCollectionExtensions
         services.AddScoped<IReceiveReceivableExecutor, PostgreSqlReceiveReceivableExecutor>();
         services.AddScoped<ITransferInventoryExecutor, PostgreSqlTransferInventoryExecutor>();
         services.AddScoped<IAdjustInventoryExecutor, PostgreSqlAdjustInventoryExecutor>();
+        services.AddScoped<IHardDeleteSupplierExecutor, PostgreSqlHardDeleteSupplierExecutor>();
         services.AddSingleton<RowVersionSaveChangesInterceptor>();
 
         services.AddDbContext<ErpDbContext>((serviceProvider, options) =>
