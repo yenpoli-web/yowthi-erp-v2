@@ -34,7 +34,7 @@ The later registration/control boundary is authoritative for classification:
 | LABOR-001 | Late work after Daily Wage confirmed | A | block normal late work |
 | FIN-001 | Payment > Outstanding | A | block |
 | FIN-002 | Receipt > Outstanding | A | block |
-| FIN-003 | Correction of wrongly registered confirmed Payment/Receipt | CONTROL | Confirmed control boundary 2026-09-04: registration error is ERP Data Correction, not a new Business Fact. Use target-specific correction, Audit before/after, concurrency, idempotency, and rebuild affected Outstanding. If money actually moves again, record a new Finance Business Fact. |
+| FIN-003 | Correction of wrongly registered confirmed Payment/Receipt | CONTROL | Confirmed control boundary 2026-09-04: registration error is ERP Data Correction, not a new Business Fact. Use target-specific correction, Audit before/after, concurrency, idempotency, and rebuild affected Outstanding. V8-C6 implements direct Payment amount correction through `CorrectPaymentAmount`; Receipt correction remains a separate pending target-specific control slice. If money actually moves again, record a new Finance Business Fact. |
 | FIN-004 | Deduction causing negative Payable Outstanding | A | block |
 | FIN-005 | Correction of wrongly registered Payable Adjustment | CONTROL | Confirmed control boundary 2026-09-04: registration error is ERP Data Correction. Use target-specific correction with Audit/concurrency/idempotency and rebuild affected Outstanding; do not fabricate a reversal business event unless reality actually contains one. |
 | FIN-006 | Adjustment types other than supplier deduction | C | not implemented |

@@ -1,6 +1,6 @@
 # Current Design Checkpoint — YowThi ERP V2
 
-Checkpoint status: **v0.1 implementation baseline through P6 V8-C5 complete. Supplier/Customer Hard Delete, Sales Allocation Correction, ERP Registration / Data Control clarification, Supplier lifecycle, and Customer lifecycle are formally implemented and validated. P6 V8 remains IN PROGRESS for remaining focused ERP Control slices.**
+Checkpoint status: **v0.1 implementation baseline through P6 V8-C6 complete. Supplier/Customer Hard Delete, Sales Allocation Correction, ERP Registration / Data Control clarification, Supplier/Customer lifecycle, and Payment Amount Correction are formally implemented and validated. P6 V8 remains IN PROGRESS for remaining focused ERP Control slices.**
 
 Purpose: recover the current architecture and implementation state if conversational context is lost.
 
@@ -120,6 +120,7 @@ P6    Business / ERP Control vertical slices             IN PROGRESS
       ERP Registration / Data Control clarification      COMPLETE
       C4 Supplier Soft Delete / Restore                  COMPLETE
       C5 Customer Soft Delete / Restore                  COMPLETE
+      C6 Payment Amount Correction                       COMPLETE
       remaining focused ERP Control slices               IN PROGRESS
 P7    React UI vertical slices                           NOT FORMALLY COMPLETE
 P8    CI / production hardening                          FUTURE
@@ -131,8 +132,8 @@ Do not mark P6 or all of V8 COMPLETE until the remaining required V8 control sco
 
 Formal code baseline immediately before this checkpoint-document commit:
 - `main = origin/main`
-- SHA: `e22d281e4c1c92bca6d57e6a301e2ea1cacc5cbb`
-- commit: `feat: add customer lifecycle control`
+- SHA: `cdd652b639a56c9896d7403cbbf501331ce7aca0`
+- commit: `feat: add payment amount correction`
 - promotion: fast-forward only
 - push: non-force
 - remote fetch/read-back: clean
@@ -144,6 +145,26 @@ C4 docs checkpoint:
 - self-hosted run: `33841667574`
 - conclusion: `success`
 - ff-only main promotion complete
+
+C5 docs checkpoint:
+- commit: `85b3c21f7e25ee8847b894d08f23c5bf595fe246`
+- commit: `docs: checkpoint customer lifecycle completion`
+- validation branch: `p6-v8-c5-checkpoint-validation`
+- self-hosted run: `33845174504`
+- conclusion: `success`
+- ff-only main promotion complete
+
+C6 Payment Amount Correction implementation:
+- commit: `cdd652b639a56c9896d7403cbbf501331ce7aca0`
+- commit: `feat: add payment amount correction`
+- validation branch: `p6-v8-payment-correction-validation`
+- local hard gates: 251/251 PASS
+- self-hosted run: `33850492563`
+- runner: `YowThi-ERP-V2`
+- required labels: `self-hosted`, `yowthi-erp-v2`
+- conclusion: `success`
+- `eligibleForMainFastForward=true`
+- ff-only main promotion + non-force push/read-back: COMPLETE
 
 ERP Registration / Data Control clarification:
 - commit: `53e9122b440209a9734697dd36a0f104dc59176c`
@@ -377,7 +398,49 @@ Do not fabricate a fake reversal business event merely to justify correcting an 
 
 If money actually moves again, record the new real Finance Business Fact.
 
-`FIN-003` / `FIN-005` are implementation/control design items, not Business Rule hard gates.
+`FIN-003` / `FIN-005` are ERP Control items, not Business Rule hard gates. V8-C6 completes Payment amount correction under FIN-003; Receipt correction remains pending, and FIN-005 Payable Adjustment correction remains pending.
+
+### Payment Amount Correction - V8-C6 COMPLETE
+
+Command:
+- `CorrectPaymentAmount`
+
+Endpoint:
+- `POST /api/v1/finance/payables/{payableId}/payments/{paymentId}/correct-amount`
+
+Capability:
+- `finance.correct`
+
+Semantics:
+- direct amendment of a wrongly registered Payment amount
+- preserve original `confirmed_at` and `confirmed_by_account_id`
+- Payable Outstanding Position row version is the monetary concurrency boundary
+- update Payment, `settlement_total_thb`, and `outstanding_thb` atomically by the correction delta
+- block a correction that would make Outstanding negative
+- no fabricated reversal Business Fact
+
+Audit/idempotency:
+- `CORRECTION` event
+- subject `finance.payment`
+- change kind `UPDATE`
+- before/after amount summary
+- correction link mode `DIRECT_AMENDMENT`
+- persistent CommandId replay before current-state validation
+- Outbox `finance.payment-corrected`
+
+Acceptance:
+- Domain 29/29 PASS
+- Architecture 66/66 PASS
+- API Contract 74/74 PASS
+- PostgreSQL Integration 82/82 PASS
+- total **251/251 PASS**
+- final Release solution build: 0 errors; only known `NETSDK1194`
+- exact SHA `cdd652b639a56c9896d7403cbbf501331ce7aca0`
+- self-hosted run `33850492563` SUCCESS
+
+No relation, schema, model snapshot, or EF migration change.
+
+Receipt correction and Payable Adjustment correction remain pending target-specific ERP Control slices.
 
 ## 13. Closed Batch Reopen baseline
 
@@ -404,6 +467,7 @@ Current examples include:
 - `sales.confirm`
 - `sales.correct-allocation`
 - `finance.pay`
+- `finance.correct`
 - `inventory.adjust`
 - `party.supplier.lifecycle`
 - `party.customer.lifecycle`
@@ -436,7 +500,7 @@ The old Business Rule hard gates for Finance correction and Batch Reopen are rem
 
 Candidate next slices include:
 - additional Party lifecycle targets using explicit target-specific commands/capabilities
-- target-specific Finance data correction
+- remaining target-specific Finance data correction (Receipt / Payable Adjustment)
 - Closed Batch Reopen
 - additional Hard Delete targets after structural dependency closure
 
@@ -461,17 +525,19 @@ Do not require routine GitHub-hosted runners, paid/larger runners, Codespaces, o
 ## 18. Recovery
 
 ```text
-main@e22d281e4c1c92bca6d57e6a301e2ea1cacc5cbb
-→ V8-C1 Supplier Hard Delete COMPLETE
-→ V8-C2 Customer Hard Delete COMPLETE
-→ V8-C3 Sales Allocation Correction COMPLETE
-→ ERP Registration / Data Control boundary COMPLETE
-→ FIN-003 / FIN-005 / LIFE-001 classified as CONTROL
-→ V8-C4 Supplier Soft Delete / Restore COMPLETE
-→ C4 docs checkpoint f81cfb97eea4fecdb99a2e556dd746e0dac9ab9c COMPLETE
-→ V8-C5 Customer Soft Delete / Restore COMPLETE
-→ local C5 hard gates 245/245 PASS
-→ C5 self-hosted run 33842998109 SUCCESS
-→ C5 ff-only main promotion + non-force push/read-back COMPLETE
-→ current docs checkpoint branch: p6-v8-c5-checkpoint-validation
+main@cdd652b639a56c9896d7403cbbf501331ce7aca0
+-> V8-C1 Supplier Hard Delete COMPLETE
+-> V8-C2 Customer Hard Delete COMPLETE
+-> V8-C3 Sales Allocation Correction COMPLETE
+-> ERP Registration / Data Control boundary COMPLETE
+-> FIN-003 / FIN-005 / LIFE-001 classified as CONTROL
+-> V8-C4 Supplier Soft Delete / Restore COMPLETE
+-> C4 docs checkpoint f81cfb97eea4fecdb99a2e556dd746e0dac9ab9c COMPLETE
+-> V8-C5 Customer Soft Delete / Restore COMPLETE
+-> C5 docs checkpoint 85b3c21f7e25ee8847b894d08f23c5bf595fe246 COMPLETE
+-> V8-C6 CorrectPaymentAmount COMPLETE
+-> local C6 hard gates 251/251 PASS
+-> C6 self-hosted run 33850492563 SUCCESS
+-> C6 ff-only main promotion + non-force push/read-back COMPLETE
+-> current docs checkpoint branch: p6-v8-payment-correction-checkpoint-validation
 ```

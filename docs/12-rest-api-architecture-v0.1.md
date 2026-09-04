@@ -141,6 +141,7 @@ Confirmed examples:
 | `AddPayableAdjustment` | `POST /api/v1/finance/payables/{payableId}/adjustments` |
 | `PayPayable` | `POST /api/v1/finance/payables/{payableId}/payments` |
 | `ReceiveReceivable` | `POST /api/v1/finance/receivables/{receivableId}/receipts` |
+| `CorrectPaymentAmount` | `POST /api/v1/finance/payables/{payableId}/payments/{paymentId}/correct-amount` |
 | `TransferInventory` | `POST /api/v1/inventory/transfers` |
 | `AdjustInventory` | `POST /api/v1/inventory/adjustments` |
 | `CloseProcurementBatch` | `POST /api/v1/procurement/batches/{batchId}/close` |
@@ -430,6 +431,8 @@ code = finance.outstanding-changed
 ```
 
 The API does not expose direct mutation of Outstanding projection rows.
+
+`CorrectPaymentAmount` uses the same applicable Payable Outstanding Position version as its monetary concurrency boundary. The correction command owns the transactional delta update of Payment + Outstanding; clients never write the projection row directly.
 
 ## 20. Validation layers
 
@@ -734,9 +737,15 @@ POST /api/v1/sales/{salesId}/allocation-revisions
 
 This aligns with immutable allocation revision history plus compensating Inventory Movements.
 
-While FIN-003 and FIN-005 remain unresolved, do not expose generic Payment/Receipt/Adjustment reversal endpoints.
+V8-C6 implements the target-specific Payment amount correction endpoint:
 
-Gap Register decisions must precede those API operations.
+```text
+POST /api/v1/finance/payables/{payableId}/payments/{paymentId}/correct-amount
+```
+
+This is an ERP Control direct amendment with correction Audit, idempotency, and Outstanding concurrency/rebuild. It is not a fabricated reversal Business Fact.
+
+Receipt correction and Payable Adjustment correction remain separate target-specific future ERP Control operations. Do not expose a generic Payment/Receipt/Adjustment correction or reversal endpoint.
 
 ## 33. Authentication baseline
 
@@ -778,6 +787,7 @@ Use operation/capability-style authorization policies such as:
 ```text
 sales.confirm
 finance.pay
+finance.correct
 inventory.adjust
 data-protection.hard-delete
 ```

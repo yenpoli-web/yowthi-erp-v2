@@ -35,6 +35,7 @@ Examples of Business Fact Commands:
 
 Examples of ERP Control Commands:
 - `CorrectSalesAllocation`
+- `CorrectPaymentAmount`
 - `SoftDeleteSupplier`
 - `RestoreSupplier`
 - `SoftDeleteCustomer`
@@ -227,6 +228,47 @@ A target-specific Finance correction may:
 If money actually moves again in reality, that is a new Finance Business Fact and must be recorded as a new transaction rather than hidden inside a data correction.
 
 `FIN-003` and `FIN-005` therefore no longer block implementation as Business Rule gaps; their remaining work is target-specific ERP Control contract/implementation design.
+
+### CorrectPaymentAmount - V8-C6 COMPLETE
+
+Command:
+- `CorrectPaymentAmount`
+
+Route:
+- `POST /api/v1/finance/payables/{payableId}/payments/{paymentId}/correct-amount`
+
+Capability:
+- `finance.correct`
+
+Input:
+- Payable
+- Payment
+- Corrected Amount THB
+- Expected Payable Outstanding Version
+- optional correction reason
+- Command Identity
+
+Correction semantics:
+- directly amend the wrongly registered `finance.payments.amount_thb`
+- preserve the original Payment `confirmed_at` and `confirmed_by_account_id`
+- Payment itself does not gain a new row-version column
+- the applicable `payable_outstanding_positions.row_version` remains the monetary concurrency boundary
+- apply the correction delta to `settlement_total_thb` and `outstanding_thb` atomically
+- block a correction that would make Outstanding negative
+- a same-amount request is a semantic no-change failure, not a new business event
+
+Audit/control:
+- `CORRECTION` Audit Event
+- subject `finance.payment`
+- change kind `UPDATE`
+- audit-safe before/after amount summary
+- `DIRECT_AMENDMENT` correction link to the latest audited Payment state
+- persistent CommandId replay
+- `finance.payment-corrected` Outbox message
+
+V8-C6 requires no relation, schema, snapshot, or EF migration change.
+
+Receipt correction and Payable Adjustment correction remain separate target-specific ERP Control slices; V8-C6 does not claim those are implemented.
 
 ## TransferInventory
 

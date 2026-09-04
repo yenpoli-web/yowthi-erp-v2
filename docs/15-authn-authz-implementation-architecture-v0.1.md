@@ -257,6 +257,7 @@ Current examples include:
 - `sales.confirm`
 - `sales.correct-allocation`
 - `finance.pay`
+- `finance.correct`
 - `inventory.adjust`
 - `party.supplier.lifecycle`
 - `party.customer.lifecycle`
@@ -302,6 +303,8 @@ Rules:
 The mechanism may later move to persisted authorization administration only through a formal architecture revision.
 
 Target-specific ERP lifecycle/correction capabilities may be added with their implementation slices without creating a new Business Rule or business-role hierarchy. Their grants remain explicit deployment configuration.
+
+`finance.correct` is the ERP Control capability used by V8-C6 `CorrectPaymentAmount`. It is separate from `finance.pay`: permission to register a Payment does not automatically imply permission to amend a previously registered Payment. This authorization distinction is technical security architecture, not a YowThi business-role hierarchy.
 
 ## 16. Highest-authority operations
 
@@ -476,3 +479,21 @@ Confirmed security consequences:
 - future target-specific lifecycle/correction capabilities may follow the same technical pattern without being treated as Business Rules
 
 V8-C4 and V8-C5 therefore require no AuthN/AuthZ persistence revision and no EF migration.
+
+## 28. V8-C6 Finance correction capability confirmation - 2026-09-04
+
+Payment amount correction uses the explicit capability:
+
+```text
+finance.correct
+```
+
+Confirmed operation:
+- `finance.correct` controls V8-C6 `CorrectPaymentAmount`
+
+Confirmed security consequences:
+- correction permission is distinct from `finance.pay`
+- capability grants remain deployment-configured by persistent Account UUID
+- no Role Master, permission tables, account-role persistence, or business-role hierarchy is introduced
+- `finance.correct` does not imply `data-protection.hard-delete`
+- no AuthN/AuthZ persistence revision or EF migration is required
