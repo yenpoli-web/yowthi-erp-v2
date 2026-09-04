@@ -6,6 +6,7 @@ public static class CapabilityPolicies
     public const string ProcessingConfirm = "processing.confirm";
     public const string OutsourcedConfirm = "outsourced.confirm";
     public const string SalesConfirm = "sales.confirm";
+    public const string SalesCorrectAllocation = "sales.correct-allocation";
     public const string SalesHandlingWorkRecord = "sales-handling.work-record.record";
     public const string LaborDailyWageConfirm = "labor.daily-wage.confirm";
     public const string FinancePay = "finance.pay";

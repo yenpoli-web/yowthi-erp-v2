@@ -8,6 +8,7 @@ Examples:
 - `ConfirmProcurementEntry`
 - `ConfirmProcessingExecution`
 - `ConfirmSales`
+- `CorrectSalesAllocation`
 - `ConfirmOutsourcedSupplyDetail`
 - `RecordSalesPackagingWork`
 - `ConfirmEmployeeDailyWage`
@@ -91,6 +92,45 @@ Confirm process:
 - SALES_ISSUE
 - create Receivable
 - mark Sales Confirmed
+
+## CorrectSalesAllocation
+
+Confirmed YowThi correction input semantics under SALES-003 support two explicit modes. The caller selects the intended mode; the system does not guess between them.
+
+Shared input:
+- Sales
+- Expected Sales Row Version
+- Correction Mode
+- Allocation inputs
+- Command Identity
+
+Mode: `COMPLETE_REPLACEMENT`
+- the user supplies the complete official replacement allocation set
+- for each Sales Detail, submitted allocation total must equal that Sales Detail quantity
+- no automatic remainder allocation is performed
+
+Mode: `OVERRIDE_AND_REALLOCATE`
+- the user supplies explicit allocation overrides first
+- submitted override total for a Sales Detail may be less than the Sales Detail quantity
+- the remaining quantity is re-allocated using the established priority: OUTSOURCED oldest→newest, then IN_HOUSE oldest→newest
+
+Atomic effects:
+- append the next immutable Sales Allocation Revision + Revision Items
+- replace only the current `sales_allocations` pointer projection
+- compare previous official allocation with the new official allocation
+- create `SALES_ALLOCATION_ADJUSTMENT` Inventory Movements only for actual net allocation deltas
+- update affected Inventory Positions transactionally
+- increment Sales row version
+- write correction Audit + correction lineage
+- persist idempotent command result and Outbox message
+
+Must not:
+- rewrite or remove prior Allocation Revisions / Revision Items
+- rewrite prior `SALES_ISSUE` or other Inventory Movement history
+- silently reopen a Closed/deleted source Batch
+- write an inventory delta back into a Closed/deleted source Batch
+
+Existing Sales source-location ambiguity handling remains applicable; correction does not invent a new storage-location override vocabulary while SALES-001 remains unresolved.
 
 ## ConfirmOutsourcedSupplyDetail
 
