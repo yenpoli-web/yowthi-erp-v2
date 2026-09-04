@@ -11,6 +11,7 @@ It defines technical/security architecture only. It does not create a YowThi Bus
 
 Implementation precedence remains:
 - Business Facts / Business Rules: Business Discovery, Command Contracts, Gap Register, owning-domain documents
+- ERP Registration / Data Control classification: `docs/17-erp-registration-data-control-boundary-v0.1.md`
 - relational baseline: `docs/10-relational-model-consolidation-v0.1.md`
 - EF Core/Npgsql architecture: `docs/11-ef-core-mapping-architecture-v0.1.md`
 - HTTP/REST architecture: `docs/12-rest-api-architecture-v0.1.md`
@@ -26,7 +27,7 @@ Auth-specific relational correction:
 ## 2. Security goals
 
 The v0.1 authentication/authorization design must:
-- require authenticated identity for ERP business endpoints
+- require authenticated identity for ERP business and control endpoints
 - keep actor identity server-controlled
 - resolve the authenticated principal to persistent `system.accounts`
 - avoid ERP-owned password storage
@@ -78,7 +79,7 @@ The React application does not become the owner of authentication tokens.
 
 `/api/v1` is an API boundary.
 
-Unauthenticated API requests return `401 Unauthorized`; the API must not transform arbitrary business requests into an HTML/OIDC redirect response.
+Unauthenticated API requests return `401 Unauthorized`; the API must not transform arbitrary business/control requests into an HTML/OIDC redirect response.
 
 Interactive login is initiated explicitly through an authentication route such as:
 
@@ -144,7 +145,7 @@ No database-generated UUID is introduced; account IDs remain application/mainten
 
 ## 8. Why identity mapping belongs in `system.accounts`
 
-The authenticated actor recorded on Business Facts must resolve deterministically to the same persistent actor anchor used by all `*_by_account_id` foreign keys.
+The authenticated actor recorded on Business Facts and ERP Control Audit must resolve deterministically to the same persistent actor anchor used by all `*_by_account_id` foreign keys.
 
 Keeping `(issuer, subject)` on `system.accounts` avoids:
 - email/name-based identity matching
@@ -216,7 +217,7 @@ A valid authentication cookie is not sufficient by itself to authorize ERP activ
 For authenticated ERP requests, server-side actor resolution must confirm the persistent account still exists and is `active = true`.
 
 If the account is missing or inactive:
-- no ActorContext is produced for Business Commands
+- no ActorContext is produced for Application Write Commands
 - the request is rejected
 
 This ensures disabling an ERP account takes effect without waiting only for natural cookie expiration.
@@ -229,7 +230,7 @@ Clients never submit authoritative actor IDs.
 
 The API authentication/actor-resolution layer produces the existing Application `ActorAccountId` from `system.accounts.id`.
 
-Business endpoint flow is conceptually:
+Application write flow is conceptually:
 
 ```text
 OIDC/Cookie authentication
@@ -252,14 +253,18 @@ is server-resolved.
 
 Authorization uses explicit operation/capability policy names.
 
-Examples already present in the API baseline:
+Current examples include:
 - `sales.confirm`
+- `sales.correct-allocation`
 - `finance.pay`
 - `inventory.adjust`
+- `party.supplier.lifecycle`
 - `data-protection.hard-delete`
 
-Capability names are technical authorization policy identifiers around confirmed operations.
+Capability names are technical authorization policy identifiers around explicit Application operations.
 They do not define a YowThi job-title or role hierarchy.
+
+`party.supplier.lifecycle` is the ordinary target-specific ERP lifecycle capability used by V8-C4 Supplier Soft Delete / Restore. It does not imply permission for physical deletion.
 
 ## 15. Capability assignment v0.1
 
@@ -274,6 +279,9 @@ sales.confirm
 
 finance.pay
   → account UUID A
+
+party.supplier.lifecycle
+  → account UUID B
 ```
 
 Rules:
@@ -284,6 +292,8 @@ Rules:
 - no automatic capability assignment from unconfirmed organization/business roles
 
 The mechanism may later move to persisted authorization administration only through a formal architecture revision.
+
+Target-specific ERP lifecycle/correction capabilities may be added with their implementation slices without creating a new Business Rule or business-role hierarchy. Their grants remain explicit deployment configuration.
 
 ## 16. Highest-authority operations
 
@@ -298,6 +308,8 @@ data-protection.hard-delete
 It does not invent a `SuperAdmin` role.
 
 Who receives this capability is a controlled security configuration decision, not a new Business Rule encoded in the domain model.
+
+`data-protection.hard-delete` is deliberately separate from ordinary lifecycle capabilities such as `party.supplier.lifecycle`. Possession of an ordinary Soft Delete / Restore capability must not imply Hard Delete authority, and Hard Delete authority must not be reused as the normal lifecycle permission.
 
 ## 17. Authentication token storage
 
@@ -331,7 +343,7 @@ X-CSRF-TOKEN
 
 Apply antiforgery to unsafe authenticated browser operations such as POST/PUT/PATCH/DELETE according to the endpoint model.
 
-Authentication protocol callback endpoints follow the security requirements of the OIDC middleware rather than being treated as ERP Business Writes.
+Authentication protocol callback endpoints follow the security requirements of the OIDC middleware rather than being treated as ERP Application Writes.
 
 ## 19. Same-origin / CORS interaction
 
@@ -375,7 +387,7 @@ Production must not log:
 
 Authentication failures may be logged with sanitized operational context and trace correlation.
 
-Business request/response body logging remains off by default under the REST/API security baseline.
+Business/control request/response body logging remains off by default under the REST/API security baseline.
 
 ## 23. Session lifecycle
 
@@ -401,6 +413,8 @@ After this document and the `system.accounts` mapping revision are validated:
 5. Only then activate Docker Desktop / PostgreSQL 18 for P5 apply and provider-specific acceptance.
 
 Actual OIDC provider wiring may proceed before Business API production use, but it does not require delaying the formal initial schema once this relational identity shape is included.
+
+Later P6 ERP Control capability names remain additive technical authorization contracts and do not reopen the P3.5 relation-count decision unless persisted authorization administration is introduced.
 
 ## 25. Explicit non-decisions
 
@@ -431,3 +445,23 @@ P3.5 is complete when:
 - self-hosted restore/build/test succeeds
 
 After that, `InitialV01` is no longer blocked by AuthN/AuthZ architecture and the project may enter P4.
+
+## 27. V8-C4 lifecycle capability confirmation — 2026-09-04
+
+Supplier Soft Delete / Restore formally validates the ordinary ERP lifecycle authorization boundary:
+
+```text
+party.supplier.lifecycle
+```
+
+The capability controls only the target-specific Supplier Soft Delete / Restore operations implemented by V8-C4.
+
+Confirmed security consequences:
+- capability grants remain deployment-configured by persistent Account UUID
+- no `roles`, `permissions`, `account_roles`, or other new authorization relations are introduced
+- no YowThi business-role hierarchy is inferred
+- `party.supplier.lifecycle` does not grant Hard Delete
+- `data-protection.hard-delete` remains the separate highest-authority physical-delete capability
+- future target-specific lifecycle/correction capabilities may follow the same technical pattern without being treated as Business Rules
+
+V8-C4 therefore requires no AuthN/AuthZ persistence revision and no EF migration.

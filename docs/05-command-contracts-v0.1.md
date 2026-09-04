@@ -35,8 +35,9 @@ Examples of Business Fact Commands:
 
 Examples of ERP Control Commands:
 - `CorrectSalesAllocation`
+- `SoftDeleteSupplier`
+- `RestoreSupplier`
 - target-specific data correction
-- target-specific Soft Delete / Restore
 - target-specific Reopen
 - target-specific Hard Delete under Data Protection
 
@@ -295,6 +296,60 @@ For Closed Batch Reopen specifically:
 - physical stock discrepancy is handled by stocktake / `AdjustInventory`
 
 `LIFE-001` therefore no longer blocks implementation as a Business Rule gap; its remaining work is lifecycle-control implementation and technical concurrency/Audit behavior.
+
+### Supplier lifecycle — V8-C4 COMPLETE
+
+Commands:
+- `SoftDeleteSupplier`
+- `RestoreSupplier`
+
+Routes:
+- `POST /api/v1/party/suppliers/{supplierId}/soft-delete`
+- `POST /api/v1/party/suppliers/{supplierId}/restore`
+
+Capability:
+- `party.supplier.lifecycle`
+
+Shared input:
+- Supplier
+- Expected Supplier Row Version
+- Command Identity
+
+`SoftDeleteSupplier`:
+- sets `deleted_at`
+- sets `deleted_by_account_id` from the authenticated actor
+- increments Supplier `row_version`
+- does not change `active`
+- does not physically delete the Supplier
+- does not cascade/delete historical Procurement, Processing, Inventory, or Finance references
+- current-use Supplier selectors exclude the soft-deleted Supplier
+
+Historical dependencies do not by themselves block Soft Delete because the Supplier row remains available for FK/traceability history.
+
+`RestoreSupplier`:
+- clears `deleted_at`
+- clears `deleted_by_account_id`
+- increments Supplier `row_version`
+- preserves the existing `active` value
+- does not automatically reactivate an inactive Supplier
+
+Lifecycle technical controls:
+- replay/CommandId acquisition occurs before current lifecycle/version lookup
+- same actor + command type + canonical hash replays the committed result
+- changed actor/type/hash conflicts with `idempotency.key-reused`
+- stale expected row version conflicts with `concurrency.stale-row-version`
+- Soft Delete of an already deleted Supplier conflicts with `party.supplier-already-deleted`
+- Restore of a current/non-deleted Supplier conflicts with `party.supplier-not-deleted`
+- failed state/concurrency attempts roll back CommandExecution acquisition
+
+Audit:
+- event kind = `DATA_LIFECYCLE`
+- subject kind = `party.supplier`
+- Soft Delete subject change kind = `SOFT_DELETE`
+- Restore subject change kind = `RESTORE`
+- before/after row versions are retained
+
+V8-C4 requires no relation, schema, snapshot, or EF migration change.
 
 ## Correction / control framework
 
