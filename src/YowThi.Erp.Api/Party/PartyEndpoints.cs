@@ -22,6 +22,10 @@ public static class PartyEndpoints
     public const string SoftDeleteCustomerCommandType = "SoftDeleteCustomer";
     public const string RestoreCustomerOperationId = "Party_RestoreCustomer";
     public const string RestoreCustomerCommandType = "RestoreCustomer";
+    public const string SoftDeleteOutsourcedVendorOperationId = "Party_SoftDeleteOutsourcedVendor";
+    public const string SoftDeleteOutsourcedVendorCommandType = "SoftDeleteOutsourcedVendor";
+    public const string RestoreOutsourcedVendorOperationId = "Party_RestoreOutsourcedVendor";
+    public const string RestoreOutsourcedVendorCommandType = "RestoreOutsourcedVendor";
 
     private static readonly JsonSerializerOptions CanonicalCommandJsonOptions = new(JsonSerializerDefaults.Web);
 
@@ -72,6 +76,30 @@ public static class PartyEndpoints
             .RequireAuthorization(CapabilityPolicies.CustomerLifecycle)
             .RequireIdempotencyKey()
             .Produces<CustomerLifecycleResult>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict)
+            .ProducesProblem(StatusCodes.Status422UnprocessableEntity);
+
+        party.MapPost("/outsourced-vendors/{outsourcedVendorId:guid}/soft-delete", SoftDeleteOutsourcedVendorAsync)
+            .WithName(SoftDeleteOutsourcedVendorOperationId)
+            .RequireAuthorization(CapabilityPolicies.OutsourcedVendorLifecycle)
+            .RequireIdempotencyKey()
+            .Produces<OutsourcedVendorLifecycleResult>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict)
+            .ProducesProblem(StatusCodes.Status422UnprocessableEntity);
+
+        party.MapPost("/outsourced-vendors/{outsourcedVendorId:guid}/restore", RestoreOutsourcedVendorAsync)
+            .WithName(RestoreOutsourcedVendorOperationId)
+            .RequireAuthorization(CapabilityPolicies.OutsourcedVendorLifecycle)
+            .RequireIdempotencyKey()
+            .Produces<OutsourcedVendorLifecycleResult>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status403Forbidden)
@@ -206,6 +234,68 @@ public static class PartyEndpoints
             : CreateFailureResult(httpContext, result.Error, "Customer Restore failed.");
     }
 
+    private static async Task<IResult> SoftDeleteOutsourcedVendorAsync(
+        Guid outsourcedVendorId,
+        OutsourcedVendorLifecycleRequest request,
+        HttpContext httpContext,
+        [FromServices] IActorContext actorContext,
+        [FromServices] ICommandRequestHasher requestHasher,
+        [FromServices] IOutsourcedVendorLifecycleExecutor executor,
+        CancellationToken cancellationToken)
+    {
+        if (request.ExpectedRowVersion < 1)
+        {
+            return InvalidTransportVersion(httpContext);
+        }
+
+        var command = new SoftDeleteOutsourcedVendorCommand(outsourcedVendorId, request.ExpectedRowVersion);
+        var canonicalPayload = JsonPayload.FromUtf8Json(
+            JsonSerializer.SerializeToUtf8Bytes(
+                new CanonicalSoftDeleteOutsourcedVendorRequest(SoftDeleteOutsourcedVendorCommandType, command),
+                CanonicalCommandJsonOptions));
+        var execution = new SoftDeleteOutsourcedVendorExecution(
+            httpContext.GetRequiredCommandId(),
+            requestHasher.Compute(canonicalPayload),
+            actorContext.ActorAccountId,
+            command);
+
+        var result = await executor.SoftDeleteAsync(execution, cancellationToken);
+        return result.IsSuccess
+            ? TypedResults.Ok(result.Value)
+            : CreateFailureResult(httpContext, result.Error, "Outsourced Vendor Soft Delete failed.");
+    }
+
+    private static async Task<IResult> RestoreOutsourcedVendorAsync(
+        Guid outsourcedVendorId,
+        OutsourcedVendorLifecycleRequest request,
+        HttpContext httpContext,
+        [FromServices] IActorContext actorContext,
+        [FromServices] ICommandRequestHasher requestHasher,
+        [FromServices] IOutsourcedVendorLifecycleExecutor executor,
+        CancellationToken cancellationToken)
+    {
+        if (request.ExpectedRowVersion < 1)
+        {
+            return InvalidTransportVersion(httpContext);
+        }
+
+        var command = new RestoreOutsourcedVendorCommand(outsourcedVendorId, request.ExpectedRowVersion);
+        var canonicalPayload = JsonPayload.FromUtf8Json(
+            JsonSerializer.SerializeToUtf8Bytes(
+                new CanonicalRestoreOutsourcedVendorRequest(RestoreOutsourcedVendorCommandType, command),
+                CanonicalCommandJsonOptions));
+        var execution = new RestoreOutsourcedVendorExecution(
+            httpContext.GetRequiredCommandId(),
+            requestHasher.Compute(canonicalPayload),
+            actorContext.ActorAccountId,
+            command);
+
+        var result = await executor.RestoreAsync(execution, cancellationToken);
+        return result.IsSuccess
+            ? TypedResults.Ok(result.Value)
+            : CreateFailureResult(httpContext, result.Error, "Outsourced Vendor Restore failed.");
+    }
+
     private static IResult InvalidTransportVersion(HttpContext httpContext) =>
         ApiProblemResults.Create(
             httpContext,
@@ -245,7 +335,16 @@ public static class PartyEndpoints
     private sealed record CanonicalRestoreCustomerRequest(
         string CommandType,
         RestoreCustomerCommand Command);
+
+    private sealed record CanonicalSoftDeleteOutsourcedVendorRequest(
+        string CommandType,
+        SoftDeleteOutsourcedVendorCommand Command);
+
+    private sealed record CanonicalRestoreOutsourcedVendorRequest(
+        string CommandType,
+        RestoreOutsourcedVendorCommand Command);
 }
 
 public sealed record SupplierLifecycleRequest(long ExpectedRowVersion);
 public sealed record CustomerLifecycleRequest(long ExpectedRowVersion);
+public sealed record OutsourcedVendorLifecycleRequest(long ExpectedRowVersion);
