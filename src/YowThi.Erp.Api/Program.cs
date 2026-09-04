@@ -30,6 +30,7 @@ app.MapOutsourcedEndpoints();
 app.MapOutsourcedSupplyDetailOptionEndpoints();
 app.MapSalesEndpoints();
 app.MapSalesHandlingEndpoints();
+app.MapSalesPackagingItemLifecycleEndpoints();
 app.MapLaborEndpoints();
 app.MapFinanceEndpoints();
 app.MapDataProtectionEndpoints();

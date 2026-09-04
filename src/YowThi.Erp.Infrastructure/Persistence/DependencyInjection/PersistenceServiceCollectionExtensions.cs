@@ -52,6 +52,7 @@ public static class PersistenceServiceCollectionExtensions
         services.AddScoped<IConfirmSalesExecutor, PostgreSqlConfirmSalesExecutor>();
         services.AddScoped<ICorrectSalesAllocationExecutor, PostgreSqlCorrectSalesAllocationExecutor>();
         services.AddScoped<IRecordSalesPackagingWorkExecutor, PostgreSqlRecordSalesPackagingWorkExecutor>();
+        services.AddScoped<ISalesPackagingItemLifecycleExecutor, PostgreSqlSalesPackagingItemLifecycleExecutor>();
         services.AddScoped<IConfirmEmployeeDailyWageExecutor, PostgreSqlConfirmEmployeeDailyWageExecutor>();
         services.AddScoped<IAddPayableAdjustmentExecutor, PostgreSqlAddPayableAdjustmentExecutor>();
         services.AddScoped<IPayPayableExecutor, PostgreSqlPayPayableExecutor>();
