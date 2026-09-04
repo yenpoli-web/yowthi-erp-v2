@@ -3,6 +3,7 @@ namespace YowThi.Erp.Api.Authorization;
 public static class CapabilityPolicies
 {
     public const string ProcurementConfirm = "procurement.confirm";
+    public const string ProcurementBatchLifecycle = "procurement.batch.lifecycle";
     public const string ProcessingConfirm = "processing.confirm";
     public const string OutsourcedConfirm = "outsourced.confirm";
     public const string SalesConfirm = "sales.confirm";

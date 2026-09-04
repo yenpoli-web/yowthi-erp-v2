@@ -20,6 +20,8 @@ public static class ProcurementEndpoints
     public const string ConfirmEntryCommandType = "ConfirmProcurementEntry";
     public const string CloseBatchOperationId = "Procurement_CloseBatch";
     public const string CloseBatchCommandType = "CloseProcurementBatch";
+    public const string ReopenBatchOperationId = "Procurement_ReopenBatch";
+    public const string ReopenBatchCommandType = "ReopenProcurementBatch";
 
     private static readonly JsonSerializerOptions CanonicalCommandJsonOptions = CreateCanonicalCommandJsonOptions();
 
@@ -46,6 +48,18 @@ public static class ProcurementEndpoints
             .RequireAuthorization(CapabilityPolicies.ProcurementConfirm)
             .RequireIdempotencyKey()
             .Produces<CloseProcurementBatchResult>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict)
+            .ProducesProblem(StatusCodes.Status422UnprocessableEntity);
+
+        procurement.MapPost("/batches/{procurementBatchId:guid}/reopen", ReopenBatchAsync)
+            .WithName(ReopenBatchOperationId)
+            .RequireAuthorization(CapabilityPolicies.ProcurementBatchLifecycle)
+            .RequireIdempotencyKey()
+            .Produces<ReopenProcurementBatchResult>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status403Forbidden)
@@ -136,6 +150,43 @@ public static class ProcurementEndpoints
             "Procurement Batch close failed.");
     }
 
+    private static async Task<IResult> ReopenBatchAsync(
+        Guid procurementBatchId,
+        ReopenProcurementBatchRequest request,
+        HttpContext httpContext,
+        [FromServices] IActorContext actorContext,
+        [FromServices] ICommandRequestHasher requestHasher,
+        [FromServices] IReopenProcurementBatchExecutor executor,
+        CancellationToken cancellationToken)
+    {
+        var command = new ReopenProcurementBatchCommand(
+            procurementBatchId,
+            request.ExpectedRowVersion,
+            request.ReasonText);
+
+        var canonicalPayload = JsonPayload.FromUtf8Json(
+            JsonSerializer.SerializeToUtf8Bytes(
+                new CanonicalReopenProcurementBatchRequest(ReopenBatchCommandType, command),
+                CanonicalCommandJsonOptions));
+
+        var execution = new ReopenProcurementBatchExecution(
+            httpContext.GetRequiredCommandId(),
+            requestHasher.Compute(canonicalPayload),
+            actorContext.ActorAccountId,
+            command);
+
+        var result = await executor.ExecuteAsync(execution, cancellationToken);
+        if (result.IsSuccess)
+        {
+            return TypedResults.Ok(result.Value);
+        }
+
+        return CreateFailureResult(
+            httpContext,
+            result.Error,
+            "Procurement Batch reopen failed.");
+    }
+
     private static IResult CreateFailureResult(
         HttpContext httpContext,
         ApplicationError error,
@@ -171,6 +222,10 @@ public static class ProcurementEndpoints
     private sealed record CanonicalCloseProcurementBatchRequest(
         string CommandType,
         CloseProcurementBatchCommand Command);
+
+    private sealed record CanonicalReopenProcurementBatchRequest(
+        string CommandType,
+        ReopenProcurementBatchCommand Command);
 }
 
 public sealed record ConfirmProcurementEntryRequest(
@@ -185,3 +240,7 @@ public sealed record ConfirmProcurementEntryRequest(
     Guid? ReceiptStorageLocationId);
 
 public sealed record CloseProcurementBatchRequest(long ExpectedRowVersion);
+
+public sealed record ReopenProcurementBatchRequest(
+    long ExpectedRowVersion,
+    string? ReasonText);
