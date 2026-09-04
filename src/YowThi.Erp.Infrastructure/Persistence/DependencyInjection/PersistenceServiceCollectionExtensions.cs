@@ -57,6 +57,7 @@ public static class PersistenceServiceCollectionExtensions
         services.AddScoped<IReceiveReceivableExecutor, PostgreSqlReceiveReceivableExecutor>();
         services.AddScoped<ICorrectPaymentAmountExecutor, PostgreSqlCorrectPaymentAmountExecutor>();
         services.AddScoped<ICorrectReceiptAmountExecutor, PostgreSqlCorrectReceiptAmountExecutor>();
+        services.AddScoped<ICorrectPayableAdjustmentExecutor, PostgreSqlCorrectPayableAdjustmentExecutor>();
         services.AddScoped<ITransferInventoryExecutor, PostgreSqlTransferInventoryExecutor>();
         services.AddScoped<IAdjustInventoryExecutor, PostgreSqlAdjustInventoryExecutor>();
         services.AddScoped<ISupplierLifecycleExecutor, PostgreSqlSupplierLifecycleExecutor>();

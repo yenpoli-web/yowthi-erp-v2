@@ -14,6 +14,9 @@ public static class FinanceApplicationErrorCodes
     public const string ReceiptExceedsOutstanding = "finance.receipt-exceeds-outstanding";
     public const string ReceiptCorrectionNoChange = "finance.receipt-correction-no-change";
     public const string ReceiptCorrectionExceedsOutstanding = "finance.receipt-correction-exceeds-outstanding";
+    public const string PayableAdjustmentNotFound = "finance.payable-adjustment-not-found";
+    public const string AdjustmentCorrectionNoChange = "finance.adjustment-correction-no-change";
+    public const string AdjustmentCorrectionCausesNegativeOutstanding = "finance.adjustment-correction-causes-negative-outstanding";
     public const string AdjustmentCausesNegativeOutstanding = "finance.adjustment-causes-negative-outstanding";
     public const string AdjustmentNotAllowed = "finance.adjustment-not-allowed";
     public const string TransportSettlementUnavailable = "finance.transport-settlement-unavailable";
