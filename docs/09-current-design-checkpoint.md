@@ -1,6 +1,6 @@
 # Current Design Checkpoint — YowThi ERP V2
 
-Checkpoint status: **v0.1 implementation baseline through P6 V8-C10 complete. P6/V8 remains IN PROGRESS until remaining required ERP Control scope is implemented or explicitly deferred.**
+Checkpoint status: **v0.1 implementation baseline through P6 V8-C11 complete. P6/V8 remains IN PROGRESS until remaining required ERP Control scope is implemented or explicitly deferred.**
 
 Purpose: recover the current architecture and implementation state if conversational context is lost.
 
@@ -50,6 +50,7 @@ Recovery precedence:
 Later implementation supplements:
 - `docs/18-procurement-batch-reopen-control-v0.1.md` — V8-C9 Procurement Batch Reopen
 - `docs/19-outsourced-vendor-lifecycle-control-v0.1.md` — V8-C10 Outsourced Vendor Soft Delete / Restore
+- `docs/20-farmer-lifecycle-control-v0.1.md` — V8-C11 Farmer Soft Delete / Restore
 - for their target-specific scopes, these later supplements resolve older omissions without superseding the broader Command/REST architecture
 
 Earlier PostgreSQL Schema Parts remain design history. `docs/10` is the consolidated relational baseline when relational details conflict.
@@ -127,6 +128,7 @@ P6    Business / ERP Control vertical slices             IN PROGRESS
       C8 Payable Adjustment Correction                   COMPLETE
       C9 Procurement Batch Reopen                        COMPLETE
       C10 Outsourced Vendor Soft Delete / Restore        COMPLETE
+      C11 Farmer Soft Delete / Restore                   COMPLETE
       remaining focused ERP Control scope                IN PROGRESS
 P7    React UI vertical slices                           NOT FORMALLY COMPLETE
 P8    CI / production hardening                          FUTURE
@@ -138,25 +140,25 @@ Do not mark P6 or all V8 COMPLETE until remaining required control scope is impl
 
 Formal implementation baseline immediately before this checkpoint-document commit:
 - `main = origin/main`
-- SHA: `470dfdda2fcf5da000f6174892d338c443815fd9`
-- commit: `feat: add outsourced vendor lifecycle control`
+- SHA: `ac5a312bae6e4d20663bb29f0b272deedf9ba568`
+- commit: `feat: add farmer lifecycle control`
 - promotion: ff-only
 - push: non-force
 - remote fetch/read-back: clean
 
 Current docs checkpoint branch:
-- `p6-v8-c10-checkpoint-validation`
+- `p6-v8-c11-checkpoint-validation`
 
-C10 implementation validation:
-- branch: `p6-v8-outsourced-vendor-lifecycle-validation`
-- exact SHA: `470dfdda2fcf5da000f6174892d338c443815fd9`
-- local hard gates: **276/276 PASS**
+C11 implementation validation:
+- branch: `p6-v8-farmer-lifecycle-validation`
+- exact SHA: `ac5a312bae6e4d20663bb29f0b272deedf9ba568`
+- local hard gates: **282/282 PASS**
 - Domain 29/29
 - Architecture 66/66
-- API Contract 86/86
-- PostgreSQL Integration 95/95
+- API Contract 89/89
+- PostgreSQL Integration 98/98
 - final Release solution build: 0 errors; only known solution custom-output `NETSDK1194`
-- self-hosted run: `33877179734`
+- self-hosted run: `33882137271`
 - runner: `YowThi-ERP-V2`
 - required labels: `self-hosted`, `yowthi-erp-v2`
 - conclusion: `success`
@@ -221,7 +223,7 @@ Current control history:
 
 Important unresolved Business Rule gaps remain authoritative, including applicable Procurement, Processing, Outsourced, Sales location, Labor, Finance transport, and deferred extension gaps. Do not invent values for them.
 
-`OUT-003` remains a Class A Business Rule gap after C10. `ConfirmOutsourcedSupplyDetail` blocks while the Batch is `CLOSED`; therefore simply reopening that Batch to `ACTIVE` would subsequently permit late detail and would decide an unconfirmed real operating fact. Outsourced Supply Batch Reopen remains DEFERRED until real late-detail behavior is confirmed, or a control design can preserve the unresolved Business Fact safely.
+`OUT-003` remains a Class A Business Rule gap after C11. `ConfirmOutsourcedSupplyDetail` blocks while the Batch is `CLOSED`; therefore simply reopening that Batch to `ACTIVE` would subsequently permit late detail and would decide an unconfirmed real operating fact. Outsourced Supply Batch Reopen remains DEFERRED until real late-detail behavior is confirmed, or a control design can preserve the unresolved Business Fact safely.
 
 ## 8. Sales Allocation Correction — V8-C3 COMPLETE
 
@@ -303,6 +305,17 @@ Outsourced Vendor C10:
 - implementation SHA `470dfdda2fcf5da000f6174892d338c443815fd9`
 - self-hosted run `33877179734` SUCCESS
 - authoritative implementation supplement: `docs/19-outsourced-vendor-lifecycle-control-v0.1.md`
+
+Farmer C11:
+- `SoftDeleteFarmer` / `RestoreFarmer`
+- capability `party.farmer.lifecycle`
+- existing Procurement Entry Farmer FK does not block Soft Delete because the Farmer row remains for typed FK integrity and historical traceability
+- current-use Procurement Farmer selectors require `active = true AND deleted_at IS NULL`
+- Restore preserves original `active`; it does not reactivate an inactive Farmer
+- local hard gates 282/282 PASS
+- implementation SHA `ac5a312bae6e4d20663bb29f0b272deedf9ba568`
+- self-hosted run `33882137271` SUCCESS
+- authoritative implementation supplement: `docs/20-farmer-lifecycle-control-v0.1.md`
 
 Ordinary lifecycle capabilities do not imply `data-protection.hard-delete`.
 
@@ -412,7 +425,42 @@ No relation/schema/model snapshot/migration change.
 
 C10 does not implement or authorize Outsourced Supply Batch Reopen. `OUT-003` remains unresolved and authoritative.
 
-## 14. AuthN/AuthZ interpretation
+## 14. Farmer lifecycle — V8-C11 COMPLETE
+
+Authoritative C11 supplement:
+- `docs/20-farmer-lifecycle-control-v0.1.md`
+
+Commands:
+- `SoftDeleteFarmer`
+- `RestoreFarmer`
+
+Endpoints:
+- `POST /api/v1/party/farmers/{farmerId}/soft-delete`
+- `POST /api/v1/party/farmers/{farmerId}/restore`
+
+Capability:
+- `party.farmer.lifecycle`
+
+Lifecycle semantics:
+- Soft Delete sets `deleted_at` / `deleted_by_account_id`, increments row version, and preserves `active`
+- Restore clears deletion markers, increments row version, and preserves `active`
+- no cascade or removal of historical Procurement Entry Farmer references
+- current-use Procurement Farmer selector requires `active = true AND deleted_at IS NULL`
+- an inactive Farmer remains inactive after Restore and is not available for new Procurement registration
+
+Audit/idempotency:
+- `DATA_LIFECYCLE`
+- subject `party.farmer`
+- `SOFT_DELETE` / `RESTORE`
+- persistent CommandId replay before current lifecycle/version validation
+- failed lifecycle/concurrency attempts leave no committed CommandExecution or lifecycle Audit residue
+- no Outbox message for this local Party master lifecycle transition
+
+No relation/schema/model snapshot/migration change.
+
+C11 does not alter any unresolved Business Rule gap. `OUT-003` and Outsourced Supply Batch Reopen remain unchanged/deferred.
+
+## 15. AuthN/AuthZ interpretation
 
 Capability policies are technical ERP Control / security identifiers, not Business Rules.
 
@@ -426,13 +474,14 @@ Current examples include:
 - `party.supplier.lifecycle`
 - `party.customer.lifecycle`
 - `party.outsourced-vendor.lifecycle`
+- `party.farmer.lifecycle`
 - `data-protection.hard-delete`
 
 Capability grants remain deployment-configured by persistent Account UUID.
 
 `data-protection.hard-delete` remains highest authority and must not be reused for ordinary lifecycle/data correction.
 
-## 15. React/UI baseline
+## 16. React/UI baseline
 
 One React application:
 - `src/YowThi.Erp.Web`
@@ -449,14 +498,14 @@ Implemented routes currently include:
 
 Broad P7 UI is not formally complete.
 
-## 16. Remaining V8 sequencing
+## 17. Remaining V8 sequencing
 
 Do not reopen business-mode questions for operations that are merely ERP maintenance/control.
 
 `OUT-003` is different: it governs the real Business Fact behavior of late Outsourced Supply Detail after Batch Close. Because reopening the Batch would currently change whether that Business Fact command is permitted, Outsourced Supply Batch Reopen is **DEFERRED**, not an eligible ordinary-control shortcut.
 
 Candidate next slices include:
-- additional Party lifecycle targets using explicit commands/capabilities
+- additional Party lifecycle targets, with Employee as a natural candidate only after structural dependency/current-selector read-only verification
 - additional Hard Delete targets after structural dependency closure
 - other focused ERP Control targets that do not silently decide unresolved Business Facts
 
@@ -464,7 +513,7 @@ Do not introduce a generic lifecycle/correction resolver to accelerate this sequ
 
 P6/V8 remains **IN PROGRESS** until remaining required control scope is implemented or explicitly deferred.
 
-## 17. Validation / cost governance
+## 18. Validation / cost governance
 
 Routine validation uses only the Windows self-hosted runner.
 
@@ -478,10 +527,10 @@ Use ff-only promotion and non-force push.
 
 Do not require routine GitHub-hosted runners, paid/larger runners, Codespaces, or unconfirmed metered services.
 
-## 18. Recovery
+## 19. Recovery
 
 ```text
-main@470dfdda2fcf5da000f6174892d338c443815fd9
+main@ac5a312bae6e4d20663bb29f0b272deedf9ba568
 -> P5 PostgreSQL 18 persistence acceptance COMPLETE
 -> P6 V1-V7 COMPLETE
 -> V8-C1 Supplier Hard Delete COMPLETE
@@ -495,10 +544,12 @@ main@470dfdda2fcf5da000f6174892d338c443815fd9
 -> V8-C8 CorrectPayableAdjustment COMPLETE
 -> V8-C9 ReopenProcurementBatch COMPLETE
 -> V8-C10 Outsourced Vendor Soft Delete / Restore COMPLETE
--> local C10 hard gates 276/276 PASS
--> C10 self-hosted run 33877179734 SUCCESS
--> C10 ff-only main promotion + non-force push/read-back COMPLETE
--> current docs checkpoint branch: p6-v8-c10-checkpoint-validation
+-> V8-C11 Farmer Soft Delete / Restore COMPLETE
+-> local C11 hard gates 282/282 PASS
+-> C11 self-hosted run 33882137271 SUCCESS
+-> C11 ff-only main promotion + non-force push/read-back COMPLETE
+-> current docs checkpoint branch: p6-v8-c11-checkpoint-validation
+-> authoritative C11 supplement: docs/20-farmer-lifecycle-control-v0.1.md
 -> OUT-003 still unresolved; Outsourced Supply Batch Reopen DEFERRED
 -> P6/V8 still IN PROGRESS for remaining required focused ERP Control scope
 -> P7 broad React UI NOT FORMALLY COMPLETE
