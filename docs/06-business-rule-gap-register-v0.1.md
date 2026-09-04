@@ -21,6 +21,7 @@
 | OUT-003 | Outsourced Supply Batch CLOSED then late detail | A | Block normal late detail until real YowThi behavior is confirmed; do not silently reopen or write new inventory into a closed batch |
 | SALES-001 | Sales issue location when stock spans locations | A | require explicit resolution if ambiguous |
 | SALES-002 | Sales Product negative inventory / presales | C | not implemented |
+| SALES-003 | Confirmed Sales allocation correction submission semantics: complete replacement allocation vs manual overrides plus system re-allocation | A | Keep immutable Allocation Revision / compensating Inventory architecture, but do not expose an allocation-correction command until real YowThi correction input behavior is confirmed |
 | BATCH-001 | Automatic vs user-confirmed batch close | A | sold-out detection separate from Close command |
 | INV-001 | Inventory count UI enters absolute or delta | B | ledger always stores delta |
 | INV-002 | Fixed adjustment reason codes | C | store context first |
