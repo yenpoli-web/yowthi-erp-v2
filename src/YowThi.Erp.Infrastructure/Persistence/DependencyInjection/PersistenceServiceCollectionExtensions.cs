@@ -55,6 +55,7 @@ public static class PersistenceServiceCollectionExtensions
         services.AddScoped<ITransferInventoryExecutor, PostgreSqlTransferInventoryExecutor>();
         services.AddScoped<IAdjustInventoryExecutor, PostgreSqlAdjustInventoryExecutor>();
         services.AddScoped<IHardDeleteSupplierExecutor, PostgreSqlHardDeleteSupplierExecutor>();
+        services.AddScoped<IHardDeleteCustomerExecutor, PostgreSqlHardDeleteCustomerExecutor>();
         services.AddSingleton<RowVersionSaveChangesInterceptor>();
 
         services.AddDbContext<ErpDbContext>((serviceProvider, options) =>

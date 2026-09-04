@@ -16,6 +16,8 @@ public static class DataProtectionEndpoints
 {
     public const string HardDeleteSupplierOperationId = "DataProtection_HardDeleteSupplier";
     public const string HardDeleteSupplierCommandType = "HardDeleteSupplier";
+    public const string HardDeleteCustomerOperationId = "DataProtection_HardDeleteCustomer";
+    public const string HardDeleteCustomerCommandType = "HardDeleteCustomer";
 
     private static readonly JsonSerializerOptions CanonicalCommandJsonOptions = new(JsonSerializerDefaults.Web);
 
@@ -37,6 +39,18 @@ public static class DataProtectionEndpoints
             .ProducesProblem(StatusCodes.Status409Conflict)
             .ProducesProblem(StatusCodes.Status422UnprocessableEntity);
 
+        dataProtection.MapPost("/customers/{customerId:guid}/hard-delete", HardDeleteCustomerAsync)
+            .WithName(HardDeleteCustomerOperationId)
+            .RequireAuthorization(CapabilityPolicies.DataProtectionHardDelete)
+            .RequireIdempotencyKey()
+            .Produces<HardDeleteCustomerResult>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict)
+            .ProducesProblem(StatusCodes.Status422UnprocessableEntity);
+
         return endpoints;
     }
 
@@ -51,22 +65,14 @@ public static class DataProtectionEndpoints
     {
         if (request.ExpectedRowVersion < 1)
         {
-            return ApiProblemResults.Create(
-                httpContext,
-                StatusCodes.Status400BadRequest,
-                ApiErrorCodes.RequestValidationFailed,
-                "Request validation failed.");
+            return InvalidTransportVersion(httpContext);
         }
 
-        var command = new HardDeleteSupplierCommand(
-            supplierId,
-            request.ExpectedRowVersion);
-
+        var command = new HardDeleteSupplierCommand(supplierId, request.ExpectedRowVersion);
         var canonicalPayload = JsonPayload.FromUtf8Json(
             JsonSerializer.SerializeToUtf8Bytes(
                 new CanonicalHardDeleteSupplierRequest(HardDeleteSupplierCommandType, command),
                 CanonicalCommandJsonOptions));
-
         var execution = new HardDeleteSupplierExecution(
             httpContext.GetRequiredCommandId(),
             requestHasher.Compute(canonicalPayload),
@@ -74,30 +80,74 @@ public static class DataProtectionEndpoints
             command);
 
         var result = await executor.ExecuteAsync(execution, cancellationToken);
-        if (result.IsSuccess)
+        return result.IsSuccess
+            ? TypedResults.Ok(result.Value)
+            : CreateFailureResult(httpContext, result.Error, "Supplier Hard Delete failed.");
+    }
+
+    private static async Task<IResult> HardDeleteCustomerAsync(
+        Guid customerId,
+        HardDeleteCustomerRequest request,
+        HttpContext httpContext,
+        [FromServices] IActorContext actorContext,
+        [FromServices] ICommandRequestHasher requestHasher,
+        [FromServices] IHardDeleteCustomerExecutor executor,
+        CancellationToken cancellationToken)
+    {
+        if (request.ExpectedRowVersion < 1)
         {
-            return TypedResults.Ok(result.Value);
+            return InvalidTransportVersion(httpContext);
         }
 
-        var statusCode = result.Error.Kind switch
+        var command = new HardDeleteCustomerCommand(customerId, request.ExpectedRowVersion);
+        var canonicalPayload = JsonPayload.FromUtf8Json(
+            JsonSerializer.SerializeToUtf8Bytes(
+                new CanonicalHardDeleteCustomerRequest(HardDeleteCustomerCommandType, command),
+                CanonicalCommandJsonOptions));
+        var execution = new HardDeleteCustomerExecution(
+            httpContext.GetRequiredCommandId(),
+            requestHasher.Compute(canonicalPayload),
+            actorContext.ActorAccountId,
+            command);
+
+        var result = await executor.ExecuteAsync(execution, cancellationToken);
+        return result.IsSuccess
+            ? TypedResults.Ok(result.Value)
+            : CreateFailureResult(httpContext, result.Error, "Customer Hard Delete failed.");
+    }
+
+    private static IResult InvalidTransportVersion(HttpContext httpContext) =>
+        ApiProblemResults.Create(
+            httpContext,
+            StatusCodes.Status400BadRequest,
+            ApiErrorCodes.RequestValidationFailed,
+            "Request validation failed.");
+
+    private static IResult CreateFailureResult(
+        HttpContext httpContext,
+        ApplicationError error,
+        string title)
+    {
+        var statusCode = error.Kind switch
         {
             ApplicationErrorKind.Validation => StatusCodes.Status422UnprocessableEntity,
             ApplicationErrorKind.NotFound => StatusCodes.Status404NotFound,
             ApplicationErrorKind.Conflict => StatusCodes.Status409Conflict,
             ApplicationErrorKind.Forbidden => StatusCodes.Status403Forbidden,
-            _ => throw new ArgumentOutOfRangeException(nameof(result.Error.Kind), result.Error.Kind, "Unsupported application error kind."),
+            _ => throw new ArgumentOutOfRangeException(nameof(error.Kind), error.Kind, "Unsupported application error kind."),
         };
 
-        return ApiProblemResults.Create(
-            httpContext,
-            statusCode,
-            result.Error.Code,
-            "Supplier Hard Delete failed.");
+        return ApiProblemResults.Create(httpContext, statusCode, error.Code, title);
     }
 
     private sealed record CanonicalHardDeleteSupplierRequest(
         string CommandType,
         HardDeleteSupplierCommand Command);
+
+    private sealed record CanonicalHardDeleteCustomerRequest(
+        string CommandType,
+        HardDeleteCustomerCommand Command);
 }
 
 public sealed record HardDeleteSupplierRequest(long ExpectedRowVersion);
+public sealed record HardDeleteCustomerRequest(long ExpectedRowVersion);
