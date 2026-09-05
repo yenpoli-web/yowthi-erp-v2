@@ -1,6 +1,6 @@
 # Current Design Checkpoint — YowThi ERP V2
 
-Checkpoint status: **v0.1 implementation baseline through P6 V8-C17 complete. P6/V8 remains IN PROGRESS until remaining required ERP Control scope is implemented or explicitly deferred.**
+Checkpoint status: **v0.1 implementation baseline through P6 V8-C18 complete. P6/V8 remains IN PROGRESS until remaining required ERP Control scope is implemented or explicitly deferred.**
 
 Purpose: recover the current architecture and implementation state if conversational context is lost.
 
@@ -57,6 +57,7 @@ Later implementation supplements:
 - `docs/24-container-lifecycle-control-v0.1.md` — V8-C15 Container Soft Delete / Restore + Processing tare/current-use boundary
 - `docs/25-warehouse-lifecycle-control-v0.1.md` — V8-C16 Warehouse Soft Delete / Restore + child Storage Location preservation boundary
 - `docs/26-outsourced-vendor-hard-delete-control-v0.1.md` — V8-C17 Outsourced Vendor Hard Delete + structural dependency closure / runner-local validation evidence
+- `docs/27-farmer-hard-delete-control-v0.1.md` — V8-C18 Farmer Hard Delete + Procurement Entry / Finance Payable structural dependency closure / runner-local validation evidence
 - for their target-specific scopes, these later supplements resolve older omissions without superseding the broader Command/REST architecture
 
 Earlier PostgreSQL Schema Parts remain design history. `docs/10` is the consolidated relational baseline when relational details conflict.
@@ -141,6 +142,7 @@ P6    Business / ERP Control vertical slices             IN PROGRESS
       C15 Container Soft Delete / Restore                COMPLETE
       C16 Warehouse Soft Delete / Restore                COMPLETE
       C17 Outsourced Vendor Hard Delete                  COMPLETE
+      C18 Farmer Hard Delete                              COMPLETE
       remaining focused ERP Control scope                IN PROGRESS
 P7    React UI vertical slices                           NOT FORMALLY COMPLETE
 P8    CI / production hardening                          FUTURE
@@ -152,31 +154,31 @@ Do not mark P6 or all V8 COMPLETE until remaining required control scope is impl
 
 Formal implementation baseline immediately before this checkpoint-document commit:
 - `main = origin/main`
-- SHA: `c03e4433d20c3900a466054512fcf506034d9edd`
-- commit: `feat: add outsourced vendor hard delete`
+- SHA: `0871bd006dfe1fa48db0b305a043277e09debfa2`
+- commit: `feat: add farmer hard delete`
 - promotion: ff-only
 - push: non-force
 - remote fetch/read-back: clean
 - Formal r17 primary channel; Bootstrap r2 remains independent recovery/read-back channel
 
 Current docs checkpoint branch:
-- `p6-v8-c17-checkpoint-validation`
+- `p6-v8-c18-checkpoint-validation`
 
-C17 implementation validation:
-- branch: `p6-v8-outsourced-vendor-hard-delete-validation`
-- exact SHA: `c03e4433d20c3900a466054512fcf506034d9edd`
-- local hard gates: **321/321 PASS**
+C18 implementation validation:
+- branch: `p6-v8-farmer-hard-delete-validation`
+- exact SHA: `0871bd006dfe1fa48db0b305a043277e09debfa2`
+- local hard gates: **328/328 PASS**
 - Domain 29/29
 - Architecture 66/66
-- API Contract 107/107
-- PostgreSQL Integration 119/119
+- API Contract 110/110
+- PostgreSQL Integration 123/123
 - final Release solution build: 0 errors; only known solution custom-output `NETSDK1194`
 - PostgreSQL validation endpoint: 18.6 / `yowthi_dev` / `isInRecovery=false`
 - normal Formal r17 / Bootstrap r2 typed GitHub workflow-status queries returned invocation errors for this publication
 - self-hosted runner-local Worker evidence proves exact SHA, workflow branch/ref, job `build-test`, and final `Succeeded`
 - runner registration: `YowThi-ERP-V2`
 - workflow definition requires labels `self-hosted`, `yowthi-erp-v2`
-- Worker log: `C:\actions-runner\actions-runner\_diag\Worker_20260905-065811-utc.log`
+- Worker log: `C:\actions-runner\actions-runner\_diag\Worker_20260905-081554-utc.log`
 - no GitHub run ID is asserted because the typed query did not return one during the incident
 - ff-only main promotion + non-force push + fetch/read-back: COMPLETE
 
@@ -239,7 +241,7 @@ Current control history:
 
 Important unresolved Business Rule gaps remain authoritative, including applicable Procurement, Processing, Outsourced, Sales location, Labor, Finance transport, and deferred extension gaps. Do not invent values for them.
 
-`OUT-003` remains a Class A Business Rule gap after C17. `ConfirmOutsourcedSupplyDetail` blocks while the Batch is `CLOSED`; therefore simply reopening that Batch to `ACTIVE` would subsequently permit late detail and would decide an unconfirmed real operating fact. Outsourced Supply Batch Reopen remains DEFERRED until real late-detail behavior is confirmed, or a control design can preserve the unresolved Business Fact safely.
+`OUT-003` remains a Class A Business Rule gap after C18. `ConfirmOutsourcedSupplyDetail` blocks while the Batch is `CLOSED`; therefore simply reopening that Batch to `ACTIVE` would subsequently permit late detail and would decide an unconfirmed real operating fact. Outsourced Supply Batch Reopen remains DEFERRED until real late-detail behavior is confirmed, or a control design can preserve the unresolved Business Fact safely.
 
 ## 8. Sales Allocation Correction — V8-C3 COMPLETE
 
@@ -279,6 +281,7 @@ Completed targets:
 - Supplier — V8-C1
 - Customer — V8-C2
 - Outsourced Vendor — V8-C17 (`docs/26-outsourced-vendor-hard-delete-control-v0.1.md`); any typed Outsourced Supply Batch dependency blocks physical deletion
+- Farmer — V8-C18 (`docs/27-farmer-hard-delete-control-v0.1.md`); any typed Procurement Entry or Finance Payable dependency blocks physical deletion
 
 Requirements:
 - explicit target support
@@ -746,7 +749,59 @@ Validation:
 
 No relation/schema/model snapshot/migration change.
 
-## 21. AuthN/AuthZ interpretation
+## 21. Farmer Hard Delete — V8-C18 COMPLETE
+
+Authoritative C18 supplement:
+- `docs/27-farmer-hard-delete-control-v0.1.md`
+
+Command:
+- `HardDeleteFarmer`
+
+Endpoint:
+- `POST /api/v1/data-protection/farmers/{farmerId}/hard-delete`
+
+OperationId:
+- `DataProtection_HardDeleteFarmer`
+
+Capability:
+- `data-protection.hard-delete`
+
+Structural dependency closure:
+- `procurement.procurement_entries.farmer_id -> party.farmers.id`
+- `finance.payables.farmer_id -> party.farmers.id`
+- both direct typed FKs use Restrict delete behavior
+- any existing Procurement Entry or Finance Payable blocks Hard Delete
+- no payment-state, outstanding-state, Procurement Batch-state, lifecycle-state, or soft-delete interpretation is needed
+- no cascade, detach, or history rewrite
+
+Hard Delete semantics:
+- lock Farmer and require exact expected row version
+- replay persistent CommandId before target lookup so committed success remains replayable after physical deletion
+- physical deletion only when both typed dependency classes are empty
+- successful same-transaction `HARD_DELETE` Audit subject `party.farmer`
+- no Outbox message
+- dependency/stale/not-found failure rolls back newly acquired CommandExecution and leaves no Hard Delete Audit residue
+
+Business Fact boundary:
+- no change to `ConfirmProcurementEntry`, Procurement Batch Close/Reopen, Finance settlement/adjustment, Farmer lifecycle, or Inventory behavior
+- no payment state or Batch state is inferred from Hard Delete
+- `OUT-003` remains unresolved
+- Outsourced Supply Batch Reopen remains DEFERRED
+
+Validation:
+- implementation SHA `0871bd006dfe1fa48db0b305a043277e09debfa2`
+- local hard gates 328/328 PASS
+- exact validation branch `p6-v8-farmer-hard-delete-validation`
+- API Contract 110/110; PostgreSQL Integration 123/123
+- typed GitHub workflow-status query was unavailable during publication; runner-local immutable Worker evidence proves the exact SHA and final successful `build-test` completion on `YowThi-ERP-V2`
+- workflow definition requires `self-hosted` + `yowthi-erp-v2`
+- Worker log `C:\actions-runner\actions-runner\_diag\Worker_20260905-081554-utc.log`
+- no GitHub run ID is asserted for the typed-query incident
+
+No relation/schema/model snapshot/migration change.
+
+## 22. AuthN/AuthZ interpretation
+
 
 
 Capability policies are technical ERP Control / security identifiers, not Business Rules.
@@ -773,7 +828,7 @@ Capability grants remain deployment-configured by persistent Account UUID.
 
 `data-protection.hard-delete` remains highest authority and must not be reused for ordinary lifecycle/data correction.
 
-## 22. React/UI baseline
+## 23. React/UI baseline
 
 One React application:
 - `src/YowThi.Erp.Web`
@@ -790,7 +845,7 @@ Implemented routes currently include:
 
 Broad P7 UI is not formally complete.
 
-## 23. Remaining V8 sequencing
+## 24. Remaining V8 sequencing
 
 Do not reopen business-mode questions for operations that are merely ERP maintenance/control.
 
@@ -823,7 +878,7 @@ C17 confirms a target-specific Hard Delete pattern for Outsourced Vendor because
 - any Batch dependency blocks physical deletion without needing to interpret Batch lifecycle/business behavior
 - no Business Fact command, Finance fact, Inventory fact, or `OUT-003` behavior is changed
 
-Farmer Hard Delete was scanned but not selected in C17 because direct structural closure includes at least Procurement Entry and Finance Payable typed Farmer references; it requires its own target-specific dependency acceptance.
+C18 confirms Farmer Hard Delete as a target-specific structural Data Protection operation: both Procurement Entry and Finance Payable typed Farmer references independently block physical deletion, without interpreting payment state or Procurement Batch state.
 
 C16 dependency closure scan also found candidates that must **not** be auto-implemented:
 - `StorageLocation`: explicit Processing location validation and selectors enforce active/non-deleted state, but automatic single-position input inference and current `ConfirmSales` allocation do not uniformly re-check Storage Location lifecycle; DEFERRED candidate
@@ -839,7 +894,7 @@ Do not introduce a generic lifecycle/correction resolver to accelerate this sequ
 
 P6/V8 remains **IN PROGRESS** until remaining required control scope is implemented or explicitly deferred.
 
-## 24. Validation / cost governance
+## 25. Validation / cost governance
 
 Routine validation uses only the Windows self-hosted runner.
 
@@ -859,10 +914,10 @@ Formal/Bootstrap operational split:
 - both currently resolve to the same healthy Agent runtime/tool catalog but through separate formal/bootstrap tunnel profiles
 - when a Formal tunnel call is ambiguous, use Bootstrap read-back before assuming whether a mutation occurred
 
-## 25. Recovery
+## 26. Recovery
 
 ```text
-main@c03e4433d20c3900a466054512fcf506034d9edd
+main@0871bd006dfe1fa48db0b305a043277e09debfa2
 -> P5 PostgreSQL 18 persistence acceptance COMPLETE
 -> P6 V1-V7 COMPLETE
 -> V8-C1 Supplier Hard Delete COMPLETE
@@ -895,12 +950,18 @@ main@c03e4433d20c3900a466054512fcf506034d9edd
 -> exact C17 runner-local self-hosted Worker evidence: build-test Succeeded for c03e4433d20c3900a466054512fcf506034d9edd
 -> typed GitHub workflow-status query incident means no run ID is asserted for C17
 -> C17 ff-only main promotion + non-force push/read-back COMPLETE
+-> V8-C18 Farmer Hard Delete COMPLETE
+-> Procurement Entry + Finance Payable typed Farmer dependencies each block physical deletion; no cascade
+-> local C18 hard gates 328/328 PASS
+-> exact C18 runner-local self-hosted Worker evidence: build-test Succeeded for 0871bd006dfe1fa48db0b305a043277e09debfa2
+-> typed GitHub workflow-status query incident means no run ID is asserted for C18
+-> C18 ff-only main promotion + non-force push/read-back COMPLETE
 -> Formal r17 is primary; Bootstrap r2 remains independent recovery/read-back channel
--> current docs checkpoint branch: p6-v8-c17-checkpoint-validation
--> authoritative C17 supplement: docs/26-outsourced-vendor-hard-delete-control-v0.1.md
+-> current docs checkpoint branch: p6-v8-c18-checkpoint-validation
+-> authoritative C18 supplement: docs/27-farmer-hard-delete-control-v0.1.md
 -> StorageLocation, ProcessMaterial, and ProcessingRoute lifecycle remain DEFERRED candidates due unresolved current-use consistency
 -> ProcurementProduct and SalesProduct lifecycle remain TO VERIFY / DEFERRED candidates where current Business Fact behavior is ambiguous
--> Farmer Hard Delete remains a separate candidate requiring Procurement Entry + Finance Payable dependency closure acceptance
+-> Farmer Hard Delete dependency closure is COMPLETE for Procurement Entry + Finance Payable typed dependencies
 -> OUT-003 still unresolved; Outsourced Supply Batch Reopen DEFERRED
 -> P6/V8 still IN PROGRESS for remaining required focused ERP Control scope
 -> P7 broad React UI NOT FORMALLY COMPLETE
