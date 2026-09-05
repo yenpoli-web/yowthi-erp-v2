@@ -1,6 +1,6 @@
 # Current Design Checkpoint — YowThi ERP V2
 
-Checkpoint status: **v0.1 implementation baseline through P6 V8-C12 complete. P6/V8 remains IN PROGRESS until remaining required ERP Control scope is implemented or explicitly deferred.**
+Checkpoint status: **v0.1 implementation baseline through P6 V8-C13 complete. P6/V8 remains IN PROGRESS until remaining required ERP Control scope is implemented or explicitly deferred.**
 
 Purpose: recover the current architecture and implementation state if conversational context is lost.
 
@@ -52,6 +52,7 @@ Later implementation supplements:
 - `docs/19-outsourced-vendor-lifecycle-control-v0.1.md` — V8-C10 Outsourced Vendor Soft Delete / Restore
 - `docs/20-farmer-lifecycle-control-v0.1.md` — V8-C11 Farmer Soft Delete / Restore
 - `docs/21-employee-lifecycle-control-v0.1.md` — V8-C12 Employee Soft Delete / Restore + current-use command guards
+- `docs/22-sales-packaging-item-lifecycle-control-v0.1.md` — V8-C13 Sales Packaging Item Soft Delete / Restore
 - for their target-specific scopes, these later supplements resolve older omissions without superseding the broader Command/REST architecture
 
 Earlier PostgreSQL Schema Parts remain design history. `docs/10` is the consolidated relational baseline when relational details conflict.
@@ -131,6 +132,7 @@ P6    Business / ERP Control vertical slices             IN PROGRESS
       C10 Outsourced Vendor Soft Delete / Restore        COMPLETE
       C11 Farmer Soft Delete / Restore                   COMPLETE
       C12 Employee Soft Delete / Restore                 COMPLETE
+      C13 Sales Packaging Item Soft Delete / Restore     COMPLETE
       remaining focused ERP Control scope                IN PROGRESS
 P7    React UI vertical slices                           NOT FORMALLY COMPLETE
 P8    CI / production hardening                          FUTURE
@@ -142,26 +144,26 @@ Do not mark P6 or all V8 COMPLETE until remaining required control scope is impl
 
 Formal implementation baseline immediately before this checkpoint-document commit:
 - `main = origin/main`
-- SHA: `82fe55f583e066c04456695b735b6ac8c8ef3d1f`
-- commit: `feat: add employee lifecycle control`
+- SHA: `75d2a24cdf1a6ffac883151283c2702309b22b32`
+- commit: `feat: add sales packaging item lifecycle`
 - promotion: ff-only
 - push: non-force
 - remote fetch/read-back: clean
 
 Current docs checkpoint branch:
-- `p6-v8-c12-checkpoint-validation`
+- `p6-v8-c13-checkpoint-validation`
 
-C12 implementation validation:
-- branch: `p6-v8-employee-lifecycle-validation`
-- exact SHA: `82fe55f583e066c04456695b735b6ac8c8ef3d1f`
-- local hard gates: **289/289 PASS**
+C13 implementation validation:
+- branch: `p6-v8-sales-packaging-item-lifecycle-validation`
+- exact SHA: `75d2a24cdf1a6ffac883151283c2702309b22b32`
+- local hard gates: **296/296 PASS**
 - Domain 29/29
 - Architecture 66/66
-- API Contract 92/92
-- PostgreSQL Integration 102/102
+- API Contract 95/95
+- PostgreSQL Integration 106/106
 - final Release solution build: 0 errors; only known solution custom-output `NETSDK1194`
 - PostgreSQL validation endpoint: 18.6 / `yowthi_dev` / `isInRecovery=false`
-- self-hosted run: `33889424952`
+- self-hosted run: `33932510549`
 - runner: `YowThi-ERP-V2`
 - required labels: `self-hosted`, `yowthi-erp-v2`
 - conclusion: `success`
@@ -226,7 +228,7 @@ Current control history:
 
 Important unresolved Business Rule gaps remain authoritative, including applicable Procurement, Processing, Outsourced, Sales location, Labor, Finance transport, and deferred extension gaps. Do not invent values for them.
 
-`OUT-003` remains a Class A Business Rule gap after C12. `ConfirmOutsourcedSupplyDetail` blocks while the Batch is `CLOSED`; therefore simply reopening that Batch to `ACTIVE` would subsequently permit late detail and would decide an unconfirmed real operating fact. Outsourced Supply Batch Reopen remains DEFERRED until real late-detail behavior is confirmed, or a control design can preserve the unresolved Business Fact safely.
+`OUT-003` remains a Class A Business Rule gap after C13. `ConfirmOutsourcedSupplyDetail` blocks while the Batch is `CLOSED`; therefore simply reopening that Batch to `ACTIVE` would subsequently permit late detail and would decide an unconfirmed real operating fact. Outsourced Supply Batch Reopen remains DEFERRED until real late-detail behavior is confirmed, or a control design can preserve the unresolved Business Fact safely.
 
 ## 8. Sales Allocation Correction — V8-C3 COMPLETE
 
@@ -519,13 +521,55 @@ No relation/schema/model snapshot/migration change.
 
 C12 does not alter any unresolved Business Rule gap. `OUT-003` and Outsourced Supply Batch Reopen remain unchanged/deferred.
 
-## 16. AuthN/AuthZ interpretation
+## 16. Sales Packaging Item lifecycle — V8-C13 COMPLETE
+
+Authoritative C13 supplement:
+- `docs/22-sales-packaging-item-lifecycle-control-v0.1.md`
+
+Commands:
+- `SoftDeleteSalesPackagingItem`
+- `RestoreSalesPackagingItem`
+
+Endpoints:
+- `POST /api/v1/sales-handling/packaging-items/{salesPackagingItemId}/soft-delete`
+- `POST /api/v1/sales-handling/packaging-items/{salesPackagingItemId}/restore`
+
+Capability:
+- `sales-handling.packaging-item.lifecycle`
+
+Lifecycle semantics:
+- Soft Delete sets `deleted_at` / `deleted_by_account_id`, increments row version, and preserves `active`
+- Restore clears deletion markers, increments row version, and preserves `active`
+- no cascade or removal of historical Sales Packaging Work Record references
+- historical `sales_packaging_work_records.sales_packaging_item_id` typed FK remains intact
+- an inactive item remains inactive after Restore
+
+Current-use behavior:
+- `RecordSalesPackagingWork` already required the packaging item to be active and non-deleted before C13
+- C13 does not change that Business Fact command or add a new Business Rule
+- a soft-deleted/inactive item is rejected for new packaging-work registration with `sales-handling.item-inactive`
+- rejected registration rolls back newly acquired CommandExecution and leaves no committed Audit/Outbox residue
+
+Audit/idempotency:
+- lifecycle `event_kind = DATA_LIFECYCLE`
+- subject `sales-handling.packaging-item`
+- `SOFT_DELETE` / `RESTORE`
+- persistent CommandId replay before current lifecycle/version validation
+- failed lifecycle/concurrency attempts leave no committed CommandExecution or lifecycle Audit residue
+- no Outbox message for this local master lifecycle transition
+
+No relation/schema/model snapshot/migration change.
+
+C13 does not alter any unresolved Business Rule gap. `OUT-003` and Outsourced Supply Batch Reopen remain unchanged/deferred.
+
+## 17. AuthN/AuthZ interpretation
 
 Capability policies are technical ERP Control / security identifiers, not Business Rules.
 
 Current examples include:
 - `sales.confirm`
 - `sales.correct-allocation`
+- `sales-handling.packaging-item.lifecycle`
 - `finance.pay`
 - `finance.correct`
 - `inventory.adjust`
@@ -541,7 +585,7 @@ Capability grants remain deployment-configured by persistent Account UUID.
 
 `data-protection.hard-delete` remains highest authority and must not be reused for ordinary lifecycle/data correction.
 
-## 17. React/UI baseline
+## 18. React/UI baseline
 
 One React application:
 - `src/YowThi.Erp.Web`
@@ -558,14 +602,16 @@ Implemented routes currently include:
 
 Broad P7 UI is not formally complete.
 
-## 18. Remaining V8 sequencing
+## 19. Remaining V8 sequencing
 
 Do not reopen business-mode questions for operations that are merely ERP maintenance/control.
 
 `OUT-003` is different: it governs the real Business Fact behavior of late Outsourced Supply Detail after Batch Close. Because reopening the Batch would currently change whether that Business Fact command is permitted, Outsourced Supply Batch Reopen is **DEFERRED**, not an eligible ordinary-control shortcut.
 
+Current Party lifecycle targets implemented in the model are covered: Supplier, Customer, Outsourced Vendor, Farmer, and Employee.
+
 Candidate next slices include:
-- additional Party lifecycle targets only after structural dependency/current-selector read-only verification
+- additional non-Party master lifecycle targets only after structural dependency/current-use verification
 - additional Hard Delete targets after structural dependency closure
 - other focused ERP Control targets that do not silently decide unresolved Business Facts
 
@@ -573,7 +619,7 @@ Do not introduce a generic lifecycle/correction resolver to accelerate this sequ
 
 P6/V8 remains **IN PROGRESS** until remaining required control scope is implemented or explicitly deferred.
 
-## 19. Validation / cost governance
+## 20. Validation / cost governance
 
 Routine validation uses only the Windows self-hosted runner.
 
@@ -587,10 +633,10 @@ Use ff-only promotion and non-force push.
 
 Do not require routine GitHub-hosted runners, paid/larger runners, Codespaces, or unconfirmed metered services.
 
-## 20. Recovery
+## 21. Recovery
 
 ```text
-main@82fe55f583e066c04456695b735b6ac8c8ef3d1f
+main@75d2a24cdf1a6ffac883151283c2702309b22b32
 -> P5 PostgreSQL 18 persistence acceptance COMPLETE
 -> P6 V1-V7 COMPLETE
 -> V8-C1 Supplier Hard Delete COMPLETE
@@ -607,11 +653,13 @@ main@82fe55f583e066c04456695b735b6ac8c8ef3d1f
 -> V8-C11 Farmer Soft Delete / Restore COMPLETE
 -> V8-C12 Employee Soft Delete / Restore COMPLETE
 -> C12 also closes inactive/soft-deleted Employee current-use guards for Sales Packaging and Daily Wage
--> local C12 hard gates 289/289 PASS
--> C12 self-hosted run 33889424952 SUCCESS
--> C12 ff-only main promotion + non-force push/read-back COMPLETE
--> current docs checkpoint branch: p6-v8-c12-checkpoint-validation
--> authoritative C12 supplement: docs/21-employee-lifecycle-control-v0.1.md
+-> V8-C13 Sales Packaging Item Soft Delete / Restore COMPLETE
+-> existing RecordSalesPackagingWork current-use guard remains authoritative for inactive/soft-deleted packaging items
+-> local C13 hard gates 296/296 PASS
+-> C13 self-hosted run 33932510549 SUCCESS
+-> C13 ff-only main promotion + non-force push/read-back COMPLETE
+-> current docs checkpoint branch: p6-v8-c13-checkpoint-validation
+-> authoritative C13 supplement: docs/22-sales-packaging-item-lifecycle-control-v0.1.md
 -> OUT-003 still unresolved; Outsourced Supply Batch Reopen DEFERRED
 -> P6/V8 still IN PROGRESS for remaining required focused ERP Control scope
 -> P7 broad React UI NOT FORMALLY COMPLETE
