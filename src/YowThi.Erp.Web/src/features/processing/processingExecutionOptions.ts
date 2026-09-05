@@ -1,7 +1,5 @@
-import {
-  ApiProblemError,
-  type OperationalLocale,
-} from './confirmProcessingExecution';
+import { getApiJson } from '../../app/api/apiTransport';
+import type { OperationalLocale } from '../../app/i18n/locale';
 
 export type ProcessingExecutionMode = 'SOURCE_TRACKED' | 'POOLED_OUTPUT' | 'FINAL_PACKAGING';
 export type ProcessingOutputKind = 'PROCESS_MATERIAL' | 'SALES_PRODUCT';
@@ -187,44 +185,8 @@ async function getJson<T>(
   }
 
   const suffix = parameters.size === 0 ? '' : `?${parameters.toString()}`;
-  const response = await fetch(`${path}${suffix}`, {
-    method: 'GET',
-    credentials: 'include',
-    headers: {
-      'Accept-Language': query.locale,
-    },
+  return getApiJson<T>(`${path}${suffix}`, {
+    locale: query.locale,
     signal: query.signal,
   });
-
-  if (!response.ok) {
-    const problem = await readProblemDetails(response);
-    throw new ApiProblemError(
-      response.status,
-      problem.code ?? `http.${response.status}`,
-      problem,
-    );
-  }
-
-  return (await response.json()) as T;
-}
-
-async function readProblemDetails(response: Response) {
-  const contentType = response.headers.get('content-type') ?? '';
-  if (!contentType.includes('application/problem+json') && !contentType.includes('application/json')) {
-    return { status: response.status, title: response.statusText };
-  }
-
-  try {
-    return (await response.json()) as {
-      type?: string;
-      title?: string;
-      status?: number;
-      detail?: string;
-      instance?: string;
-      code?: string;
-      traceId?: string;
-    };
-  } catch {
-    return { status: response.status, title: response.statusText };
-  }
 }
