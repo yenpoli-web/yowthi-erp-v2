@@ -32,6 +32,12 @@ jobs:
           dotnet --version
           for /f "delims=" %%V in ('dotnet --version') do if not "%%V"=="10.0.400" exit /b 1
 
+      - name: Verify Node.js and pnpm
+        run: |
+          node --version
+          pnpm --version
+          for /f "delims=" %%V in ('pnpm --version') do if not "%%V"=="11.23.0" exit /b 1
+
       - name: Restore local tools
         run: dotnet tool restore
 
@@ -43,3 +49,19 @@ jobs:
 
       - name: Test
         run: dotnet test YowThi.Erp.slnx --configuration Release --no-build
+
+      - name: Frontend install
+        working-directory: src/YowThi.Erp.Web
+        run: pnpm install --frozen-lockfile
+
+      - name: Frontend lint
+        working-directory: src/YowThi.Erp.Web
+        run: pnpm lint
+
+      - name: Frontend typecheck
+        working-directory: src/YowThi.Erp.Web
+        run: pnpm typecheck
+
+      - name: Frontend build
+        working-directory: src/YowThi.Erp.Web
+        run: pnpm build
