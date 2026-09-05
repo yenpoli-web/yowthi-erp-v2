@@ -10,6 +10,7 @@ public static class CapabilityPolicies
     public const string SalesCorrectAllocation = "sales.correct-allocation";
     public const string SalesHandlingWorkRecord = "sales-handling.work-record.record";
     public const string SalesPackagingItemLifecycle = "sales-handling.packaging-item.lifecycle";
+    public const string SalesProductGroupLifecycle = "product.sales-product-group.lifecycle";
     public const string LaborDailyWageConfirm = "labor.daily-wage.confirm";
     public const string FinancePay = "finance.pay";
     public const string FinanceCorrect = "finance.correct";

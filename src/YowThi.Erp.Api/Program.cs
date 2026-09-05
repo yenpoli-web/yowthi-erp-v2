@@ -7,6 +7,7 @@ using YowThi.Erp.Api.Outsourced;
 using YowThi.Erp.Api.Party;
 using YowThi.Erp.Api.Processing;
 using YowThi.Erp.Api.Procurement;
+using YowThi.Erp.Api.Product;
 using YowThi.Erp.Api.Sales;
 using YowThi.Erp.Api.SalesHandling;
 
@@ -31,6 +32,7 @@ app.MapOutsourcedSupplyDetailOptionEndpoints();
 app.MapSalesEndpoints();
 app.MapSalesHandlingEndpoints();
 app.MapSalesPackagingItemLifecycleEndpoints();
+app.MapSalesProductGroupLifecycleEndpoints();
 app.MapLaborEndpoints();
 app.MapFinanceEndpoints();
 app.MapDataProtectionEndpoints();
