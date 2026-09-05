@@ -1,6 +1,6 @@
 # Current Design Checkpoint — YowThi ERP V2
 
-Checkpoint status: **v0.1 implementation baseline through P6 V8-C18 complete. P6/V8 remains IN PROGRESS until remaining required ERP Control scope is implemented or explicitly deferred.**
+Checkpoint status: **v0.1 implementation baseline through P6 / V8 COMPLETE. Remaining lifecycle / Hard Delete / Batch-control candidates are explicitly deferred or future target-specific scope. P7 remains NOT FORMALLY COMPLETE.**
 
 Purpose: recover the current architecture and implementation state if conversational context is lost.
 
@@ -58,6 +58,7 @@ Later implementation supplements:
 - `docs/25-warehouse-lifecycle-control-v0.1.md` — V8-C16 Warehouse Soft Delete / Restore + child Storage Location preservation boundary
 - `docs/26-outsourced-vendor-hard-delete-control-v0.1.md` — V8-C17 Outsourced Vendor Hard Delete + structural dependency closure / runner-local validation evidence
 - `docs/27-farmer-hard-delete-control-v0.1.md` — V8-C18 Farmer Hard Delete + Procurement Entry / Finance Payable structural dependency closure / runner-local validation evidence
+- `docs/28-p6-v8-closure-checkpoint-v0.1.md` — formal P6 / V8 closure + deferred/future target-specific scope boundary
 - for their target-specific scopes, these later supplements resolve older omissions without superseding the broader Command/REST architecture
 
 Earlier PostgreSQL Schema Parts remain design history. `docs/10` is the consolidated relational baseline when relational details conflict.
@@ -115,7 +116,7 @@ P3    API technical shell                                COMPLETE
 P3.5  AuthN/AuthZ architecture hard gate                 COMPLETE
 P4    InitialV01 generation / static review              COMPLETE
 P5    PostgreSQL 18 persistence acceptance               COMPLETE
-P6    Business / ERP Control vertical slices             IN PROGRESS
+P6    Business / ERP Control vertical slices             COMPLETE
   V1  ConfirmProcurementEntry                            COMPLETE
   V2  ConfirmOutsourcedSupplyDetail                      COMPLETE
   V3  ConfirmProcessingExecution                         COMPLETE
@@ -123,7 +124,7 @@ P6    Business / ERP Control vertical slices             IN PROGRESS
   V5  Sales Packaging Work + Daily Wage                 COMPLETE
   V6  Finance adjustment / settlements                   COMPLETE
   V7  Inventory transfer / adjustment / Batch Close     COMPLETE
-  V8  Correction / Lifecycle / Hard Delete              IN PROGRESS
+  V8  Correction / Lifecycle / Hard Delete              COMPLETE
       C1 Supplier Hard Delete                            COMPLETE
       C2 Customer Hard Delete                            COMPLETE
       C3 Sales Allocation Correction                     COMPLETE
@@ -143,26 +144,26 @@ P6    Business / ERP Control vertical slices             IN PROGRESS
       C16 Warehouse Soft Delete / Restore                COMPLETE
       C17 Outsourced Vendor Hard Delete                  COMPLETE
       C18 Farmer Hard Delete                              COMPLETE
-      remaining focused ERP Control scope                IN PROGRESS
+      remaining candidate ERP Control scope               DEFERRED / FUTURE
 P7    React UI vertical slices                           NOT FORMALLY COMPLETE
 P8    CI / production hardening                          FUTURE
 ```
 
-Do not mark P6 or all V8 COMPLETE until remaining required control scope is implemented or explicitly deferred.
+P6/V8 is COMPLETE because remaining candidate control scope is now explicitly deferred or future target-specific scope; unresolved Business Facts remain governed by the Gap Register.
 
 ## 5. Current formal Git baseline
 
 Formal implementation baseline immediately before this checkpoint-document commit:
 - `main = origin/main`
-- SHA: `0871bd006dfe1fa48db0b305a043277e09debfa2`
-- commit: `feat: add farmer hard delete`
+- SHA: `5ba09434827c5081161739b5172ccab574ec5026`
+- commit: `docs: checkpoint farmer hard delete`
 - promotion: ff-only
 - push: non-force
 - remote fetch/read-back: clean
-- Formal r17 primary channel; Bootstrap r2 remains independent recovery/read-back channel
+- Formal r18 primary channel; Bootstrap r2 remains independent recovery/read-back channel
 
 Current docs checkpoint branch:
-- `p6-v8-c18-checkpoint-validation`
+- `p6-v8-closure-checkpoint-validation`
 
 C18 implementation validation:
 - branch: `p6-v8-farmer-hard-delete-validation`
@@ -241,7 +242,7 @@ Current control history:
 
 Important unresolved Business Rule gaps remain authoritative, including applicable Procurement, Processing, Outsourced, Sales location, Labor, Finance transport, and deferred extension gaps. Do not invent values for them.
 
-`OUT-003` remains a Class A Business Rule gap after C18. `ConfirmOutsourcedSupplyDetail` blocks while the Batch is `CLOSED`; therefore simply reopening that Batch to `ACTIVE` would subsequently permit late detail and would decide an unconfirmed real operating fact. Outsourced Supply Batch Reopen remains DEFERRED until real late-detail behavior is confirmed, or a control design can preserve the unresolved Business Fact safely.
+`OUT-003` remains a Class A Business Rule gap after P6/V8 closure. `ConfirmOutsourcedSupplyDetail` blocks while the Batch is `CLOSED`; therefore simply reopening that Batch to `ACTIVE` would subsequently permit late detail and would decide an unconfirmed real operating fact. Outsourced Supply Batch Reopen remains DEFERRED until real late-detail behavior is confirmed, or a control design can preserve the unresolved Business Fact safely.
 
 ## 8. Sales Allocation Correction — V8-C3 COMPLETE
 
@@ -291,7 +292,7 @@ Requirements:
 - replay before target lookup
 - no silent cascade
 
-Additional Hard Delete targets do not need a Business Rule merely to be considered, but they require target-specific dependency closure before implementation.
+Additional Hard Delete targets are DEFERRED / future target-specific scope. They do not need a Business Rule merely to be considered, but they require a real operational need and target-specific dependency closure before implementation.
 
 No generic `/data-protection/entities/{type}/{id}` endpoint.
 
@@ -845,7 +846,9 @@ Implemented routes currently include:
 
 Broad P7 UI is not formally complete.
 
-## 24. Remaining V8 sequencing
+P7 preview follow-up is deferred until after system-skeleton closure: the current visual style is not accepted as final, and Traditional Chinese / Thai language switching is not yet complete across the presentation.
+
+## 24. P6 / V8 closure state
 
 Do not reopen business-mode questions for operations that are merely ERP maintenance/control.
 
@@ -885,14 +888,14 @@ C16 dependency closure scan also found candidates that must **not** be auto-impl
 - `ProcessMaterial`: Processing output resolution checks current lifecycle while existing Module input use does not re-check it; DEFERRED candidate
 - `ProcessingRoute`: existing Batch execution uses stored Route Version without re-checking parent Route lifecycle; DEFERRED candidate
 
-Candidate next slices include:
-- additional non-Party master lifecycle only where structural/current-use behavior is already unambiguous
-- additional Hard Delete targets after structural dependency closure
+Deferred / future target-specific scope:
+- additional non-Party master lifecycle only where structural/current-use behavior becomes unambiguous
+- additional Hard Delete targets only when a real operational Data Protection need is established and dependency closure is complete
 - other focused ERP Control targets that do not silently decide unresolved Business Facts
 
-Do not introduce a generic lifecycle/correction resolver to accelerate this sequence.
+These candidates are not current P6 completion blockers. Do not introduce a generic lifecycle/correction resolver to accelerate this scope.
 
-P6/V8 remains **IN PROGRESS** until remaining required control scope is implemented or explicitly deferred.
+P6/V8 is **COMPLETE**. Any future control target reopens only its own target-specific scope; it does not retroactively make the v0.1 P6 skeleton incomplete.
 
 ## 25. Validation / cost governance
 
@@ -909,7 +912,7 @@ Use ff-only promotion and non-force push.
 Do not require routine GitHub-hosted runners, paid/larger runners, Codespaces, or unconfirmed metered services.
 
 Formal/Bootstrap operational split:
-- Formal r17 is the primary formal Repository mutation/validation channel
+- Formal r18 is the primary formal Repository mutation/validation channel
 - Bootstrap r2 is an independent recovery/read-back channel
 - both currently resolve to the same healthy Agent runtime/tool catalog but through separate formal/bootstrap tunnel profiles
 - when a Formal tunnel call is ambiguous, use Bootstrap read-back before assuming whether a mutation occurred
@@ -917,7 +920,7 @@ Formal/Bootstrap operational split:
 ## 26. Recovery
 
 ```text
-main@0871bd006dfe1fa48db0b305a043277e09debfa2
+main@5ba09434827c5081161739b5172ccab574ec5026
 -> P5 PostgreSQL 18 persistence acceptance COMPLETE
 -> P6 V1-V7 COMPLETE
 -> V8-C1 Supplier Hard Delete COMPLETE
@@ -956,14 +959,18 @@ main@0871bd006dfe1fa48db0b305a043277e09debfa2
 -> exact C18 runner-local self-hosted Worker evidence: build-test Succeeded for 0871bd006dfe1fa48db0b305a043277e09debfa2
 -> typed GitHub workflow-status query incident means no run ID is asserted for C18
 -> C18 ff-only main promotion + non-force push/read-back COMPLETE
--> Formal r17 is primary; Bootstrap r2 remains independent recovery/read-back channel
--> current docs checkpoint branch: p6-v8-c18-checkpoint-validation
+-> P6/V8 closure hard gate confirms current Gap Register CONTROL items are satisfied
+-> remaining lifecycle / Hard Delete / Batch-control candidates are DEFERRED / future target-specific scope
+-> P6 / V8 COMPLETE
+-> Formal r18 is primary; Bootstrap r2 remains independent recovery/read-back channel
+-> current docs checkpoint branch: p6-v8-closure-checkpoint-validation
 -> authoritative C18 supplement: docs/27-farmer-hard-delete-control-v0.1.md
+-> authoritative P6/V8 closure supplement: docs/28-p6-v8-closure-checkpoint-v0.1.md
 -> StorageLocation, ProcessMaterial, and ProcessingRoute lifecycle remain DEFERRED candidates due unresolved current-use consistency
 -> ProcurementProduct and SalesProduct lifecycle remain TO VERIFY / DEFERRED candidates where current Business Fact behavior is ambiguous
 -> Farmer Hard Delete dependency closure is COMPLETE for Procurement Entry + Finance Payable typed dependencies
 -> OUT-003 still unresolved; Outsourced Supply Batch Reopen DEFERRED
--> P6/V8 still IN PROGRESS for remaining required focused ERP Control scope
--> P7 broad React UI NOT FORMALLY COMPLETE
+-> P6 / V8 COMPLETE; remaining candidate ERP Control scope explicitly deferred/future target-specific
+-> P7 broad React UI NOT FORMALLY COMPLETE; visual redesign and zh-TW/th-TH completeness deferred to P7
 ```
 
