@@ -20,6 +20,8 @@ public static class DataProtectionEndpoints
     public const string HardDeleteCustomerCommandType = "HardDeleteCustomer";
     public const string HardDeleteOutsourcedVendorOperationId = "DataProtection_HardDeleteOutsourcedVendor";
     public const string HardDeleteOutsourcedVendorCommandType = "HardDeleteOutsourcedVendor";
+    public const string HardDeleteFarmerOperationId = "DataProtection_HardDeleteFarmer";
+    public const string HardDeleteFarmerCommandType = "HardDeleteFarmer";
 
     private static readonly JsonSerializerOptions CanonicalCommandJsonOptions = new(JsonSerializerDefaults.Web);
 
@@ -58,6 +60,18 @@ public static class DataProtectionEndpoints
             .RequireAuthorization(CapabilityPolicies.DataProtectionHardDelete)
             .RequireIdempotencyKey()
             .Produces<HardDeleteOutsourcedVendorResult>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict)
+            .ProducesProblem(StatusCodes.Status422UnprocessableEntity);
+
+        dataProtection.MapPost("/farmers/{farmerId:guid}/hard-delete", HardDeleteFarmerAsync)
+            .WithName(HardDeleteFarmerOperationId)
+            .RequireAuthorization(CapabilityPolicies.DataProtectionHardDelete)
+            .RequireIdempotencyKey()
+            .Produces<HardDeleteFarmerResult>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status403Forbidden)
@@ -155,6 +169,35 @@ public static class DataProtectionEndpoints
             : CreateFailureResult(httpContext, result.Error, "Outsourced Vendor Hard Delete failed.");
     }
 
+    private static async Task<IResult> HardDeleteFarmerAsync(
+        Guid farmerId,
+        HardDeleteFarmerRequest request,
+        HttpContext httpContext,
+        [FromServices] IActorContext actorContext,
+        [FromServices] ICommandRequestHasher requestHasher,
+        [FromServices] IHardDeleteFarmerExecutor executor,
+        CancellationToken cancellationToken)
+    {
+        if (request.ExpectedRowVersion < 1)
+            return InvalidTransportVersion(httpContext);
+
+        var command = new HardDeleteFarmerCommand(farmerId, request.ExpectedRowVersion);
+        var canonicalPayload = JsonPayload.FromUtf8Json(
+            JsonSerializer.SerializeToUtf8Bytes(
+                new CanonicalHardDeleteFarmerRequest(HardDeleteFarmerCommandType, command),
+                CanonicalCommandJsonOptions));
+        var execution = new HardDeleteFarmerExecution(
+            httpContext.GetRequiredCommandId(),
+            requestHasher.Compute(canonicalPayload),
+            actorContext.ActorAccountId,
+            command);
+
+        var result = await executor.ExecuteAsync(execution, cancellationToken);
+        return result.IsSuccess
+            ? TypedResults.Ok(result.Value)
+            : CreateFailureResult(httpContext, result.Error, "Farmer Hard Delete failed.");
+    }
+
     private static IResult InvalidTransportVersion(HttpContext httpContext) =>
         ApiProblemResults.Create(
             httpContext,
@@ -190,8 +233,13 @@ public static class DataProtectionEndpoints
     private sealed record CanonicalHardDeleteOutsourcedVendorRequest(
         string CommandType,
         HardDeleteOutsourcedVendorCommand Command);
+
+    private sealed record CanonicalHardDeleteFarmerRequest(
+        string CommandType,
+        HardDeleteFarmerCommand Command);
 }
 
 public sealed record HardDeleteSupplierRequest(long ExpectedRowVersion);
 public sealed record HardDeleteCustomerRequest(long ExpectedRowVersion);
 public sealed record HardDeleteOutsourcedVendorRequest(long ExpectedRowVersion);
+public sealed record HardDeleteFarmerRequest(long ExpectedRowVersion);
