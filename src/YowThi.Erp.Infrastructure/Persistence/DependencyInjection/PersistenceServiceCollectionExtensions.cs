@@ -76,6 +76,7 @@ public static class PersistenceServiceCollectionExtensions
         services.AddScoped<IOutsourcedVendorLifecycleExecutor, PostgreSqlOutsourcedVendorLifecycleExecutor>();
         services.AddScoped<IHardDeleteSupplierExecutor, PostgreSqlHardDeleteSupplierExecutor>();
         services.AddScoped<IHardDeleteCustomerExecutor, PostgreSqlHardDeleteCustomerExecutor>();
+        services.AddScoped<IHardDeleteOutsourcedVendorExecutor, PostgreSqlHardDeleteOutsourcedVendorExecutor>();
         services.AddSingleton<RowVersionSaveChangesInterceptor>();
 
         services.AddDbContext<ErpDbContext>((serviceProvider, options) =>
