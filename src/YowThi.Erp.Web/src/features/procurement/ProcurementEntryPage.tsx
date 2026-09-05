@@ -2,17 +2,16 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import {
   type FormEvent,
   useDeferredValue,
-  useEffect,
   useMemo,
   useRef,
   useState,
 } from 'react';
 
+import { type OperationalLocale, useOperationalLocale } from '../../app/i18n/locale';
 import {
   ApiProblemError,
   confirmProcurementEntry,
   type ConfirmProcurementEntryRequest,
-  type OperationalLocale,
   type ProcurementSourceType,
 } from './confirmProcurementEntry';
 import {
@@ -127,7 +126,7 @@ const copy = {
 } as const;
 
 export function ProcurementEntryPage() {
-  const [locale, setLocale] = useState<OperationalLocale>(resolveInitialLocale);
+  const { locale, setLocale } = useOperationalLocale();
   const [sourceType, setSourceType] = useState<ProcurementSourceType>('SUPPLIER');
   const [productSearch, setProductSearch] = useState('');
   const [sourceSearch, setSourceSearch] = useState('');
@@ -142,10 +141,6 @@ export function ProcurementEntryPage() {
   const deferredProductSearch = useDeferredValue(productSearch);
   const deferredSourceSearch = useDeferredValue(sourceSearch);
   const deferredLocationSearch = useDeferredValue(locationSearch);
-
-  useEffect(() => {
-    document.documentElement.lang = locale;
-  }, [locale]);
 
   const productQuery = useQuery({
     queryKey: ['procurement-entry-options', 'products', locale, deferredProductSearch],
@@ -533,34 +528,6 @@ function includeSelected<T extends { id: string }>(items: T[], selected: T | nul
 
 function firstOptionError(...errors: Array<Error | null>): Error | null {
   return errors.find((error) => error !== null) ?? null;
-}
-
-function resolveInitialLocale(): OperationalLocale {
-  const configured = normalizeLocale(import.meta.env.VITE_DEFAULT_LOCALE);
-  if (configured !== null) {
-    return configured;
-  }
-
-  for (const candidate of navigator.languages) {
-    const normalized = normalizeLocale(candidate);
-    if (normalized !== null) {
-      return normalized;
-    }
-  }
-
-  return 'zh-TW';
-}
-
-function normalizeLocale(value: string | undefined): OperationalLocale | null {
-  if (value?.toLowerCase() === 'zh-tw') {
-    return 'zh-TW';
-  }
-
-  if (value?.toLowerCase() === 'th-th') {
-    return 'th-TH';
-  }
-
-  return null;
 }
 
 function requiredText(formData: FormData, name: string): string {

@@ -1,9 +1,13 @@
 import { NavLink, Outlet } from 'react-router';
 
 import { withDeviceExperienceOverride } from '../device/deviceExperience';
-import { primaryNavigation } from '../navigation';
+import { useOperationalLocale } from '../i18n/locale';
+import { applicationShellCopy, primaryNavigation } from '../navigation';
 
 export function DesktopAppShell() {
+  const { locale } = useOperationalLocale();
+  const shellCopy = applicationShellCopy[locale];
+
   return (
     <div className="application-frame desktop-application-frame" data-ui-experience="desktop">
       <header className="topbar desktop-topbar">
@@ -11,14 +15,14 @@ export function DesktopAppShell() {
           <span className="brand-mark">YowThi</span>
           <span className="brand-subtitle">ERP V2</span>
         </div>
-        <nav className="desktop-navigation" aria-label="Primary navigation">
+        <nav className="desktop-navigation" aria-label={shellCopy.primaryNavigation}>
           {primaryNavigation.map((item) => (
             <NavLink
               key={item.to}
               to={withDeviceExperienceOverride(item.to)}
               className={({ isActive }) => (isActive ? 'active' : undefined)}
             >
-              {item.label}
+              {item.label[locale]}
             </NavLink>
           ))}
         </nav>
