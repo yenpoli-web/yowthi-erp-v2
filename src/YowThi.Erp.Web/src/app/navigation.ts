@@ -62,4 +62,15 @@ export const primaryNavigation: readonly PrimaryNavigationItem[] = [
       'th-TH': 'แปรรูป',
     },
   },
+  {
+    to: '/modules',
+    label: {
+      'zh-TW': '模組',
+      'th-TH': 'โมดูล',
+    },
+    compactLabel: {
+      'zh-TW': '模組',
+      'th-TH': 'โมดูล',
+    },
+  },
 ];

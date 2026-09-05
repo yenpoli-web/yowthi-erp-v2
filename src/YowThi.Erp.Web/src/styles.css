@@ -94,7 +94,8 @@ select:disabled {
   padding: clamp(1.5rem, 4vw, 3.75rem) 0 4rem;
 }
 
-.procurement-page {
+.procurement-page,
+.module-page {
   display: grid;
   gap: 2rem;
 }
@@ -397,7 +398,7 @@ select:disabled {
   width: min(calc(100% - 1rem), 32rem);
   transform: translateX(-50%);
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.35rem;
   padding: 0.45rem;
   border: 1px solid rgba(24, 35, 29, 0.13);

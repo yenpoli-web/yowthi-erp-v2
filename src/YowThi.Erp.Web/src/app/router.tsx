@@ -4,6 +4,8 @@ import { OutsourcedSupplyDetailPage } from '../features/outsourced/OutsourcedSup
 import { ProcessingExecutionPage } from '../features/processing/ProcessingExecutionPage';
 import { ProcurementEntryPage } from '../features/procurement/ProcurementEntryPage';
 import { App } from './App';
+import { ModuleIndexPage, ModuleSkeletonPage } from './modules/ModulePages';
+import { skeletonModules } from './modules/moduleRegistry';
 
 export const router = createBrowserRouter([
   {
@@ -26,6 +28,14 @@ export const router = createBrowserRouter([
         path: 'processing/executions/new',
         element: <ProcessingExecutionPage />,
       },
+      {
+        path: 'modules',
+        element: <ModuleIndexPage />,
+      },
+      ...skeletonModules.map((module) => ({
+        path: module.route.slice(1),
+        element: <ModuleSkeletonPage moduleKey={module.key} />,
+      })),
     ],
   },
 ]);
