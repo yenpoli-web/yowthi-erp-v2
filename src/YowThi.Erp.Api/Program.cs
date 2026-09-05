@@ -35,6 +35,7 @@ app.MapSalesHandlingEndpoints();
 app.MapSalesPackagingItemLifecycleEndpoints();
 app.MapSalesProductGroupLifecycleEndpoints();
 app.MapContainerLifecycleEndpoints();
+app.MapWarehouseLifecycleEndpoints();
 app.MapLaborEndpoints();
 app.MapFinanceEndpoints();
 app.MapDataProtectionEndpoints();
