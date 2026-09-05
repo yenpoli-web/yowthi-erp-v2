@@ -1,6 +1,7 @@
 using YowThi.Erp.Api.DataProtection;
 using YowThi.Erp.Api.Finance;
 using YowThi.Erp.Api.Hosting;
+using YowThi.Erp.Api.Infrastructure;
 using YowThi.Erp.Api.Inventory;
 using YowThi.Erp.Api.Labor;
 using YowThi.Erp.Api.Outsourced;
@@ -33,6 +34,7 @@ app.MapSalesEndpoints();
 app.MapSalesHandlingEndpoints();
 app.MapSalesPackagingItemLifecycleEndpoints();
 app.MapSalesProductGroupLifecycleEndpoints();
+app.MapContainerLifecycleEndpoints();
 app.MapLaborEndpoints();
 app.MapFinanceEndpoints();
 app.MapDataProtectionEndpoints();
