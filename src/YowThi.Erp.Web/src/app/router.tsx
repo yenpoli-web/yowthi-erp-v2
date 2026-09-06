@@ -3,6 +3,7 @@ import { Navigate, createBrowserRouter } from 'react-router';
 import { OutsourcedSupplyDetailPage } from '../features/outsourced/OutsourcedSupplyDetailPage';
 import { FinanceSettlementPage } from '../features/finance/FinanceSettlementPage';
 import { InventoryOperationsPage } from '../features/inventory/InventoryOperationsPage';
+import { InfrastructureLifecyclePage } from '../features/infrastructure/InfrastructureLifecyclePage';
 import { LaborDailyWagePage } from '../features/labor/LaborDailyWagePage';
 import { PartyLifecyclePage } from '../features/party/PartyLifecyclePage';
 import { ProcessingExecutionPage } from '../features/processing/ProcessingExecutionPage';
@@ -57,6 +58,10 @@ export const router = createBrowserRouter([
       {
         path: 'party',
         element: <PartyLifecyclePage />,
+      },
+      {
+        path: 'infrastructure',
+        element: <InfrastructureLifecyclePage />,
       },
       {
         path: 'modules',

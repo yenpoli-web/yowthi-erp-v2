@@ -40,6 +40,7 @@ app.MapSalesPackagingItemLifecycleEndpoints();
 app.MapSalesProductGroupLifecycleEndpoints();
 app.MapContainerLifecycleEndpoints();
 app.MapWarehouseLifecycleEndpoints();
+app.MapInfrastructureLifecycleOptionEndpoints();
 app.MapLaborEndpoints();
 app.MapLaborDailyWageOptionEndpoints();
 app.MapFinanceEndpoints();

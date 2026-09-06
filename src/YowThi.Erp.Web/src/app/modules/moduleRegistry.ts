@@ -93,7 +93,7 @@ export const systemModules: readonly SystemModuleDefinition[] = [
     key: 'infrastructure',
     route: '/infrastructure',
     area: 'controls',
-    webState: 'skeleton',
+    webState: 'operational',
     label: { 'zh-TW': '基礎設施資料', 'th-TH': 'ข้อมูลโครงสร้างพื้นฐาน' },
   },
   {
