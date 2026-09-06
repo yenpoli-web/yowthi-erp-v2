@@ -31,6 +31,7 @@ app.MapInventoryEndpoints();
 app.MapOutsourcedEndpoints();
 app.MapOutsourcedSupplyDetailOptionEndpoints();
 app.MapSalesEndpoints();
+app.MapSalesConfirmationOptionEndpoints();
 app.MapSalesHandlingEndpoints();
 app.MapSalesPackagingItemLifecycleEndpoints();
 app.MapSalesProductGroupLifecycleEndpoints();

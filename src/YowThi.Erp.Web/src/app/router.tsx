@@ -3,6 +3,7 @@ import { Navigate, createBrowserRouter } from 'react-router';
 import { OutsourcedSupplyDetailPage } from '../features/outsourced/OutsourcedSupplyDetailPage';
 import { ProcessingExecutionPage } from '../features/processing/ProcessingExecutionPage';
 import { ProcurementEntryPage } from '../features/procurement/ProcurementEntryPage';
+import { SalesConfirmationPage } from '../features/sales/SalesConfirmationPage';
 import { App } from './App';
 import { ModuleIndexPage, ModuleSkeletonPage } from './modules/ModulePages';
 import { skeletonModules } from './modules/moduleRegistry';
@@ -27,6 +28,10 @@ export const router = createBrowserRouter([
       {
         path: 'processing/executions/new',
         element: <ProcessingExecutionPage />,
+      },
+      {
+        path: 'sales',
+        element: <SalesConfirmationPage />,
       },
       {
         path: 'modules',
