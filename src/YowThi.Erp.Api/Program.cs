@@ -38,6 +38,7 @@ app.MapSalesHandlingEndpoints();
 app.MapSalesHandlingWorkOptionEndpoints();
 app.MapSalesPackagingItemLifecycleEndpoints();
 app.MapSalesProductGroupLifecycleEndpoints();
+app.MapSalesProductGroupLifecycleOptionEndpoints();
 app.MapContainerLifecycleEndpoints();
 app.MapWarehouseLifecycleEndpoints();
 app.MapInfrastructureLifecycleOptionEndpoints();

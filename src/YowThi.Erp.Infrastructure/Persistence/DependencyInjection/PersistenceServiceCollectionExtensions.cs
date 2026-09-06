@@ -60,6 +60,7 @@ public static class PersistenceServiceCollectionExtensions
         services.AddScoped<ISalesHandlingWorkOptionsReader, EfSalesHandlingWorkOptionsReader>();
         services.AddScoped<ISalesPackagingItemLifecycleExecutor, PostgreSqlSalesPackagingItemLifecycleExecutor>();
         services.AddScoped<ISalesProductGroupLifecycleExecutor, PostgreSqlSalesProductGroupLifecycleExecutor>();
+        services.AddScoped<ISalesProductGroupLifecycleOptionsReader, EfSalesProductGroupLifecycleOptionsReader>();
         services.AddScoped<IContainerLifecycleExecutor, PostgreSqlContainerLifecycleExecutor>();
         services.AddScoped<IWarehouseLifecycleExecutor, PostgreSqlWarehouseLifecycleExecutor>();
         services.AddScoped<IInfrastructureLifecycleOptionsReader, EfInfrastructureLifecycleOptionsReader>();

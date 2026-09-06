@@ -100,7 +100,7 @@ export const systemModules: readonly SystemModuleDefinition[] = [
     key: 'product',
     route: '/product',
     area: 'controls',
-    webState: 'skeleton',
+    webState: 'operational',
     label: { 'zh-TW': '產品設定', 'th-TH': 'การตั้งค่าสินค้า' },
   },
   {
