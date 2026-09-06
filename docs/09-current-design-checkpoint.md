@@ -1,6 +1,6 @@
 # Current Design Checkpoint — YowThi ERP V2
 
-Checkpoint status: **v0.1 implementation baseline through P6 / V8 COMPLETE. Remaining lifecycle / Hard Delete / Batch-control candidates are explicitly deferred or future target-specific scope. P7 remains NOT FORMALLY COMPLETE.**
+Checkpoint status: **v0.1 implementation baseline through P6 / V8 COMPLETE and P7 system skeleton S0–S12 COMPLETE. Remaining lifecycle / Hard Delete / Batch-control candidates remain explicitly deferred or future target-specific scope. P7 presentation redesign and full zh-TW / th-TH presentation acceptance remain OPEN.**
 
 Purpose: recover the current architecture and implementation state if conversational context is lost.
 
@@ -59,6 +59,7 @@ Later implementation supplements:
 - `docs/26-outsourced-vendor-hard-delete-control-v0.1.md` — V8-C17 Outsourced Vendor Hard Delete + structural dependency closure / runner-local validation evidence
 - `docs/27-farmer-hard-delete-control-v0.1.md` — V8-C18 Farmer Hard Delete + Procurement Entry / Finance Payable structural dependency closure / runner-local validation evidence
 - `docs/28-p6-v8-closure-checkpoint-v0.1.md` — formal P6 / V8 closure + deferred/future target-specific scope boundary
+- `docs/29-p7-system-skeleton-closure-checkpoint-v0.1.md` — P7 S0–S12 system-skeleton closure + 12/12 operational web modules + presentation redesign boundary
 - for their target-specific scopes, these later supplements resolve older omissions without superseding the broader Command/REST architecture
 
 Earlier PostgreSQL Schema Parts remain design history. `docs/10` is the consolidated relational baseline when relational details conflict.
@@ -145,7 +146,8 @@ P6    Business / ERP Control vertical slices             COMPLETE
       C17 Outsourced Vendor Hard Delete                  COMPLETE
       C18 Farmer Hard Delete                              COMPLETE
       remaining candidate ERP Control scope               DEFERRED / FUTURE
-P7    React UI vertical slices                           NOT FORMALLY COMPLETE
+P7    React UI system skeleton S0-S12                  COMPLETE
+      Presentation redesign / adaptive UX / i18n        OPEN
 P8    CI / production hardening                          FUTURE
 ```
 
@@ -155,15 +157,15 @@ P6/V8 is COMPLETE because remaining candidate control scope is now explicitly de
 
 Formal implementation baseline immediately before this checkpoint-document commit:
 - `main = origin/main`
-- SHA: `5ba09434827c5081161739b5172ccab574ec5026`
-- commit: `docs: checkpoint farmer hard delete`
+- SHA: `137190098bb343ce072957dba25c50631c433092`
+- commit: `feat(data-protection): add hard delete ui`
 - promotion: ff-only
 - push: non-force
 - remote fetch/read-back: clean
-- Formal r18 primary channel; Bootstrap r2 remains independent recovery/read-back channel
+- Formal r20 primary channel; Bootstrap r2 remains independent recovery/read-back channel
 
 Current docs checkpoint branch:
-- `p6-v8-closure-checkpoint-validation`
+- `p7-closure-checkpoint-validation`
 
 C18 implementation validation:
 - branch: `p6-v8-farmer-hard-delete-validation`
@@ -839,14 +841,23 @@ Presentation experiences:
 - Tablet
 - Mobile
 
-Implemented routes currently include:
+Implemented operational routes now include:
 - `/procurement/entries/new`
 - `/outsourced/supply-details/new`
 - `/processing/executions/new`
+- `/sales`
+- `/sales-handling`
+- `/labor`
+- `/finance`
+- `/inventory`
+- `/party`
+- `/infrastructure`
+- `/product`
+- `/data-protection`
 
-Broad P7 UI is not formally complete.
+P7 system skeleton is formally complete through S0–S12 at `main@137190098bb343ce072957dba25c50631c433092`.
 
-P7 preview follow-up is deferred until after system-skeleton closure: the current visual style is not accepted as final, and Traditional Chinese / Thai language switching is not yet complete across the presentation.
+P7 presentation follow-up remains open after system-skeleton closure: the current visual style is not accepted as final, and application-wide Traditional Chinese / Thai presentation completeness plus Desktop / Tablet / Mobile UX acceptance remain to be completed.
 
 ## 24. P6 / V8 closure state
 
@@ -912,7 +923,7 @@ Use ff-only promotion and non-force push.
 Do not require routine GitHub-hosted runners, paid/larger runners, Codespaces, or unconfirmed metered services.
 
 Formal/Bootstrap operational split:
-- Formal r18 is the primary formal Repository mutation/validation channel
+- Formal r20 is the primary formal Repository mutation/validation channel
 - Bootstrap r2 is an independent recovery/read-back channel
 - both currently resolve to the same healthy Agent runtime/tool catalog but through separate formal/bootstrap tunnel profiles
 - when a Formal tunnel call is ambiguous, use Bootstrap read-back before assuming whether a mutation occurred
@@ -920,7 +931,7 @@ Formal/Bootstrap operational split:
 ## 26. Recovery
 
 ```text
-main@5ba09434827c5081161739b5172ccab574ec5026
+main@137190098bb343ce072957dba25c50631c433092
 -> P5 PostgreSQL 18 persistence acceptance COMPLETE
 -> P6 V1-V7 COMPLETE
 -> V8-C1 Supplier Hard Delete COMPLETE
@@ -962,15 +973,16 @@ main@5ba09434827c5081161739b5172ccab574ec5026
 -> P6/V8 closure hard gate confirms current Gap Register CONTROL items are satisfied
 -> remaining lifecycle / Hard Delete / Batch-control candidates are DEFERRED / future target-specific scope
 -> P6 / V8 COMPLETE
--> Formal r18 is primary; Bootstrap r2 remains independent recovery/read-back channel
--> current docs checkpoint branch: p6-v8-closure-checkpoint-validation
+-> Formal r20 is primary; Bootstrap r2 remains independent recovery/read-back channel
+-> current docs checkpoint branch: p7-closure-checkpoint-validation
 -> authoritative C18 supplement: docs/27-farmer-hard-delete-control-v0.1.md
 -> authoritative P6/V8 closure supplement: docs/28-p6-v8-closure-checkpoint-v0.1.md
+-> authoritative P7 system-skeleton closure supplement: docs/29-p7-system-skeleton-closure-checkpoint-v0.1.md
 -> StorageLocation, ProcessMaterial, and ProcessingRoute lifecycle remain DEFERRED candidates due unresolved current-use consistency
 -> ProcurementProduct and SalesProduct lifecycle remain TO VERIFY / DEFERRED candidates where current Business Fact behavior is ambiguous
 -> Farmer Hard Delete dependency closure is COMPLETE for Procurement Entry + Finance Payable typed dependencies
 -> OUT-003 still unresolved; Outsourced Supply Batch Reopen DEFERRED
 -> P6 / V8 COMPLETE; remaining candidate ERP Control scope explicitly deferred/future target-specific
--> P7 broad React UI NOT FORMALLY COMPLETE; visual redesign and zh-TW/th-TH completeness deferred to P7
+-> P7 system skeleton S0–S12 COMPLETE / 12 of 12 modules operational; visual redesign and full zh-TW/th-TH presentation acceptance remain OPEN
 ```
 
