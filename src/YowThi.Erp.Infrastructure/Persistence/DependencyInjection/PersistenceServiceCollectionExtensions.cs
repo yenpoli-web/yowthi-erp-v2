@@ -63,6 +63,7 @@ public static class PersistenceServiceCollectionExtensions
         services.AddScoped<IContainerLifecycleExecutor, PostgreSqlContainerLifecycleExecutor>();
         services.AddScoped<IWarehouseLifecycleExecutor, PostgreSqlWarehouseLifecycleExecutor>();
         services.AddScoped<IConfirmEmployeeDailyWageExecutor, PostgreSqlConfirmEmployeeDailyWageExecutor>();
+        services.AddScoped<ILaborDailyWageOptionsReader, EfLaborDailyWageOptionsReader>();
         services.AddScoped<IAddPayableAdjustmentExecutor, PostgreSqlAddPayableAdjustmentExecutor>();
         services.AddScoped<IPayPayableExecutor, PostgreSqlPayPayableExecutor>();
         services.AddScoped<IReceiveReceivableExecutor, PostgreSqlReceiveReceivableExecutor>();

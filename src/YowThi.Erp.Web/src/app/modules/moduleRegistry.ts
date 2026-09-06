@@ -65,7 +65,7 @@ export const systemModules: readonly SystemModuleDefinition[] = [
     key: 'labor',
     route: '/labor',
     area: 'operations',
-    webState: 'skeleton',
+    webState: 'operational',
     label: { 'zh-TW': '工資', 'th-TH': 'ค่าจ้าง' },
   },
   {

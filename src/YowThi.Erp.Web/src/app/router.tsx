@@ -1,6 +1,7 @@
 import { Navigate, createBrowserRouter } from 'react-router';
 
 import { OutsourcedSupplyDetailPage } from '../features/outsourced/OutsourcedSupplyDetailPage';
+import { LaborDailyWagePage } from '../features/labor/LaborDailyWagePage';
 import { ProcessingExecutionPage } from '../features/processing/ProcessingExecutionPage';
 import { ProcurementEntryPage } from '../features/procurement/ProcurementEntryPage';
 import { SalesConfirmationPage } from '../features/sales/SalesConfirmationPage';
@@ -37,6 +38,10 @@ export const router = createBrowserRouter([
       {
         path: 'sales-handling',
         element: <SalesPackagingWorkPage />,
+      },
+      {
+        path: 'labor',
+        element: <LaborDailyWagePage />,
       },
       {
         path: 'modules',
