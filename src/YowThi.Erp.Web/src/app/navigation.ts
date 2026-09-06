@@ -1,76 +1,78 @@
 import type { OperationalLocale } from './i18n/locale';
+import { systemModules, type ModuleArea, type SystemModuleDefinition } from './modules/moduleRegistry';
 
 type LocalizedLabel = Record<OperationalLocale, string>;
 
-export type PrimaryNavigationItem = {
+export type NavigationGroup = {
+  area: ModuleArea;
+  modules: readonly SystemModuleDefinition[];
+};
+
+export type QuickNavigationItem = {
   to: string;
   label: LocalizedLabel;
-  compactLabel: LocalizedLabel;
 };
 
 export const applicationShellCopy: Record<
   OperationalLocale,
   {
     primaryNavigation: string;
+    operations: string;
+    controls: string;
+    workspace: string;
+    moduleMenu: string;
+    closeMenu: string;
+    systemReady: string;
     tabletSuffix: string;
     mobileSuffix: string;
   }
 > = {
   'zh-TW': {
     primaryNavigation: '主要導覽',
-    tabletSuffix: '平板',
-    mobileSuffix: '手機',
+    operations: '日常作業',
+    controls: '資料與控制',
+    workspace: 'ERP 工作台',
+    moduleMenu: '全部模組',
+    closeMenu: '關閉模組選單',
+    systemReady: '12 個模組可使用',
+    tabletSuffix: '平板工作台',
+    mobileSuffix: '行動工作台',
   },
   'th-TH': {
     primaryNavigation: 'เมนูหลัก',
-    tabletSuffix: 'แท็บเล็ต',
-    mobileSuffix: 'มือถือ',
+    operations: 'งานประจำวัน',
+    controls: 'ข้อมูลและการควบคุม',
+    workspace: 'พื้นที่ทำงาน ERP',
+    moduleMenu: 'โมดูลทั้งหมด',
+    closeMenu: 'ปิดเมนูโมดูล',
+    systemReady: 'พร้อมใช้งาน 12 โมดูล',
+    tabletSuffix: 'พื้นที่ทำงานแท็บเล็ต',
+    mobileSuffix: 'พื้นที่ทำงานมือถือ',
   },
 };
 
-export const primaryNavigation: readonly PrimaryNavigationItem[] = [
+export const navigationGroups: readonly NavigationGroup[] = (
+  ['operations', 'controls'] as const
+).map((area) => ({
+  area,
+  modules: systemModules.filter((module) => module.area === area),
+}));
+
+export const mobileQuickNavigation: readonly QuickNavigationItem[] = [
   {
     to: '/procurement/entries/new',
-    label: {
-      'zh-TW': '採購',
-      'th-TH': 'จัดซื้อ',
-    },
-    compactLabel: {
-      'zh-TW': '採購',
-      'th-TH': 'จัดซื้อ',
-    },
-  },
-  {
-    to: '/outsourced/supply-details/new',
-    label: {
-      'zh-TW': '委外供應',
-      'th-TH': 'จัดหาภายนอก',
-    },
-    compactLabel: {
-      'zh-TW': '委外',
-      'th-TH': 'ภายนอก',
-    },
+    label: { 'zh-TW': '採購', 'th-TH': 'จัดซื้อ' },
   },
   {
     to: '/processing/executions/new',
-    label: {
-      'zh-TW': '加工',
-      'th-TH': 'แปรรูป',
-    },
-    compactLabel: {
-      'zh-TW': '加工',
-      'th-TH': 'แปรรูป',
-    },
+    label: { 'zh-TW': '加工', 'th-TH': 'แปรรูป' },
+  },
+  {
+    to: '/sales',
+    label: { 'zh-TW': '銷售', 'th-TH': 'การขาย' },
   },
   {
     to: '/modules',
-    label: {
-      'zh-TW': '模組',
-      'th-TH': 'โมดูล',
-    },
-    compactLabel: {
-      'zh-TW': '模組',
-      'th-TH': 'โมดูล',
-    },
+    label: { 'zh-TW': '全部', 'th-TH': 'ทั้งหมด' },
   },
 ];

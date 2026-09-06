@@ -28,23 +28,23 @@ const modulePageCopy: Record<
   'zh-TW': {
     eyebrow: 'ERP V2',
     title: '系統模組',
-    intro: '此頁只列出目前已存在正式 P6 後端能力的模組。已有操作畫面的模組可直接使用；其餘模組先建立穩定 Web route，後續依 P7 vertical slice 逐一接入。',
-    operations: '作業模組',
-    controls: '控制與基礎模組',
-    operational: '已有操作畫面',
-    skeleton: 'Web 骨架',
-    skeletonIntro: '此模組的後端能力已存在；目前先納入 Web 系統骨架。後續 P7 vertical slice 會依正式 command/query contract 接入操作畫面，不在此處新增 Business Rule。',
+    intro: '12 個 ERP 模組已全部接入正式操作畫面。本頁是 Desktop、Tablet、Mobile 共用的模組索引；各模組仍使用同一套已驗證的 command、query、權限與 Business Rule 邊界。',
+    operations: '日常作業',
+    controls: '資料與控制',
+    operational: '可使用',
+    skeleton: '尚未接入',
+    skeletonIntro: '此模組目前尚未接入操作畫面；若未來重新出現 skeleton 狀態，仍必須依正式 command/query contract 實作，不得在 presentation layer 新增 Business Rule。',
     backToModules: '返回系統模組',
   },
   'th-TH': {
     eyebrow: 'ERP V2',
     title: 'โมดูลระบบ',
-    intro: 'หน้านี้แสดงเฉพาะโมดูลที่มีความสามารถฝั่ง backend ของ P6 อยู่แล้ว โมดูลที่มีหน้าปฏิบัติงานสามารถใช้งานได้ทันที ส่วนโมดูลอื่นจะสร้าง Web route ที่คงที่ก่อน แล้วจึงเชื่อมต่อทีละ vertical slice ใน P7',
-    operations: 'โมดูลปฏิบัติงาน',
-    controls: 'โมดูลควบคุมและข้อมูลพื้นฐาน',
-    operational: 'มีหน้าปฏิบัติงานแล้ว',
-    skeleton: 'โครง Web',
-    skeletonIntro: 'โมดูลนี้มีความสามารถฝั่ง backend อยู่แล้ว และถูกนำเข้าโครงระบบ Web ในขั้นนี้ P7 vertical slice ถัดไปจะเชื่อมต่อหน้าปฏิบัติงานตาม command/query contract ที่ยืนยันแล้ว โดยไม่สร้าง Business Rule เพิ่มในหน้านี้',
+    intro: 'โมดูล ERP ทั้ง 12 โมดูลมีหน้าปฏิบัติงานแล้ว หน้านี้เป็นดัชนีโมดูลร่วมสำหรับ Desktop, Tablet และ Mobile โดยทุกโมดูลยังใช้ command, query, สิทธิ์ และขอบเขต Business Rule ชุดเดียวกันที่ผ่านการตรวจสอบแล้ว',
+    operations: 'งานประจำวัน',
+    controls: 'ข้อมูลและการควบคุม',
+    operational: 'พร้อมใช้งาน',
+    skeleton: 'ยังไม่เชื่อมต่อ',
+    skeletonIntro: 'โมดูลนี้ยังไม่มีหน้าปฏิบัติงาน หากในอนาคตมีสถานะ skeleton อีก ต้องเชื่อมต่อตาม command/query contract ที่ยืนยันแล้ว และห้ามสร้าง Business Rule ใหม่ใน presentation layer',
     backToModules: 'กลับไปโมดูลระบบ',
   },
 };
@@ -108,7 +108,7 @@ function ModuleAreaSection({
   const modules = systemModules.filter((module) => module.area === area);
 
   return (
-    <section className="entry-form" aria-labelledby={`module-area-${area}`}>
+    <section className="entry-form module-area-card" aria-labelledby={`module-area-${area}`}>
       <h2 id={`module-area-${area}`}>{title}</h2>
       <ul className="module-list">
         {modules.map((module) => (
