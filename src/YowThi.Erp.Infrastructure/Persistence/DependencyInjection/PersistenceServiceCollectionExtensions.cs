@@ -79,6 +79,7 @@ public static class PersistenceServiceCollectionExtensions
         services.AddScoped<IEmployeeLifecycleExecutor, PostgreSqlEmployeeLifecycleExecutor>();
         services.AddScoped<ICustomerLifecycleExecutor, PostgreSqlCustomerLifecycleExecutor>();
         services.AddScoped<IOutsourcedVendorLifecycleExecutor, PostgreSqlOutsourcedVendorLifecycleExecutor>();
+        services.AddScoped<IPartyLifecycleOptionsReader, EfPartyLifecycleOptionsReader>();
         services.AddScoped<IHardDeleteSupplierExecutor, PostgreSqlHardDeleteSupplierExecutor>();
         services.AddScoped<IHardDeleteCustomerExecutor, PostgreSqlHardDeleteCustomerExecutor>();
         services.AddScoped<IHardDeleteOutsourcedVendorExecutor, PostgreSqlHardDeleteOutsourcedVendorExecutor>();

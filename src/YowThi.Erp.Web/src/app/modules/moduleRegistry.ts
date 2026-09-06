@@ -86,7 +86,7 @@ export const systemModules: readonly SystemModuleDefinition[] = [
     key: 'party',
     route: '/party',
     area: 'controls',
-    webState: 'skeleton',
+    webState: 'operational',
     label: { 'zh-TW': '人員與往來對象', 'th-TH': 'บุคลากรและคู่ค้า' },
   },
   {

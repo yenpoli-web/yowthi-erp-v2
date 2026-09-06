@@ -4,6 +4,7 @@ import { OutsourcedSupplyDetailPage } from '../features/outsourced/OutsourcedSup
 import { FinanceSettlementPage } from '../features/finance/FinanceSettlementPage';
 import { InventoryOperationsPage } from '../features/inventory/InventoryOperationsPage';
 import { LaborDailyWagePage } from '../features/labor/LaborDailyWagePage';
+import { PartyLifecyclePage } from '../features/party/PartyLifecyclePage';
 import { ProcessingExecutionPage } from '../features/processing/ProcessingExecutionPage';
 import { ProcurementEntryPage } from '../features/procurement/ProcurementEntryPage';
 import { SalesConfirmationPage } from '../features/sales/SalesConfirmationPage';
@@ -52,6 +53,10 @@ export const router = createBrowserRouter([
       {
         path: 'inventory',
         element: <InventoryOperationsPage />,
+      },
+      {
+        path: 'party',
+        element: <PartyLifecyclePage />,
       },
       {
         path: 'modules',
