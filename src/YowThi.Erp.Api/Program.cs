@@ -28,6 +28,7 @@ app.MapProcurementEntryOptionEndpoints();
 app.MapProcessingEndpoints();
 app.MapProcessingExecutionOptionEndpoints();
 app.MapInventoryEndpoints();
+app.MapInventoryOperationOptionEndpoints();
 app.MapOutsourcedEndpoints();
 app.MapOutsourcedSupplyDetailOptionEndpoints();
 app.MapSalesEndpoints();

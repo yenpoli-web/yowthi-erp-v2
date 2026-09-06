@@ -73,6 +73,7 @@ public static class PersistenceServiceCollectionExtensions
         services.AddScoped<ICorrectPayableAdjustmentExecutor, PostgreSqlCorrectPayableAdjustmentExecutor>();
         services.AddScoped<ITransferInventoryExecutor, PostgreSqlTransferInventoryExecutor>();
         services.AddScoped<IAdjustInventoryExecutor, PostgreSqlAdjustInventoryExecutor>();
+        services.AddScoped<IInventoryOperationOptionsReader, EfInventoryOperationOptionsReader>();
         services.AddScoped<ISupplierLifecycleExecutor, PostgreSqlSupplierLifecycleExecutor>();
         services.AddScoped<IFarmerLifecycleExecutor, PostgreSqlFarmerLifecycleExecutor>();
         services.AddScoped<IEmployeeLifecycleExecutor, PostgreSqlEmployeeLifecycleExecutor>();

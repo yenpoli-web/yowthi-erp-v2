@@ -79,7 +79,7 @@ export const systemModules: readonly SystemModuleDefinition[] = [
     key: 'inventory',
     route: '/inventory',
     area: 'operations',
-    webState: 'skeleton',
+    webState: 'operational',
     label: { 'zh-TW': '庫存', 'th-TH': 'สินค้าคงคลัง' },
   },
   {

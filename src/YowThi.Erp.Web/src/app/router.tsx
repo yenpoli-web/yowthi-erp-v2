@@ -2,6 +2,7 @@ import { Navigate, createBrowserRouter } from 'react-router';
 
 import { OutsourcedSupplyDetailPage } from '../features/outsourced/OutsourcedSupplyDetailPage';
 import { FinanceSettlementPage } from '../features/finance/FinanceSettlementPage';
+import { InventoryOperationsPage } from '../features/inventory/InventoryOperationsPage';
 import { LaborDailyWagePage } from '../features/labor/LaborDailyWagePage';
 import { ProcessingExecutionPage } from '../features/processing/ProcessingExecutionPage';
 import { ProcurementEntryPage } from '../features/procurement/ProcurementEntryPage';
@@ -47,6 +48,10 @@ export const router = createBrowserRouter([
       {
         path: 'finance',
         element: <FinanceSettlementPage />,
+      },
+      {
+        path: 'inventory',
+        element: <InventoryOperationsPage />,
       },
       {
         path: 'modules',
