@@ -47,6 +47,7 @@ app.MapLaborDailyWageOptionEndpoints();
 app.MapFinanceEndpoints();
 app.MapFinanceSettlementOptionEndpoints();
 app.MapDataProtectionEndpoints();
+app.MapHardDeleteOptionEndpoints();
 
 app.Run();
 

@@ -1,5 +1,6 @@
 import { Navigate, createBrowserRouter } from 'react-router';
 
+import { HardDeletePage } from '../features/data-protection/HardDeletePage';
 import { OutsourcedSupplyDetailPage } from '../features/outsourced/OutsourcedSupplyDetailPage';
 import { FinanceSettlementPage } from '../features/finance/FinanceSettlementPage';
 import { InventoryOperationsPage } from '../features/inventory/InventoryOperationsPage';
@@ -67,6 +68,10 @@ export const router = createBrowserRouter([
       {
         path: 'product',
         element: <SalesProductGroupLifecyclePage />,
+      },
+      {
+        path: 'data-protection',
+        element: <HardDeletePage />,
       },
       {
         path: 'modules',

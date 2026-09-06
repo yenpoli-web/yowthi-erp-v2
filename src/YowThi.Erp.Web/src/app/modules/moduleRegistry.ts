@@ -107,7 +107,7 @@ export const systemModules: readonly SystemModuleDefinition[] = [
     key: 'data-protection',
     route: '/data-protection',
     area: 'controls',
-    webState: 'skeleton',
+    webState: 'operational',
     label: { 'zh-TW': '資料保護控制', 'th-TH': 'การควบคุมการคุ้มครองข้อมูล' },
   },
 ];
