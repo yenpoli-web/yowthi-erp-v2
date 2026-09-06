@@ -1,6 +1,7 @@
 import { Navigate, createBrowserRouter } from 'react-router';
 
 import { OutsourcedSupplyDetailPage } from '../features/outsourced/OutsourcedSupplyDetailPage';
+import { FinanceSettlementPage } from '../features/finance/FinanceSettlementPage';
 import { LaborDailyWagePage } from '../features/labor/LaborDailyWagePage';
 import { ProcessingExecutionPage } from '../features/processing/ProcessingExecutionPage';
 import { ProcurementEntryPage } from '../features/procurement/ProcurementEntryPage';
@@ -42,6 +43,10 @@ export const router = createBrowserRouter([
       {
         path: 'labor',
         element: <LaborDailyWagePage />,
+      },
+      {
+        path: 'finance',
+        element: <FinanceSettlementPage />,
       },
       {
         path: 'modules',

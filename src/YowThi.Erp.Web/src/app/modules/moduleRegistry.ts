@@ -72,7 +72,7 @@ export const systemModules: readonly SystemModuleDefinition[] = [
     key: 'finance',
     route: '/finance',
     area: 'operations',
-    webState: 'skeleton',
+    webState: 'operational',
     label: { 'zh-TW': '財務', 'th-TH': 'การเงิน' },
   },
   {

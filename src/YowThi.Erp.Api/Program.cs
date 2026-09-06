@@ -41,6 +41,7 @@ app.MapWarehouseLifecycleEndpoints();
 app.MapLaborEndpoints();
 app.MapLaborDailyWageOptionEndpoints();
 app.MapFinanceEndpoints();
+app.MapFinanceSettlementOptionEndpoints();
 app.MapDataProtectionEndpoints();
 
 app.Run();
