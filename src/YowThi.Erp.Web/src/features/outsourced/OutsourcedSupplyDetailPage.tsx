@@ -50,7 +50,7 @@ const copy = {
     quantity: '數量',
     unitPrice: '單價',
     location: '收貨儲位',
-    locationSearch: '搜尋儲位名稱 / code',
+    locationSearch: '搜尋儲位名稱／代碼',
     useDefault: '由伺服器使用產品預設收貨儲位',
     locationSelect: '選擇明確收貨儲位',
     explicitLocationRequired: '此產品目前沒有可用的預設收貨儲位；確認前必須明確選擇收貨儲位。',
@@ -60,21 +60,21 @@ const copy = {
     submit: '確認委外供應明細',
     submitting: '確認中…',
     validation: '請檢查輸入資料。',
-    quantityPositive: 'P6 目前依 OUT-002 safe control 要求數量大於 0。',
+    quantityPositive: '依 OUT-002，數量必須大於 0。',
     priceNonNegative: '單價不可小於 0。',
     vendorRequired: '請選擇委外商。',
     productRequired: '請選擇銷售產品。',
     locationRequired: '請明確選擇收貨儲位。',
-    batchClosed: '此委外供應批次已關閉；正常 late detail 目前依既有 TO VERIFY control 被阻擋。',
-    idempotencyConflict: '此 Idempotency-Key 已被不同 command request 使用。請修改輸入或重新開始一次確認。',
+    batchClosed: '此委外供應批次已關閉；依目前未確認規則，一般補登仍被阻擋。',
+    idempotencyConflict: '此操作識別碼已被不同請求使用。請修改輸入或重新開始一次確認。',
     success: '委外供應明細已確認',
-    detailId: 'Outsourced Supply Detail',
-    batchId: 'Outsourced Supply Batch',
-    inventoryOperationId: 'Inventory Operation',
-    payableId: 'Payable',
-    amount: '金額 THB',
+    detailId: '委外供應明細',
+    batchId: '委外供應批次',
+    inventoryOperationId: '庫存操作',
+    payableId: '應付款',
+    amount: '金額（泰銖）',
     receiptLocation: '收貨儲位',
-    rowVersion: 'Row Version',
+    rowVersion: '資料版本',
     unexpected: '發生未預期錯誤。',
   },
   'th-TH': {
@@ -93,7 +93,7 @@ const copy = {
     quantity: 'ปริมาณ',
     unitPrice: 'ราคาต่อหน่วย',
     location: 'ตำแหน่งรับสินค้า',
-    locationSearch: 'ค้นหาชื่อ / code ตำแหน่ง',
+    locationSearch: 'ค้นหาชื่อ / รหัสตำแหน่ง',
     useDefault: 'ให้เซิร์ฟเวอร์ใช้ตำแหน่งรับสินค้าหลักของสินค้า',
     locationSelect: 'เลือกตำแหน่งรับสินค้า',
     explicitLocationRequired: 'สินค้านี้ไม่มีตำแหน่งรับสินค้าหลักที่ใช้งานได้ ต้องเลือกตำแหน่งรับสินค้าให้ชัดเจนก่อนยืนยัน',
@@ -103,21 +103,21 @@ const copy = {
     submit: 'ยืนยันรายละเอียด',
     submitting: 'กำลังยืนยัน…',
     validation: 'โปรดตรวจสอบข้อมูล',
-    quantityPositive: 'P6 ใช้ OUT-002 safe control: ปริมาณต้องมากกว่า 0',
+    quantityPositive: 'ตาม OUT-002 ปริมาณต้องมากกว่า 0',
     priceNonNegative: 'ราคาต่อหน่วยต้องไม่ติดลบ',
     vendorRequired: 'โปรดเลือกผู้รับจ้าง',
     productRequired: 'โปรดเลือกสินค้าขาย',
     locationRequired: 'โปรดเลือกตำแหน่งรับสินค้าให้ชัดเจน',
-    batchClosed: 'Outsourced Supply Batch นี้ปิดแล้ว รายการย้อนหลังแบบปกติถูกบล็อกตาม TO VERIFY control ปัจจุบัน',
-    idempotencyConflict: 'Idempotency-Key นี้ถูกใช้กับ command request อื่นแล้ว โปรดแก้ข้อมูลหรือเริ่มการยืนยันครั้งใหม่',
+    batchClosed: 'ล็อตจัดหาภายนอกนี้ปิดแล้ว และตามกฎที่ยังรอยืนยันยังไม่อนุญาตให้เพิ่มรายการย้อนหลังแบบปกติ',
+    idempotencyConflict: 'รหัสการทำงานนี้ถูกใช้กับคำขออื่นแล้ว โปรดแก้ข้อมูลหรือเริ่มการยืนยันครั้งใหม่',
     success: 'ยืนยันรายละเอียดแล้ว',
-    detailId: 'Outsourced Supply Detail',
-    batchId: 'Outsourced Supply Batch',
-    inventoryOperationId: 'Inventory Operation',
-    payableId: 'Payable',
-    amount: 'จำนวนเงิน THB',
+    detailId: 'รายละเอียดการจัดหาภายนอก',
+    batchId: 'ล็อตจัดหาภายนอก',
+    inventoryOperationId: 'รายการสินค้าคงคลัง',
+    payableId: 'เจ้าหนี้',
+    amount: 'จำนวนเงิน (บาท)',
     receiptLocation: 'ตำแหน่งรับสินค้า',
-    rowVersion: 'Row Version',
+    rowVersion: 'รุ่นข้อมูล',
     unexpected: 'เกิดข้อผิดพลาดที่ไม่คาดคิด',
   },
 } as const;
@@ -372,7 +372,7 @@ export function OutsourcedSupplyDetailPage() {
                 <option value="">{productQuery.isPending ? labels.loading : labels.productSelect}</option>
                 {productItems.map((item) => (
                   <option key={item.id} value={item.id}>
-                    {item.displayName} · {labels.pricingBasis}: {item.pricingBasis}
+                    {item.displayName} · {labels.pricingBasis}: {pricingBasisLabel(item.pricingBasis, locale)}
                   </option>
                 ))}
               </select>
@@ -464,6 +464,12 @@ export function OutsourcedSupplyDetailPage() {
       </div>
     </section>
   );
+}
+
+function pricingBasisLabel(basis: string, locale: 'zh-TW' | 'th-TH'): string {
+  if (basis === 'WEIGHT_BASED_UNIT') return locale === 'zh-TW' ? '依重量計價' : 'คิดราคาตามน้ำหนัก';
+  if (basis === 'UNIT_BASED') return locale === 'zh-TW' ? '依件數計價' : 'คิดราคาต่อหน่วย';
+  return basis;
 }
 
 function ResultRow({ label, value }: { label: string; value: string }) {

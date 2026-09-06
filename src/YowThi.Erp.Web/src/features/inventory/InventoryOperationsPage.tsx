@@ -217,8 +217,8 @@ export function InventoryOperationsPage() {
               <select value={selectedKey} onChange={(event) => { setSelectedKey(event.target.value); setLocationId(''); setQuantityText(''); setReasonText(''); submissionIdentity.current = null; mutation.reset(); }}>
                 <option value="">{mainQuery.isPending ? labels.loading : mode === 'transfer' ? labels.chooseSource : labels.chooseIdentity}</option>
                 {mode === 'transfer'
-                  ? sourceOptions.map((item) => <option key={item.inventoryPositionId} value={item.inventoryPositionId}>{transferLabel(item, labels.farmersCombined, numberFormat)}</option>)
-                  : adjustmentOptions.map((item) => <option key={identityKey(item)} value={identityKey(item)}>{identityLabel(item, labels.farmersCombined)}</option>)}
+                  ? sourceOptions.map((item) => <option key={item.inventoryPositionId} value={item.inventoryPositionId}>{transferLabel(item, labels, numberFormat)}</option>)
+                  : adjustmentOptions.map((item) => <option key={identityKey(item)} value={identityKey(item)}>{identityLabel(item, labels)}</option>)}
               </select>
             </div>
 
@@ -226,7 +226,7 @@ export function InventoryOperationsPage() {
               <span>{mode === 'transfer' ? labels.destination : labels.adjustmentLocation}</span>
               <select value={locationId} onChange={(event) => { setLocationId(event.target.value); submissionIdentity.current = null; mutation.reset(); }}>
                 <option value="">{locationQuery.isPending ? labels.loading : mode === 'transfer' ? labels.chooseDestination : labels.chooseLocation}</option>
-                {locationItems.map((item) => <option key={item.id} value={item.id}>{item.displayName}{item.active ? '' : ' · inactive'}</option>)}
+                {locationItems.map((item) => <option key={item.id} value={item.id}>{item.displayName}{item.active ? '' : ` · ${labels.inactiveStatus}`}</option>)}
               </select>
             </label>
 
@@ -240,9 +240,9 @@ export function InventoryOperationsPage() {
 
           {identity && <dl>
             <ResultRow label={labels.batchDate} value={identity.batchDate} />
-            <ResultRow label={labels.origin} value={identity.origin} />
-            <ResultRow label={labels.objectKind} value={`${identity.inventoryObjectKind} · ${identity.objectDisplayName}`} />
-            <ResultRow label={labels.rawSource} value={rawSourceLabel(identity, labels.farmersCombined)} />
+            <ResultRow label={labels.origin} value={originLabel(identity, labels)} />
+            <ResultRow label={labels.objectKind} value={`${objectKindLabel(identity, labels)} · ${identity.objectDisplayName}`} />
+            <ResultRow label={labels.rawSource} value={rawSourceLabel(identity, labels)} />
             {selectedTransfer && <ResultRow label={labels.sourceLocation} value={selectedTransfer.sourceStorageLocationDisplayName} />}
             {selectedTransfer && <ResultRow label={labels.balance} value={numberFormat.format(selectedTransfer.balanceQuantity)} />}
           </dl>}
@@ -281,17 +281,29 @@ function toRequestIdentity(item: InventoryOperationIdentityOption): InventoryPos
 function identityKey(item: InventoryOperationIdentityOption): string {
   return [item.origin, item.procurementBatchId ?? '', item.outsourcedSupplyBatchId ?? '', item.inventoryObjectKind, item.procurementProductId ?? '', item.processMaterialId ?? '', item.salesProductId ?? '', item.rawSourceKind ?? '', item.supplierId ?? ''].join('|');
 }
-function rawSourceLabel(item: InventoryOperationIdentityOption, farmersCombined: string): string {
-  if (item.rawSourceKind === 'FARMERS_COMBINED') return farmersCombined;
-  if (item.rawSourceKind === 'SUPPLIER') return item.rawSourceDisplayName ?? 'SUPPLIER';
+type InventoryLabels = typeof inventoryOperationsCopy['zh-TW'] | typeof inventoryOperationsCopy['th-TH'];
+function rawSourceLabel(item: InventoryOperationIdentityOption, labels: InventoryLabels): string {
+  if (item.rawSourceKind === 'FARMERS_COMBINED') return labels.farmersCombined;
+  if (item.rawSourceKind === 'SUPPLIER') return item.rawSourceDisplayName ?? labels.supplierSource;
   return '—';
 }
-function identityLabel(item: InventoryOperationIdentityOption, farmersCombined: string): string {
-  return `${item.batchDate} · ${item.objectDisplayName} · ${rawSourceLabel(item, farmersCombined)} · ${item.origin}`;
+function originLabel(item: InventoryOperationIdentityOption, labels: InventoryLabels): string {
+  return item.origin === 'IN_HOUSE' ? labels.inHouseOrigin : labels.outsourcedOrigin;
 }
-function transferLabel(item: { inventoryIdentity: InventoryOperationIdentityOption; sourceStorageLocationDisplayName: string; balanceQuantity: number }, farmersCombined: string, format: Intl.NumberFormat): string {
-  return `${identityLabel(item.inventoryIdentity, farmersCombined)} · ${item.sourceStorageLocationDisplayName} · ${format.format(item.balanceQuantity)}`;
+function objectKindLabel(item: InventoryOperationIdentityOption, labels: InventoryLabels): string {
+  switch (item.inventoryObjectKind) {
+    case 'PROCUREMENT_PRODUCT': return labels.procurementProductKind;
+    case 'PROCESS_MATERIAL': return labels.processMaterialKind;
+    case 'SALES_PRODUCT': return labels.salesProductKind;
+  }
 }
+function identityLabel(item: InventoryOperationIdentityOption, labels: InventoryLabels): string {
+  return `${item.batchDate} · ${item.objectDisplayName} · ${rawSourceLabel(item, labels)} · ${originLabel(item, labels)}`;
+}
+function transferLabel(item: { inventoryIdentity: InventoryOperationIdentityOption; sourceStorageLocationDisplayName: string; balanceQuantity: number }, labels: InventoryLabels, format: Intl.NumberFormat): string {
+  return `${identityLabel(item.inventoryIdentity, labels)} · ${item.sourceStorageLocationDisplayName} · ${format.format(item.balanceQuantity)}`;
+}
+
 function ResultRow({ label, value }: { label: string; value: string }) {
   return <div className="result-row"><dt>{label}</dt><dd>{value}</dd></div>;
 }

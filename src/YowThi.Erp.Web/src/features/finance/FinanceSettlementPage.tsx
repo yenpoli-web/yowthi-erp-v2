@@ -41,74 +41,76 @@ const copy = {
   'zh-TW': {
     eyebrow: 'P7 · 財務',
     title: '應付 / 應收結算登記',
-    intro: '此畫面直接使用正式 PayPayable 與 ReceiveReceivable command。Outstanding 是 Finance 可重建 projection；Amount 留空代表依目前 Outstanding 全額結算，填入金額則登記部分付款或收款。',
+    intro: '此畫面用於應付款與應收款結算登記。金額留空代表依目前未結金額全額結算，填入金額則登記部分付款或收款。',
     payables: '付款',
     receivables: '收款',
     searchPayable: '搜尋應付對象',
     searchReceivable: '搜尋客戶',
-    choosePayable: '選擇 Open Payable',
-    chooseReceivable: '選擇 Open Receivable',
+    choosePayable: '選擇未結應付款',
+    chooseReceivable: '選擇未結應收款',
     loading: '載入中…',
-    outstanding: 'Outstanding THB',
-    version: 'Outstanding version',
-    sourceKind: 'Payable kind',
-    salesDate: 'Sales date',
-    amount: '結算金額 THB（可留空）',
-    amountHint: '留空 = 當下全部 Outstanding；填入正整數 = 部分結算。不可超過目前 Outstanding。',
+    currency: '泰銖',
+    outstanding: '未結金額（泰銖）',
+    version: '未結餘額版本',
+    sourceKind: '應付類型',
+    salesDate: '銷售日期',
+    amount: '結算金額（泰銖，可留空）',
+    amountHint: '留空代表全額結算；填入正整數代表部分結算，且不可超過目前未結金額。',
     submitPayable: '登記付款',
     submitReceivable: '登記收款',
     submitting: '登記中…',
-    queryFailed: 'Finance settlement options 查詢失敗',
+    queryFailed: '結算選項查詢失敗',
     required: '請先選擇一筆可結算資料。',
-    amountInvalid: '金額必須留空，或輸入大於 0 的整數 THB。',
-    exceeds: '輸入金額不可超過目前 Outstanding。',
-    stale: 'Outstanding 已被其他操作變更，請重新載入後再登記。',
-    unavailable: '所選 Finance target 已不存在或不可結算，請重新載入。',
-    transportBlocked: 'Company Pickup Transport settlement 目前不可用；OUT-003 尚未解除。',
-    idempotency: '此 Idempotency-Key 已被不同 request 使用，請重新開始一次登記。',
+    amountInvalid: '金額必須留空，或輸入大於 0 的整數泰銖。',
+    exceeds: '輸入金額不可超過目前未結金額。',
+    stale: '未結金額已被其他操作變更，請重新載入後再登記。',
+    unavailable: '所選結算對象已不存在或不可結算，請重新載入。',
+    transportBlocked: '公司取貨運輸結算目前不可用；OUT-003 尚未解除。',
+    idempotency: '此操作識別碼已被不同請求使用，請重新開始一次登記。',
     unexpected: '發生未預期錯誤。',
     successPayment: '付款已登記',
     successReceipt: '收款已登記',
-    transactionId: 'Transaction',
-    settledAmount: 'Amount THB',
-    remaining: 'Remaining Outstanding THB',
-    confirmedAt: 'Confirmed at',
+    transactionId: '交易',
+    settledAmount: '結算金額（泰銖）',
+    remaining: '剩餘未結金額（泰銖）',
+    confirmedAt: '確認時間',
   },
   'th-TH': {
     eyebrow: 'P7 · การเงิน',
     title: 'บันทึกการชำระเจ้าหนี้ / รับชำระลูกหนี้',
-    intro: 'หน้านี้ใช้ PayPayable และ ReceiveReceivable จริง Outstanding เป็น projection ของ Finance ที่สร้างใหม่ได้ หากเว้น Amount ว่างจะชำระตาม Outstanding ปัจจุบันทั้งหมด หากกรอกจำนวนเงินจะเป็นการชำระบางส่วน',
+    intro: 'หน้านี้ใช้บันทึกการชำระเจ้าหนี้และการรับชำระลูกหนี้ หากเว้นจำนวนเงินว่างจะชำระยอดคงค้างปัจจุบันทั้งหมด หากกรอกจำนวนเงินจะเป็นการชำระบางส่วน',
     payables: 'จ่ายเงิน',
     receivables: 'รับเงิน',
     searchPayable: 'ค้นหาผู้รับเงิน',
     searchReceivable: 'ค้นหาลูกค้า',
-    choosePayable: 'เลือก Open Payable',
-    chooseReceivable: 'เลือก Open Receivable',
+    choosePayable: 'เลือกเจ้าหนี้คงค้าง',
+    chooseReceivable: 'เลือกลูกหนี้คงค้าง',
     loading: 'กำลังโหลด…',
-    outstanding: 'Outstanding THB',
-    version: 'Outstanding version',
-    sourceKind: 'Payable kind',
-    salesDate: 'Sales date',
-    amount: 'จำนวนเงิน THB (เว้นว่างได้)',
-    amountHint: 'เว้นว่าง = Outstanding ทั้งหมด ณ ตอนยืนยัน; กรอกจำนวนเต็มบวก = ชำระบางส่วน และต้องไม่เกิน Outstanding',
+    currency: 'บาท',
+    outstanding: 'ยอดคงค้าง (บาท)',
+    version: 'รุ่นยอดคงค้าง',
+    sourceKind: 'ประเภทเจ้าหนี้',
+    salesDate: 'วันที่ขาย',
+    amount: 'จำนวนเงิน (บาท, เว้นว่างได้)',
+    amountHint: 'เว้นว่างหมายถึงชำระทั้งหมด กรอกจำนวนเต็มบวกหมายถึงชำระบางส่วน และต้องไม่เกินยอดคงค้าง',
     submitPayable: 'บันทึกการจ่ายเงิน',
     submitReceivable: 'บันทึกการรับเงิน',
     submitting: 'กำลังบันทึก…',
-    queryFailed: 'โหลด Finance settlement options ไม่สำเร็จ',
+    queryFailed: 'โหลดตัวเลือกการชำระไม่สำเร็จ',
     required: 'โปรดเลือกรายการที่ชำระได้ก่อน',
-    amountInvalid: 'จำนวนเงินต้องเว้นว่าง หรือเป็นจำนวนเต็ม THB ที่มากกว่า 0',
-    exceeds: 'จำนวนเงินต้องไม่เกิน Outstanding ปัจจุบัน',
-    stale: 'Outstanding ถูกเปลี่ยนโดยการทำงานอื่น โปรดโหลดใหม่ก่อนบันทึก',
-    unavailable: 'Finance target ที่เลือกไม่มีอยู่หรือไม่สามารถชำระได้ โปรดโหลดใหม่',
-    transportBlocked: 'Company Pickup Transport settlement ยังใช้ไม่ได้ เนื่องจาก OUT-003 ยังไม่ถูกปลด',
-    idempotency: 'Idempotency-Key นี้ถูกใช้กับ request อื่นแล้ว โปรดเริ่มการบันทึกใหม่',
+    amountInvalid: 'จำนวนเงินต้องเว้นว่าง หรือเป็นจำนวนเต็มบาทที่มากกว่า 0',
+    exceeds: 'จำนวนเงินต้องไม่เกินยอดคงค้างปัจจุบัน',
+    stale: 'ยอดคงค้างถูกเปลี่ยนโดยการทำงานอื่น โปรดโหลดใหม่ก่อนบันทึก',
+    unavailable: 'รายการชำระที่เลือกไม่มีอยู่หรือไม่สามารถชำระได้ โปรดโหลดใหม่',
+    transportBlocked: 'การชำระค่าขนส่งรับสินค้าโดยบริษัทยังใช้ไม่ได้ เนื่องจาก OUT-003 ยังไม่ถูกปลด',
+    idempotency: 'รหัสการทำงานนี้ถูกใช้กับคำขออื่นแล้ว โปรดเริ่มการบันทึกใหม่',
     unexpected: 'เกิดข้อผิดพลาดที่ไม่คาดคิด',
     successPayment: 'บันทึกการจ่ายเงินแล้ว',
     successReceipt: 'บันทึกการรับเงินแล้ว',
-    transactionId: 'Transaction',
-    settledAmount: 'Amount THB',
-    remaining: 'Remaining Outstanding THB',
-    confirmedAt: 'Confirmed at',
+    transactionId: 'รายการชำระ',
+    settledAmount: 'จำนวนที่ชำระ (บาท)',
+    remaining: 'ยอดคงค้างที่เหลือ (บาท)',
+    confirmedAt: 'เวลายืนยัน',
   },
 } as const;
 
@@ -292,11 +294,11 @@ export function FinanceSettlementPage() {
                 <option value="">{activeQuery.isPending ? labels.loading : mode === 'payable' ? labels.choosePayable : labels.chooseReceivable}</option>
                 {options.map((item) => mode === 'payable' ? (
                   <option key={(item as FinancePayableSettlementOption).payableId} value={(item as FinancePayableSettlementOption).payableId}>
-                    {(item as FinancePayableSettlementOption).sourceDisplayName} · {(item as FinancePayableSettlementOption).payableKind} · {numberFormat.format(item.outstandingThb)} THB
+                    {(item as FinancePayableSettlementOption).sourceDisplayName} · {payableKindLabel((item as FinancePayableSettlementOption).payableKind, locale)} · {numberFormat.format(item.outstandingThb)} {labels.currency}
                   </option>
                 ) : (
                   <option key={(item as FinanceReceivableSettlementOption).receivableId} value={(item as FinanceReceivableSettlementOption).receivableId}>
-                    {(item as FinanceReceivableSettlementOption).salesDate} · {(item as FinanceReceivableSettlementOption).customerDisplayName} · {numberFormat.format(item.outstandingThb)} THB
+                    {(item as FinanceReceivableSettlementOption).salesDate} · {(item as FinanceReceivableSettlementOption).customerDisplayName} · {numberFormat.format(item.outstandingThb)} {labels.currency}
                   </option>
                 ))}
               </select>
@@ -319,7 +321,7 @@ export function FinanceSettlementPage() {
 
           {selectedPayable && (
             <dl>
-              <ResultRow label={labels.sourceKind} value={selectedPayable.payableKind} />
+              <ResultRow label={labels.sourceKind} value={payableKindLabel(selectedPayable.payableKind, locale)} />
               <ResultRow label={labels.outstanding} value={numberFormat.format(selectedPayable.outstandingThb)} />
               <ResultRow label={labels.version} value={String(selectedPayable.outstandingVersion)} />
             </dl>
@@ -361,6 +363,24 @@ export function FinanceSettlementPage() {
       </div>
     </section>
   );
+}
+
+function payableKindLabel(kind: string, locale: 'zh-TW' | 'th-TH'): string {
+  const zh: Record<string, string> = {
+    PROCUREMENT_SUPPLIER: '供應商採購',
+    PROCUREMENT_FARMER: '農戶採購',
+    COMPANY_PICKUP_TRANSPORT: '公司取貨運輸',
+    OUTSOURCED_VENDOR: '委外供應',
+    EMPLOYEE_DAILY_WAGE: '員工每日工資',
+  };
+  const th: Record<string, string> = {
+    PROCUREMENT_SUPPLIER: 'เจ้าหนี้จัดซื้อจากผู้จำหน่าย',
+    PROCUREMENT_FARMER: 'เจ้าหนี้จัดซื้อจากเกษตรกร',
+    COMPANY_PICKUP_TRANSPORT: 'ค่าขนส่งรับสินค้าโดยบริษัท',
+    OUTSOURCED_VENDOR: 'เจ้าหนี้งานภายนอก',
+    EMPLOYEE_DAILY_WAGE: 'ค่าแรงรายวันพนักงาน',
+  };
+  return (locale === 'zh-TW' ? zh : th)[kind] ?? kind;
 }
 
 function ResultRow({ label, value }: { label: string; value: string }) {

@@ -22,29 +22,32 @@ const copy = {
     search: '搜尋客戶名稱',
     select: '選擇待確認銷售',
     loading: '載入中…',
+    salesId: '銷售',
+    weightBased: '依重量計價',
+    unitBased: '依件數計價',
     customer: '客戶',
     date: '銷售日期',
-    rowVersion: 'Row version',
+    rowVersion: '資料版本',
     details: '銷售明細',
     quantity: '數量',
     pricing: '計價基礎',
-    weight: 'Sales weight',
+    weight: '銷售重量',
     unitPrice: '單價',
-    amount: '金額 THB',
+    amount: '金額（泰銖）',
     autoAllocation: '本階段提交空的 manual allocation override 集合，使用既有 OUTSOURCED oldest→newest、再 IN_HOUSE oldest→newest 自動分配。',
-    sales001: '此來源批次的可售庫存橫跨多個儲位。依 SALES-001 safe handling，目前必須阻擋確認；尚未建立 storage-location override contract。',
-    insufficient: '可售庫存不足，無法完成目前 Sale 的自動分配。',
-    stale: 'Sale 已被其他操作更新。請重新載入目前 DRAFT Sale 後再確認。',
-    idempotency: '此 Idempotency-Key 已被不同 request 使用。請重新開始一次確認。',
-    queryFailed: 'Sales confirmation query 失敗',
+    sales001: '此來源批次的可售庫存橫跨多個儲位。依 SALES-001，目前必須阻擋確認；尚未建立儲位指定機制。',
+    insufficient: '可售庫存不足，無法完成目前銷售的自動分配。',
+    stale: '銷售資料已被其他操作更新。請重新載入目前草稿銷售後再確認。',
+    idempotency: '此操作識別碼已被不同請求使用。請重新開始一次確認。',
+    queryFailed: '銷售確認資料查詢失敗',
     unexpected: '發生未預期錯誤。',
     submit: '確認銷售',
     submitting: '確認中…',
     success: '銷售已確認',
-    receivable: 'Receivable',
-    allocationRevision: 'Allocation Revision',
-    inventoryOperation: 'Inventory Operation',
-    noDraft: '目前沒有可確認的 DRAFT Sale。',
+    receivable: '應收款',
+    allocationRevision: '分配修訂',
+    inventoryOperation: '庫存操作',
+    noDraft: '目前沒有可確認的草稿銷售。',
   },
   'th-TH': {
     eyebrow: 'P7 · การขาย',
@@ -53,29 +56,32 @@ const copy = {
     search: 'ค้นหาชื่อลูกค้า',
     select: 'เลือกการขายที่รอยืนยัน',
     loading: 'กำลังโหลด…',
+    salesId: 'การขาย',
+    weightBased: 'คิดราคาตามน้ำหนัก',
+    unitBased: 'คิดราคาต่อหน่วย',
     customer: 'ลูกค้า',
     date: 'วันที่ขาย',
-    rowVersion: 'Row version',
+    rowVersion: 'รุ่นข้อมูล',
     details: 'รายละเอียดการขาย',
     quantity: 'ปริมาณ',
     pricing: 'เกณฑ์ราคา',
-    weight: 'Sales weight',
+    weight: 'น้ำหนักขาย',
     unitPrice: 'ราคาต่อหน่วย',
-    amount: 'จำนวนเงิน THB',
+    amount: 'จำนวนเงิน (บาท)',
     autoAllocation: 'ขั้นนี้ส่ง manual allocation override เป็นชุดว่าง และใช้ลำดับอัตโนมัติ OUTSOURCED เก่าสุด→ใหม่สุด แล้ว IN_HOUSE เก่าสุด→ใหม่สุดตาม contract เดิม',
-    sales001: 'สต็อกขายได้ของ source batch นี้อยู่หลายตำแหน่ง ตาม SALES-001 safe handling ต้องบล็อกการยืนยัน และยังไม่มี storage-location override contract',
-    insufficient: 'สต็อกขายได้ไม่เพียงพอสำหรับการจัดสรรอัตโนมัติ',
-    stale: 'Sale ถูกแก้ไขโดยการทำงานอื่น โปรดโหลด DRAFT Sale ปัจจุบันใหม่ก่อนยืนยัน',
-    idempotency: 'Idempotency-Key นี้ถูกใช้กับ request อื่น โปรดเริ่มการยืนยันใหม่',
+    sales001: 'สินค้าคงคลังที่ขายได้ของล็อตต้นทางนี้อยู่หลายตำแหน่ง ตาม SALES-001 ต้องหยุดการยืนยัน และยังไม่มีกลไกระบุตำแหน่งจัดเก็บ',
+    insufficient: 'สินค้าคงคลังที่ขายได้ไม่เพียงพอสำหรับการจัดสรรอัตโนมัติ',
+    stale: 'ข้อมูลการขายถูกแก้ไขโดยการทำงานอื่น โปรดโหลดการขายแบบร่างปัจจุบันใหม่ก่อนยืนยัน',
+    idempotency: 'รหัสการทำงานนี้ถูกใช้กับคำขออื่น โปรดเริ่มการยืนยันใหม่',
     queryFailed: 'โหลดข้อมูลยืนยันการขายไม่สำเร็จ',
     unexpected: 'เกิดข้อผิดพลาดที่ไม่คาดคิด',
     submit: 'ยืนยันการขาย',
     submitting: 'กำลังยืนยัน…',
     success: 'ยืนยันการขายแล้ว',
-    receivable: 'Receivable',
-    allocationRevision: 'Allocation Revision',
-    inventoryOperation: 'Inventory Operation',
-    noDraft: 'ไม่มี DRAFT Sale ที่พร้อมยืนยันในขณะนี้',
+    receivable: 'ลูกหนี้',
+    allocationRevision: 'รุ่นการจัดสรร',
+    inventoryOperation: 'รายการสินค้าคงคลัง',
+    noDraft: 'ไม่มีการขายแบบร่างที่พร้อมยืนยันในขณะนี้',
   },
 } as const;
 
@@ -182,7 +188,7 @@ export function SalesConfirmationPage() {
                   <div className="result-row" key={detail.id}>
                     <dt>#{detail.lineNumber} · {detail.productDisplayName}</dt>
                     <dd>
-                      {labels.quantity}: {detail.quantity} · {labels.pricing}: {detail.pricingBasis} · {labels.weight}: {detail.salesWeight ?? '—'} · {labels.unitPrice}: {detail.unitPrice} · {labels.amount}: {new Intl.NumberFormat(locale).format(detail.amountThb)}
+                      {labels.quantity}: {detail.quantity} · {labels.pricing}: {pricingBasisLabel(detail.pricingBasis, labels)} · {labels.weight}: {detail.salesWeight ?? '—'} · {labels.unitPrice}: {detail.unitPrice} · {labels.amount}: {new Intl.NumberFormat(locale).format(detail.amountThb)}
                     </dd>
                   </div>
                 ))}
@@ -201,7 +207,7 @@ export function SalesConfirmationPage() {
             <>
               <p className="eyebrow">{labels.success}</p>
               <dl>
-                <ResultRow label="Sales" value={mutation.data.salesId} />
+                <ResultRow label={labels.salesId} value={mutation.data.salesId} />
                 <ResultRow label={labels.receivable} value={mutation.data.receivableId} />
                 <ResultRow label={labels.allocationRevision} value={mutation.data.allocationRevisionId} />
                 <ResultRow label={labels.inventoryOperation} value={mutation.data.inventoryOperationId} />
@@ -215,6 +221,12 @@ export function SalesConfirmationPage() {
       </div>
     </section>
   );
+}
+
+function pricingBasisLabel(basis: string, labels: typeof copy['zh-TW'] | typeof copy['th-TH']): string {
+  if (basis === 'WEIGHT_BASED_UNIT') return labels.weightBased;
+  if (basis === 'UNIT_BASED') return labels.unitBased;
+  return basis;
 }
 
 function ResultRow({ label, value }: { label: string; value: string }) {
