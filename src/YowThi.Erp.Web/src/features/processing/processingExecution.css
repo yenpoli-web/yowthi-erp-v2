@@ -64,7 +64,7 @@
 .mode-badge {
   flex: 0 0 auto;
   padding: 0.3rem 0.52rem;
-  border: 1px solid #bfdbfe;
+  border: 1px solid #bfd9b8;
   border-radius: 999px;
   background: var(--accent-soft);
   color: var(--accent-strong);
