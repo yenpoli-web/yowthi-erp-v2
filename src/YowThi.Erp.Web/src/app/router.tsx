@@ -4,6 +4,7 @@ import { OutsourcedSupplyDetailPage } from '../features/outsourced/OutsourcedSup
 import { ProcessingExecutionPage } from '../features/processing/ProcessingExecutionPage';
 import { ProcurementEntryPage } from '../features/procurement/ProcurementEntryPage';
 import { SalesConfirmationPage } from '../features/sales/SalesConfirmationPage';
+import { SalesPackagingWorkPage } from '../features/sales-handling/SalesPackagingWorkPage';
 import { App } from './App';
 import { ModuleIndexPage, ModuleSkeletonPage } from './modules/ModulePages';
 import { skeletonModules } from './modules/moduleRegistry';
@@ -32,6 +33,10 @@ export const router = createBrowserRouter([
       {
         path: 'sales',
         element: <SalesConfirmationPage />,
+      },
+      {
+        path: 'sales-handling',
+        element: <SalesPackagingWorkPage />,
       },
       {
         path: 'modules',

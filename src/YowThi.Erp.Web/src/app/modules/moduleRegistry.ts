@@ -58,7 +58,7 @@ export const systemModules: readonly SystemModuleDefinition[] = [
     key: 'sales-handling',
     route: '/sales-handling',
     area: 'operations',
-    webState: 'skeleton',
+    webState: 'operational',
     label: { 'zh-TW': '銷售包裝作業', 'th-TH': 'งานบรรจุขาย' },
   },
   {
