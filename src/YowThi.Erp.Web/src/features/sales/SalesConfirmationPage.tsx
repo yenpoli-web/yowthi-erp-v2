@@ -150,7 +150,6 @@ export function SalesConfirmationPage() {
         <div>
           <p className="eyebrow">{labels.eyebrow}</p>
           <h1 id="sales-confirmation-title">{labels.title}</h1>
-          <p className="page-intro">{labels.intro}</p>
         </div>
         <LocaleControl />
       </header>
@@ -159,7 +158,7 @@ export function SalesConfirmationPage() {
         <div className="entry-form">
           <div className="option-picker">
             <span className="field-label">{labels.select}</span>
-            <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder={labels.search} />
+            <input value={search} onChange={(event) => setSearch(event.target.value)} />
             <select value={salesId} onChange={(event) => { setSalesId(event.target.value); mutation.reset(); submissionIdentity.current = null; }}>
               <option value="">{salesQuery.isPending ? labels.loading : labels.select}</option>
               {(salesQuery.data?.items ?? []).map((item) => (
@@ -188,7 +187,6 @@ export function SalesConfirmationPage() {
                   </div>
                 ))}
               </dl>
-              <p className="page-intro">{labels.autoAllocation}</p>
               {(problemMessage ?? queryErrorMessage) && <div className="problem-banner" role="alert">{problemMessage ?? queryErrorMessage}</div>}
               <button className="primary-action" type="button" onClick={handleConfirm} disabled={mutation.isPending || workspace.details.length === 0}>
                 {mutation.isPending ? labels.submitting : labels.submit}

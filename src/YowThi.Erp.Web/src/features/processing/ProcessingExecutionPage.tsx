@@ -633,7 +633,6 @@ export function ProcessingExecutionPage() {
         <div>
           <p className="eyebrow">{labels.eyebrow}</p>
           <h1 id="processing-execution-title">{labels.title}</h1>
-          <p className="page-intro">{labels.intro}</p>
         </div>
 
         <label className="locale-control">
@@ -658,7 +657,6 @@ export function ProcessingExecutionPage() {
               <input
                 value={employeeSearch}
                 onChange={(event) => setEmployeeSearch(event.target.value)}
-                placeholder={labels.employeeSearch}
                 aria-label={labels.employeeSearch}
               />
               <select
@@ -682,7 +680,6 @@ export function ProcessingExecutionPage() {
               <input
                 value={batchSearch}
                 onChange={(event) => setBatchSearch(event.target.value)}
-                placeholder={labels.batchSearch}
                 aria-label={labels.batchSearch}
               />
               <select value={selectedBatch?.id ?? ''} onChange={(event) => handleBatchChange(event.target.value)} required>
@@ -700,7 +697,6 @@ export function ProcessingExecutionPage() {
               <input
                 value={moduleSearch}
                 onChange={(event) => setModuleSearch(event.target.value)}
-                placeholder={labels.moduleSearch}
                 aria-label={labels.moduleSearch}
                 disabled={selectedBatch === null}
               />
@@ -744,7 +740,6 @@ export function ProcessingExecutionPage() {
                     <input
                       value={supplierSearch}
                       onChange={(event) => setSupplierSearch(event.target.value)}
-                      placeholder={labels.supplierSearch}
                       aria-label={labels.supplierSearch}
                     />
                     <select
@@ -802,7 +797,6 @@ export function ProcessingExecutionPage() {
               <input
                 value={inputLocationSearch}
                 onChange={(event) => setInputLocationSearch(event.target.value)}
-                placeholder={labels.inputLocationSearch}
                 aria-label={labels.inputLocationSearch}
                 disabled={selectedModule === null}
               />
@@ -847,12 +841,10 @@ export function ProcessingExecutionPage() {
                 <div className="processing-section-heading">
                   <div>
                     <span className="field-label">{labels.outputs}</span>
-                    <small>{labels.outputIntro}</small>
                   </div>
                   <input
                     value={outputLocationSearch}
                     onChange={(event) => setOutputLocationSearch(event.target.value)}
-                    placeholder={labels.outputLocationSearch}
                     aria-label={labels.outputLocationSearch}
                   />
                 </div>

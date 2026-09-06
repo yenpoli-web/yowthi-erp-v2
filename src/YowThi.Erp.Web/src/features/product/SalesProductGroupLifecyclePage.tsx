@@ -129,7 +129,6 @@ export function SalesProductGroupLifecyclePage() {
         <div>
           <p className="eyebrow">{labels.eyebrow}</p>
           <h1 id="sales-product-group-lifecycle-title">{labels.title}</h1>
-          <p className="page-intro">{labels.intro}</p>
         </div>
         <LocaleControl />
       </header>
@@ -145,7 +144,6 @@ export function SalesProductGroupLifecyclePage() {
                   setSearch(event.target.value);
                   resetSelection();
                 }}
-                placeholder={labels.search}
               />
               <select
                 value={selectedId}
@@ -164,7 +162,6 @@ export function SalesProductGroupLifecyclePage() {
             </div>
           </div>
 
-          <p className="page-intro">{labels.boundaryHint}</p>
 
           {selected && (
             <dl>

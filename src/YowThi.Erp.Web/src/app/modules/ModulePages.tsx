@@ -59,7 +59,6 @@ export function ModuleIndexPage() {
         <div>
           <p className="eyebrow">{copy.eyebrow}</p>
           <h1>{copy.title}</h1>
-          <p className="page-intro">{copy.intro}</p>
         </div>
         <LocaleControl />
       </header>
@@ -81,7 +80,6 @@ export function ModuleSkeletonPage({ moduleKey }: { moduleKey: ModuleKey }) {
         <div>
           <p className="eyebrow">{copy.eyebrow}</p>
           <h1>{module.label[locale]}</h1>
-          <p className="page-intro">{copy.skeletonIntro}</p>
         </div>
         <LocaleControl />
       </header>

@@ -213,7 +213,6 @@ export function SalesPackagingWorkPage() {
         <div>
           <p className="eyebrow">{labels.eyebrow}</p>
           <h1 id="sales-packaging-work-title">{labels.title}</h1>
-          <p className="page-intro">{labels.intro}</p>
         </div>
         <LocaleControl />
       </header>
@@ -226,7 +225,6 @@ export function SalesPackagingWorkPage() {
               <input
                 value={saleSearch}
                 onChange={(event) => setSaleSearch(event.target.value)}
-                placeholder={labels.saleSearch}
               />
               <select
                 value={salesId}
@@ -261,7 +259,6 @@ export function SalesPackagingWorkPage() {
               <input
                 value={employeeSearch}
                 onChange={(event) => setEmployeeSearch(event.target.value)}
-                placeholder={labels.employeeSearch}
               />
               <select
                 value={employeeId}
@@ -284,7 +281,6 @@ export function SalesPackagingWorkPage() {
               <input
                 value={itemSearch}
                 onChange={(event) => setItemSearch(event.target.value)}
-                placeholder={labels.itemSearch}
               />
               <select
                 value={itemId}
@@ -303,7 +299,6 @@ export function SalesPackagingWorkPage() {
             </div>
           </div>
 
-          <p className="page-intro">{labels.wageHint}</p>
 
           {(localError ?? problemMessage ?? optionErrorMessage) && (
             <div className="problem-banner" role="alert">

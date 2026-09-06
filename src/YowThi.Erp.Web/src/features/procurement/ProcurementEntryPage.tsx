@@ -332,7 +332,6 @@ export function ProcurementEntryPage() {
         <div>
           <p className="eyebrow">{labels.eyebrow}</p>
           <h1 id="procurement-entry-title">{labels.title}</h1>
-          <p className="page-intro">{labels.intro}</p>
         </div>
 
         <label className="locale-control">
@@ -369,7 +368,6 @@ export function ProcurementEntryPage() {
               <input
                 value={productSearch}
                 onChange={(event) => setProductSearch(event.target.value)}
-                placeholder={labels.productSearch}
                 aria-label={labels.productSearch}
               />
               <select
@@ -391,7 +389,6 @@ export function ProcurementEntryPage() {
               <input
                 value={sourceSearch}
                 onChange={(event) => setSourceSearch(event.target.value)}
-                placeholder={labels.sourceSearch}
                 aria-label={labels.sourceSearch}
               />
               <select
@@ -428,7 +425,6 @@ export function ProcurementEntryPage() {
               <input
                 value={locationSearch}
                 onChange={(event) => setLocationSearch(event.target.value)}
-                placeholder={labels.locationSearch}
                 aria-label={labels.locationSearch}
                 disabled={selectedProduct === null}
               />

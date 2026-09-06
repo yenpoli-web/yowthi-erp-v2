@@ -317,7 +317,6 @@ export function OutsourcedSupplyDetailPage() {
         <div>
           <p className="eyebrow">{labels.eyebrow}</p>
           <h1 id="outsourced-supply-detail-title">{labels.title}</h1>
-          <p className="page-intro">{labels.intro}</p>
         </div>
 
         <label className="locale-control">
@@ -342,7 +341,6 @@ export function OutsourcedSupplyDetailPage() {
               <input
                 value={vendorSearch}
                 onChange={(event) => setVendorSearch(event.target.value)}
-                placeholder={labels.vendorSearch}
                 aria-label={labels.vendorSearch}
               />
               <select
@@ -364,7 +362,6 @@ export function OutsourcedSupplyDetailPage() {
               <input
                 value={productSearch}
                 onChange={(event) => setProductSearch(event.target.value)}
-                placeholder={labels.productSearch}
                 aria-label={labels.productSearch}
               />
               <select
@@ -396,7 +393,6 @@ export function OutsourcedSupplyDetailPage() {
               <input
                 value={locationSearch}
                 onChange={(event) => setLocationSearch(event.target.value)}
-                placeholder={labels.locationSearch}
                 aria-label={labels.locationSearch}
                 disabled={selectedProduct === null}
               />

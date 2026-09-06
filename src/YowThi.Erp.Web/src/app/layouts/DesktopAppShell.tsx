@@ -41,10 +41,6 @@ export function DesktopAppShell() {
           ))}
         </nav>
 
-        <div className="sidebar-status">
-          <span className="status-indicator" aria-hidden="true" />
-          <span>{shellCopy.systemReady}</span>
-        </div>
       </aside>
 
       <div className="desktop-workspace">

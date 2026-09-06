@@ -141,7 +141,6 @@ export function HardDeletePage() {
         <div>
           <p className="eyebrow">{labels.eyebrow}</p>
           <h1 id="hard-delete-title">{labels.title}</h1>
-          <p className="page-intro">{labels.intro}</p>
         </div>
         <LocaleControl />
       </header>
@@ -169,7 +168,6 @@ export function HardDeletePage() {
                   setSearch(event.target.value);
                   resetSelection();
                 }}
-                placeholder={labels.search}
               />
               <select
                 value={selectedId}
@@ -189,7 +187,6 @@ export function HardDeletePage() {
             </div>
           </div>
 
-          <p className="page-intro">{labels.boundaryHint}</p>
 
           {selected && (
             <dl>

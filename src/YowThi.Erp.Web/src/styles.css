@@ -600,14 +600,9 @@ a { color: var(--accent-strong); }
   line-height: 1.45;
 }
 
-.default-hint {
-  color: #31733a !important;
-  font-weight: 650;
-}
-
+.default-hint,
 .required-hint {
-  color: var(--warning) !important;
-  font-weight: 700;
+  display: none !important;
 }
 
 .full-width { grid-column: 1 / -1; }

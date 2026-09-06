@@ -135,7 +135,6 @@ export function InfrastructureLifecyclePage() {
         <div>
           <p className="eyebrow">{labels.eyebrow}</p>
           <h1 id="infrastructure-lifecycle-title">{labels.title}</h1>
-          <p className="page-intro">{labels.intro}</p>
         </div>
         <LocaleControl />
       </header>
@@ -168,7 +167,6 @@ export function InfrastructureLifecyclePage() {
                   setSearch(event.target.value);
                   resetSelection();
                 }}
-                placeholder={labels.search}
               />
               <select
                 value={selectedId}
@@ -187,7 +185,6 @@ export function InfrastructureLifecyclePage() {
             </div>
           </div>
 
-          <p className="page-intro">{labels.boundaryHint}</p>
 
           {selected && (
             <dl>

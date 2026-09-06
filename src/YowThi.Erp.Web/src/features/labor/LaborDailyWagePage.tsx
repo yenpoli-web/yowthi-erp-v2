@@ -198,7 +198,6 @@ export function LaborDailyWagePage() {
         <div>
           <p className="eyebrow">{labels.eyebrow}</p>
           <h1 id="labor-daily-wage-title">{labels.title}</h1>
-          <p className="page-intro">{labels.intro}</p>
         </div>
         <LocaleControl />
       </header>
@@ -208,7 +207,7 @@ export function LaborDailyWagePage() {
           <div className="field-grid">
             <div className="option-picker full-width">
               <span className="field-label">{labels.employee}</span>
-              <input value={employeeSearch} onChange={(event) => setEmployeeSearch(event.target.value)} placeholder={labels.employeeSearch} />
+              <input value={employeeSearch} onChange={(event) => setEmployeeSearch(event.target.value)} />
               <select value={employeeId} onChange={(event) => { setEmployeeId(event.target.value); setRateInputs({}); submissionIdentity.current = null; mutation.reset(); setLocalError(null); }}>
                 <option value="">{employeeQuery.isPending ? labels.loading : labels.employeeSelect}</option>
                 {(employeeQuery.data?.items ?? []).map((item) => <option key={item.id} value={item.id}>{item.displayName}</option>)}

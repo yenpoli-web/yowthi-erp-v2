@@ -201,7 +201,6 @@ export function InventoryOperationsPage() {
         <div>
           <p className="eyebrow">{labels.eyebrow}</p>
           <h1 id="inventory-operations-title">{labels.title}</h1>
-          <p className="page-intro">{labels.intro}</p>
         </div>
         <LocaleControl />
       </header>
@@ -214,7 +213,7 @@ export function InventoryOperationsPage() {
 
             <div className="option-picker full-width">
               <span className="field-label">{mode === 'transfer' ? labels.chooseSource : labels.chooseIdentity}</span>
-              <input value={search} onChange={(event) => { setSearch(event.target.value); reset(); }} placeholder={mode === 'transfer' ? labels.searchSource : labels.searchIdentity} />
+              <input value={search} onChange={(event) => { setSearch(event.target.value); reset(); }} />
               <select value={selectedKey} onChange={(event) => { setSelectedKey(event.target.value); setLocationId(''); setQuantityText(''); setReasonText(''); submissionIdentity.current = null; mutation.reset(); }}>
                 <option value="">{mainQuery.isPending ? labels.loading : mode === 'transfer' ? labels.chooseSource : labels.chooseIdentity}</option>
                 {mode === 'transfer'
@@ -236,10 +235,9 @@ export function InventoryOperationsPage() {
               <input type="number" step="any" inputMode="decimal" value={quantityText} onChange={(event) => { setQuantityText(event.target.value); submissionIdentity.current = null; mutation.reset(); }} />
             </label>
 
-            {mode === 'adjustment' && <label className="full-width"><span>{labels.reason}</span><textarea value={reasonText} onChange={(event) => { setReasonText(event.target.value); submissionIdentity.current = null; mutation.reset(); }} placeholder={labels.reasonPlaceholder} /></label>}
+            {mode === 'adjustment' && <label className="full-width"><span>{labels.reason}</span><textarea value={reasonText} onChange={(event) => { setReasonText(event.target.value); submissionIdentity.current = null; mutation.reset(); }} /></label>}
           </div>
 
-          {mode === 'adjustment' && <p className="page-intro">{labels.deltaHint}</p>}
           {identity && <dl>
             <ResultRow label={labels.batchDate} value={identity.batchDate} />
             <ResultRow label={labels.origin} value={identity.origin} />

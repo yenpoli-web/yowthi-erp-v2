@@ -106,7 +106,6 @@ export function PartyLifecyclePage() {
         <div>
           <p className="eyebrow">{labels.eyebrow}</p>
           <h1 id="party-lifecycle-title">{labels.title}</h1>
-          <p className="page-intro">{labels.intro}</p>
         </div>
         <LocaleControl />
       </header>
@@ -134,7 +133,6 @@ export function PartyLifecyclePage() {
                   setSearch(event.target.value);
                   resetSelection();
                 }}
-                placeholder={labels.search}
               />
               <select
                 value={selectedId}
@@ -153,7 +151,6 @@ export function PartyLifecyclePage() {
             </div>
           </div>
 
-          <p className="page-intro">{labels.lifecycleHint}</p>
 
           {selected && (
             <dl>

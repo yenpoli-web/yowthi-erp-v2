@@ -265,7 +265,6 @@ export function FinanceSettlementPage() {
         <div>
           <p className="eyebrow">{labels.eyebrow}</p>
           <h1 id="finance-settlement-title">{labels.title}</h1>
-          <p className="page-intro">{labels.intro}</p>
         </div>
         <LocaleControl />
       </header>
@@ -285,7 +284,6 @@ export function FinanceSettlementPage() {
               <input
                 value={search}
                 onChange={(event) => { setSearch(event.target.value); resetSelection(); }}
-                placeholder={mode === 'payable' ? labels.searchPayable : labels.searchReceivable}
               />
               <select
                 value={selectedId}
@@ -318,7 +316,6 @@ export function FinanceSettlementPage() {
             </label>
           </div>
 
-          <p className="page-intro">{labels.amountHint}</p>
 
           {selectedPayable && (
             <dl>
