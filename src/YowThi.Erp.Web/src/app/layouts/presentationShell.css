@@ -397,22 +397,25 @@
 .nature-mobile-app-shell {
   width: min(calc(100% - 1rem), 44rem);
   padding-top: 0.8rem;
-  padding-bottom: calc(5.15rem + env(safe-area-inset-bottom));
+  padding-bottom: calc(4.9rem + env(safe-area-inset-bottom));
 }
 
 .nature-mobile-bottom-navigation {
   position: fixed;
-  left: 50%;
-  bottom: max(0.35rem, env(safe-area-inset-bottom));
+  left: 0;
+  right: 0;
+  bottom: 0;
   z-index: 50;
-  width: min(calc(100% - 0.8rem), 30rem);
-  transform: translateX(-50%);
+  width: 100%;
+  max-width: none;
+  transform: none;
   gap: 0.22rem;
-  padding: 0.28rem;
-  border-color: #d5e5d6;
-  border-radius: 1rem;
+  padding: 0.28rem 0.32rem calc(0.28rem + env(safe-area-inset-bottom));
+  border: 0;
+  border-top: 1px solid #d5e5d6;
+  border-radius: 0;
   background: rgba(255, 254, 251, 0.98);
-  box-shadow: 0 12px 30px rgba(28, 61, 43, 0.13);
+  box-shadow: 0 -8px 24px rgba(28, 61, 43, 0.1);
 }
 
 .nature-mobile-bottom-navigation a {

@@ -216,7 +216,7 @@ async function main() {
     console.log('- viewport overflow: none');
     console.log('- zh-TW / th-TH static interface mixing: none');
     console.log('- mobile module menu bounds: accepted');
-    console.log('- mobile fixed bottom navigation: accepted');
+    console.log('- mobile docked bottom navigation: accepted');
   } catch (error) {
     fail(error instanceof Error ? error.message : String(error));
   } finally {
@@ -310,6 +310,9 @@ function assertMetrics(acceptanceCase, metrics, locale) {
     }
     if (metrics.mobileBottomPosition !== 'fixed') {
       throw new Error(`${name}: mobile bottom navigation position is ${metrics.mobileBottomPosition ?? 'unset'}, expected fixed.`);
+    }
+    if (Math.abs(metrics.mobileBottomNavigation.left) > 1 || Math.abs(metrics.mobileBottomNavigation.right - width) > 1 || Math.abs(metrics.mobileBottomNavigation.bottom - height) > 1) {
+      throw new Error(`${name}: mobile bottom navigation must be docked edge-to-edge at the viewport bottom: ${JSON.stringify(metrics.mobileBottomNavigation)}.`);
     }
     if (metrics.mobileBottomItemCount !== 4) {
       throw new Error(`${name}: mobile bottom navigation must expose exactly 4 entries; found ${metrics.mobileBottomItemCount}.`);
