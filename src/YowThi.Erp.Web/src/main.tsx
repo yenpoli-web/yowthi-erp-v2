@@ -7,6 +7,7 @@ import { LocaleProvider } from './app/i18n/locale';
 import { queryClient } from './app/queryClient';
 import { router } from './app/router';
 import './styles.css';
+import './app/layouts/presentationShell.css';
 import './features/processing/processingExecution.css';
 
 const rootElement = document.getElementById('root');

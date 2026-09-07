@@ -23,7 +23,7 @@ export const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <Navigate to="/procurement/entries/new" replace />,
+        element: <Navigate to="/modules" replace />,
       },
       {
         path: 'procurement/entries/new',
