@@ -151,11 +151,6 @@ export function SupplierMasterPrototypePage() {
       bankAccount: draft.bankAccount.trim(),
       active: draft.active,
     };
-    if (!normalized.nameZhTw && !normalized.nameThTh) {
-      setFormError(labels.nameRequired);
-      return;
-    }
-
     if (mode === 'create') {
       const created = createPrototypeSupplier(normalized);
       setSelectedId(created.id);
