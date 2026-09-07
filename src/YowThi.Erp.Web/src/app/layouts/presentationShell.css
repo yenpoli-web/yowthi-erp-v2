@@ -229,11 +229,20 @@
 }
 
 /* Mobile Nature Green composition */
+.mobile-application-frame {
+  padding-top: calc(6.75rem + env(safe-area-inset-top));
+}
+
 .nature-mobile-shell-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 60;
   gap: 0;
-  padding: 0;
+  padding: env(safe-area-inset-top) 0 0;
   border-bottom: 1px solid #dce7dd;
-  background: #fbfdfb;
+  background: #0b7b5f;
   box-shadow: 0 3px 12px rgba(31, 80, 56, 0.05);
   backdrop-filter: none;
 }
@@ -317,10 +326,10 @@
 }
 
 .nature-mobile-module-menu {
-  top: 7.05rem;
+  top: calc(7.05rem + env(safe-area-inset-top));
   left: 0.55rem;
   right: 0.55rem;
-  max-height: calc(100vh - 8.25rem);
+  max-height: calc(100dvh - 8.25rem - env(safe-area-inset-top) - env(safe-area-inset-bottom));
   gap: 0.85rem;
   padding: 0.75rem;
   border-color: #d5e5d6;

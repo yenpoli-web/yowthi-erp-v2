@@ -154,6 +154,8 @@ async function main() {
     return;
   }
 
+  assertPwaShellMetadata();
+
   const previewPort = await reservePort();
   const cdpPort = await reservePort();
   const baseUrl = `http://127.0.0.1:${previewPort}`;
@@ -219,7 +221,9 @@ async function main() {
     console.log('- viewport overflow: none');
     console.log('- zh-TW / th-TH static interface mixing: none');
     console.log('- mobile module menu bounds: accepted');
+    console.log('- mobile fixed top shell: accepted');
     console.log('- mobile docked bottom navigation: accepted');
+    console.log('- PWA standalone metadata and root scope: accepted');
   } catch (error) {
     fail(error instanceof Error ? error.message : String(error));
   } finally {
@@ -382,6 +386,12 @@ function assertMetrics(acceptanceCase, metrics, locale) {
     }
   }
   if (experience === 'mobile') {
+    if (!metrics.mobileHeader || metrics.mobileHeader.left < -1 || metrics.mobileHeader.right > width + 1) {
+      throw new Error(`${name}: mobile header escapes viewport: ${JSON.stringify(metrics.mobileHeader)}.`);
+    }
+    if (metrics.mobileHeaderPosition !== 'fixed' || Math.abs(metrics.mobileHeader.top) > 1) {
+      throw new Error(`${name}: mobile header must remain fixed at viewport top; position=${metrics.mobileHeaderPosition ?? 'unset'}, rect=${JSON.stringify(metrics.mobileHeader)}.`);
+    }
     if (!metrics.mobileBottomNavigation || metrics.mobileBottomNavigation.left < -1 || metrics.mobileBottomNavigation.right > width + 1 || metrics.mobileBottomNavigation.bottom > height + 1) {
       throw new Error(`${name}: mobile bottom navigation escapes viewport: ${JSON.stringify(metrics.mobileBottomNavigation)}.`);
     }
@@ -435,6 +445,7 @@ async function inspectPage(client) {
     const sidebar = document.querySelector('.desktop-sidebar');
     const brand = document.querySelector('.desktop-sidebar-brand');
     const tabletNavigation = document.querySelector('.nature-tablet-navigation');
+    const mobileHeader = document.querySelector('.nature-mobile-shell-header');
     const mobileBottomNavigation = document.querySelector('.nature-mobile-bottom-navigation');
     return {
       experience: shell?.getAttribute('data-ui-experience') ?? null,
@@ -450,6 +461,8 @@ async function inspectPage(client) {
       desktopSidebarBackground: sidebar ? getComputedStyle(sidebar).backgroundColor : null,
       desktopBrandBackground: brand ? getComputedStyle(brand).backgroundColor : null,
       tabletNavigation: rect(tabletNavigation),
+      mobileHeader: rect(mobileHeader),
+      mobileHeaderPosition: mobileHeader ? getComputedStyle(mobileHeader).position : null,
       mobileBottomNavigation: rect(mobileBottomNavigation),
       mobileBottomPosition: mobileBottomNavigation ? getComputedStyle(mobileBottomNavigation).position : null,
       mobileBottomItemCount: mobileBottomNavigation ? mobileBottomNavigation.querySelectorAll(':scope > a').length : 0,
@@ -520,6 +533,40 @@ async function evaluate(client, expression) {
     throw new Error(`Browser evaluation failed: ${description}`);
   }
   return response.result?.value;
+}
+
+function assertPwaShellMetadata() {
+  const distRoot = path.join(webRoot, 'dist');
+  const indexPath = path.join(distRoot, 'index.html');
+  const manifestPath = path.join(distRoot, 'manifest.webmanifest');
+  const indexHtml = fs.readFileSync(indexPath, 'utf8');
+
+  if (!indexHtml.includes('name="apple-mobile-web-app-capable" content="yes"')) {
+    throw new Error('PWA acceptance: apple-mobile-web-app-capable=yes is missing.');
+  }
+  if (!indexHtml.includes('name="mobile-web-app-capable" content="yes"')) {
+    throw new Error('PWA acceptance: mobile-web-app-capable=yes is missing.');
+  }
+  if (!indexHtml.includes('viewport-fit=cover')) {
+    throw new Error('PWA acceptance: viewport-fit=cover is missing.');
+  }
+  if (!indexHtml.includes('rel="manifest" href="/manifest.webmanifest"')) {
+    throw new Error('PWA acceptance: manifest link is missing.');
+  }
+  if (!fs.existsSync(manifestPath)) {
+    throw new Error('PWA acceptance: dist/manifest.webmanifest is missing.');
+  }
+
+  const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+  if (manifest.display !== 'standalone') {
+    throw new Error(`PWA acceptance: display is ${manifest.display ?? 'unset'}, expected standalone.`);
+  }
+  if (manifest.scope !== '/') {
+    throw new Error(`PWA acceptance: scope is ${manifest.scope ?? 'unset'}, expected root scope.`);
+  }
+  if (manifest.start_url !== '/modules') {
+    throw new Error(`PWA acceptance: start_url is ${manifest.start_url ?? 'unset'}, expected /modules.`);
+  }
 }
 
 async function reservePort() {
