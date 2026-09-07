@@ -1,0 +1,214 @@
+.home-page {
+  display: grid;
+  gap: 1rem;
+}
+
+.home-hero {
+  position: relative;
+  min-height: 13rem;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  padding: clamp(1.35rem, 3vw, 2.3rem);
+  border: 1px solid #cfe1cf;
+  border-radius: 1rem;
+  background: linear-gradient(115deg, #f1f8ef 0%, #e3f1df 48%, #c7e0c2 100%);
+  box-shadow: var(--shadow-sm);
+}
+
+.home-hero-copy {
+  position: relative;
+  z-index: 2;
+  max-width: 38rem;
+}
+
+.home-hero-kicker {
+  color: #28733f;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.home-hero h1 {
+  margin: 0.45rem 0 0;
+  color: #173b29;
+  font-size: clamp(1.85rem, 4vw, 3rem);
+  line-height: 1.08;
+  letter-spacing: -0.035em;
+}
+
+.home-hero p {
+  max-width: 34rem;
+  margin: 0.75rem 0 0;
+  color: #4a6654;
+  font-size: clamp(0.92rem, 1.5vw, 1.05rem);
+}
+
+.home-hero-landscape {
+  position: absolute;
+  inset: 0 0 0 48%;
+  overflow: hidden;
+}
+
+.home-sun {
+  position: absolute;
+  top: 1.25rem;
+  right: 13%;
+  width: 4.5rem;
+  height: 4.5rem;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.45);
+  box-shadow: 0 0 0 1.2rem rgba(255, 255, 255, 0.12);
+}
+
+.home-field {
+  position: absolute;
+  left: -8%;
+  right: -10%;
+  bottom: -4rem;
+  height: 10rem;
+  transform: rotate(-7deg);
+  border-radius: 50% 50% 0 0;
+}
+
+.home-field-one {
+  bottom: -2.6rem;
+  background: repeating-linear-gradient(90deg, rgba(57, 123, 70, 0.3) 0 0.7rem, rgba(104, 156, 91, 0.1) 0.7rem 1.4rem);
+}
+
+.home-field-two {
+  bottom: -5.2rem;
+  left: 8%;
+  background: repeating-linear-gradient(90deg, rgba(36, 116, 80, 0.22) 0 0.8rem, rgba(255, 255, 255, 0.12) 0.8rem 1.6rem);
+}
+
+.home-field-three {
+  bottom: -7.1rem;
+  left: 18%;
+  background: repeating-linear-gradient(90deg, rgba(31, 104, 58, 0.24) 0 0.65rem, rgba(154, 190, 131, 0.13) 0.65rem 1.3rem);
+}
+
+.home-module-section {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.home-section-header h2 {
+  margin: 0;
+  color: #203b2b;
+  font-size: 1rem;
+  font-weight: 760;
+}
+
+.home-module-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.home-module-card {
+  min-width: 0;
+  min-height: 5.25rem;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem;
+  border: 1px solid #d9e5d6;
+  border-radius: 0.9rem;
+  background: #fffef9;
+  color: #244334;
+  text-decoration: none;
+  box-shadow: var(--shadow-sm);
+  transition: border-color 120ms ease, background 120ms ease, transform 120ms ease, box-shadow 120ms ease;
+}
+
+.home-module-card:hover {
+  border-color: #b9d3b4;
+  background: #fbfef9;
+  color: #176242;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(40, 76, 50, 0.07);
+}
+
+.home-module-icon-wrap {
+  width: 2.65rem;
+  height: 2.65rem;
+  display: grid;
+  place-items: center;
+  border-radius: 0.78rem;
+  background: #edf7eb;
+  color: #2d7b48;
+}
+
+.home-module-icon {
+  width: 1.35rem;
+  height: 1.35rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.home-module-card strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: inherit;
+  font-size: 0.88rem;
+  font-weight: 740;
+  white-space: nowrap;
+}
+
+.home-module-arrow {
+  color: #7a9982;
+  font-size: 1.05rem;
+  line-height: 1;
+}
+
+@media (max-width: 1100px) {
+  .home-module-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 820px) {
+  .home-hero {
+    min-height: 11.5rem;
+  }
+
+  .home-hero-landscape {
+    inset: 0 0 0 58%;
+    opacity: 0.72;
+  }
+
+  .home-module-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
+  .home-hero {
+    min-height: 12.5rem;
+    padding: 1.2rem;
+  }
+
+  .home-hero-copy {
+    max-width: 82%;
+  }
+
+  .home-hero-landscape {
+    inset: 0 0 0 62%;
+    opacity: 0.58;
+  }
+
+  .home-module-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .home-module-card {
+    min-height: 4.8rem;
+  }
+}

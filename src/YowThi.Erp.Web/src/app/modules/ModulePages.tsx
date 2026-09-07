@@ -2,6 +2,7 @@ import { Link } from 'react-router';
 
 import { withDeviceExperienceOverride } from '../device/deviceExperience';
 import { useOperationalLocale, type OperationalLocale } from '../i18n/locale';
+import { ModuleIcon } from './ModuleIcon';
 import {
   getSystemModule,
   systemModules,
@@ -10,66 +11,81 @@ import {
   type SystemModuleDefinition,
 } from './moduleRegistry';
 
-const modulePageCopy: Record<
+const homePageCopy: Record<
+  OperationalLocale,
+  {
+    welcome: string;
+    subtitle: string;
+    operations: string;
+    controls: string;
+    openModule: string;
+  }
+> = {
+  'zh-TW': {
+    welcome: '歡迎使用 YowThi ERP V2',
+    subtitle: '日常作業與資料控制集中在同一個工作台。',
+    operations: '日常作業',
+    controls: '資料與控制',
+    openModule: '開啟模組',
+  },
+  'th-TH': {
+    welcome: 'ยินดีต้อนรับสู่ YowThi ERP V2',
+    subtitle: 'รวมงานประจำวันและการควบคุมข้อมูลไว้ในพื้นที่ทำงานเดียว',
+    operations: 'งานประจำวัน',
+    controls: 'ข้อมูลและการควบคุม',
+    openModule: 'เปิดโมดูล',
+  },
+};
+
+const skeletonPageCopy: Record<
   OperationalLocale,
   {
     eyebrow: string;
-    title: string;
-    intro: string;
-    operations: string;
-    controls: string;
-    operational: string;
     skeleton: string;
-    skeletonIntro: string;
     backToModules: string;
   }
 > = {
   'zh-TW': {
     eyebrow: 'ERP V2',
-    title: '系統模組',
-    intro: '12 個 ERP 模組已全部接入正式操作畫面。本頁是 Desktop、Tablet、Mobile 共用的模組索引；各模組仍使用同一套已驗證的 command、query、權限與 Business Rule 邊界。',
-    operations: '日常作業',
-    controls: '資料與控制',
-    operational: '可使用',
     skeleton: '尚未接入',
-    skeletonIntro: '此模組目前尚未接入操作畫面；若未來重新出現 skeleton 狀態，仍必須依正式 command/query contract 實作，不得在 presentation layer 新增 Business Rule。',
-    backToModules: '返回系統模組',
+    backToModules: '返回首頁',
   },
   'th-TH': {
     eyebrow: 'ERP V2',
-    title: 'โมดูลระบบ',
-    intro: 'โมดูล ERP ทั้ง 12 โมดูลมีหน้าปฏิบัติงานแล้ว หน้านี้เป็นดัชนีโมดูลร่วมสำหรับ Desktop, Tablet และ Mobile โดยทุกโมดูลยังใช้ command, query, สิทธิ์ และขอบเขต Business Rule ชุดเดียวกันที่ผ่านการตรวจสอบแล้ว',
-    operations: 'งานประจำวัน',
-    controls: 'ข้อมูลและการควบคุม',
-    operational: 'พร้อมใช้งาน',
     skeleton: 'ยังไม่เชื่อมต่อ',
-    skeletonIntro: 'โมดูลนี้ยังไม่มีหน้าปฏิบัติงาน หากในอนาคตมีสถานะ skeleton อีก ต้องเชื่อมต่อตาม command/query contract ที่ยืนยันแล้ว และห้ามสร้าง Business Rule ใหม่ใน presentation layer',
-    backToModules: 'กลับไปโมดูลระบบ',
+    backToModules: 'กลับหน้าแรก',
   },
 };
 
 export function ModuleIndexPage() {
   const { locale } = useOperationalLocale();
-  const copy = modulePageCopy[locale];
+  const copy = homePageCopy[locale];
 
   return (
-    <section className="module-page">
-      <header className="page-header">
-        <div>
-          <p className="eyebrow">{copy.eyebrow}</p>
-          <h1>{copy.title}</h1>
+    <section className="home-page">
+      <section className="home-hero" aria-labelledby="home-welcome-title">
+        <div className="home-hero-copy">
+          <span className="home-hero-kicker">YowThi ERP V2</span>
+          <h1 id="home-welcome-title">{copy.welcome}</h1>
+          <p>{copy.subtitle}</p>
         </div>
-      </header>
+        <div className="home-hero-landscape" aria-hidden="true">
+          <span className="home-sun" />
+          <span className="home-field home-field-one" />
+          <span className="home-field home-field-two" />
+          <span className="home-field home-field-three" />
+        </div>
+      </section>
 
-      <ModuleAreaSection area="operations" title={copy.operations} locale={locale} />
-      <ModuleAreaSection area="controls" title={copy.controls} locale={locale} />
+      <HomeModuleSection area="operations" title={copy.operations} locale={locale} />
+      <HomeModuleSection area="controls" title={copy.controls} locale={locale} />
     </section>
   );
 }
 
 export function ModuleSkeletonPage({ moduleKey }: { moduleKey: ModuleKey }) {
   const { locale } = useOperationalLocale();
-  const copy = modulePageCopy[locale];
+  const copy = skeletonPageCopy[locale];
   const module = getSystemModule(moduleKey);
 
   return (
@@ -83,14 +99,13 @@ export function ModuleSkeletonPage({ moduleKey }: { moduleKey: ModuleKey }) {
 
       <div className="entry-form">
         <p className="eyebrow">{copy.skeleton}</p>
-        <p>{module.route}</p>
         <Link to={withDeviceExperienceOverride('/modules')}>{copy.backToModules}</Link>
       </div>
     </section>
   );
 }
 
-function ModuleAreaSection({
+function HomeModuleSection({
   area,
   title,
   locale,
@@ -99,34 +114,43 @@ function ModuleAreaSection({
   title: string;
   locale: OperationalLocale;
 }) {
-  const copy = modulePageCopy[locale];
+  const copy = homePageCopy[locale];
   const modules = systemModules.filter((module) => module.area === area);
 
   return (
-    <section className="entry-form module-area-card" aria-labelledby={`module-area-${area}`}>
-      <h2 id={`module-area-${area}`}>{title}</h2>
-      <ul className="module-list">
+    <section className="home-module-section" aria-labelledby={`home-module-area-${area}`}>
+      <header className="home-section-header">
+        <h2 id={`home-module-area-${area}`}>{title}</h2>
+      </header>
+      <div className="home-module-grid">
         {modules.map((module) => (
-          <ModuleListItem key={module.key} module={module} locale={locale} copy={copy} />
+          <HomeModuleCard key={module.key} module={module} locale={locale} openModule={copy.openModule} />
         ))}
-      </ul>
+      </div>
     </section>
   );
 }
 
-function ModuleListItem({
+function HomeModuleCard({
   module,
   locale,
-  copy,
+  openModule,
 }: {
   module: SystemModuleDefinition;
   locale: OperationalLocale;
-  copy: (typeof modulePageCopy)[OperationalLocale];
+  openModule: string;
 }) {
   return (
-    <li>
-      <Link to={withDeviceExperienceOverride(module.route)}>{module.label[locale]}</Link>
-      <span>{module.webState === 'operational' ? copy.operational : copy.skeleton}</span>
-    </li>
+    <Link
+      className="home-module-card"
+      to={withDeviceExperienceOverride(module.route)}
+      aria-label={`${openModule}: ${module.label[locale]}`}
+    >
+      <span className="home-module-icon-wrap" aria-hidden="true">
+        <ModuleIcon icon={module.key} className="home-module-icon" />
+      </span>
+      <strong>{module.label[locale]}</strong>
+      <span className="home-module-arrow" aria-hidden="true">→</span>
+    </Link>
   );
 }
