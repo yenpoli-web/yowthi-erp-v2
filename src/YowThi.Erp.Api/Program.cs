@@ -21,6 +21,7 @@ var app = builder.Build();
 app.UseYowThiApiInfrastructure();
 app.MapYowThiTechnicalEndpoints();
 app.MapPartyEndpoints();
+app.MapSupplierMasterEndpoints();
 app.MapPartyLifecycleOptionEndpoints();
 app.MapFarmerLifecycleEndpoints();
 app.MapEmployeeLifecycleEndpoints();

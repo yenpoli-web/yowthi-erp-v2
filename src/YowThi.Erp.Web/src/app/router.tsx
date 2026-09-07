@@ -1,6 +1,6 @@
 import { Navigate, createBrowserRouter } from 'react-router';
 
-import { DataProtectionPrototypePage } from '../features/data-protection/DataProtectionPrototypePage';
+import { DataProtectionPage } from '../features/data-protection/DataProtectionPage';
 import { HardDeletePage } from '../features/data-protection/HardDeletePage';
 import { OutsourcedSupplyDetailPage } from '../features/outsourced/OutsourcedSupplyDetailPage';
 import { FinanceSettlementPage } from '../features/finance/FinanceSettlementPage';
@@ -8,7 +8,7 @@ import { InventoryOperationsPage } from '../features/inventory/InventoryOperatio
 import { InfrastructureLifecyclePage } from '../features/infrastructure/InfrastructureLifecyclePage';
 import { LaborDailyWagePage } from '../features/labor/LaborDailyWagePage';
 import { PartyLifecyclePage } from '../features/party/PartyLifecyclePage';
-import { SupplierMasterPrototypePage } from '../features/party/SupplierMasterPrototypePage';
+import { SupplierMasterPage } from '../features/party/SupplierMasterPage';
 import { SalesProductGroupLifecyclePage } from '../features/product/SalesProductGroupLifecyclePage';
 import { ProcessingExecutionPage } from '../features/processing/ProcessingExecutionPage';
 import { ProcurementEntryPage } from '../features/procurement/ProcurementEntryPage';
@@ -61,7 +61,7 @@ export const router = createBrowserRouter([
       },
       {
         path: 'party',
-        element: <SupplierMasterPrototypePage />,
+        element: <SupplierMasterPage />,
       },
       {
         path: 'party/lifecycle',
@@ -77,7 +77,7 @@ export const router = createBrowserRouter([
       },
       {
         path: 'data-protection',
-        element: <DataProtectionPrototypePage />,
+        element: <DataProtectionPage />,
       },
       {
         path: 'data-protection/hard-delete',
