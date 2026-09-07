@@ -209,6 +209,9 @@ async function main() {
       console.log(`visual acceptance: PASS ${acceptanceCase.name} (${acceptanceCase.width}x${acceptanceCase.height})`);
     }
 
+    await runMobileRouteTransitionAcceptance(cdp, baseUrl);
+    console.log('visual acceptance: PASS mobile-route-scroll-reset (390x844)');
+
     console.log('visual acceptance: PASS');
     console.log(`- cases: ${results.length}/${cases.length}`);
     console.log('- experiences: desktop / tablet / mobile');
@@ -269,6 +272,80 @@ async function runCase(client, acceptanceCase, origin) {
 
   await setLocale(client, 'zh-TW');
   return { zhMetrics, thMetrics };
+}
+
+async function runMobileRouteTransitionAcceptance(client, origin) {
+  const width = 390;
+  const height = 844;
+  await client.send('Emulation.setDeviceMetricsOverride', {
+    width,
+    height,
+    deviceScaleFactor: 1,
+    mobile: true,
+    screenWidth: width,
+    screenHeight: height,
+  });
+
+  await navigateAndWait(client, `${origin}/modules?ui=mobile`);
+  await waitForSelector(client, '[data-ui-experience="mobile"]', 8_000);
+  await setLocale(client, 'zh-TW');
+  await delay(250);
+
+  const scrollSetup = await evaluate(client, `(() => {
+    const scroller = document.scrollingElement;
+    if (!scroller) return { maxScroll: 0, target: 0 };
+    const maxScroll = Math.max(0, scroller.scrollHeight - innerHeight);
+    const target = Math.min(600, maxScroll);
+    scroller.scrollTop = target;
+    window.scrollTo(0, target);
+    return { maxScroll, target };
+  })()`);
+  await delay(100);
+
+  if (scrollSetup.maxScroll < 200) {
+    throw new Error(`mobile-route-scroll-reset: test page is not tall enough (${scrollSetup.maxScroll}px scroll range).`);
+  }
+
+  const beforeScroll = await evaluate(client, 'window.scrollY');
+  if (beforeScroll < 200) {
+    throw new Error(`mobile-route-scroll-reset: test page did not reach the requested pre-navigation scroll (${beforeScroll}/${scrollSetup.target}).`);
+  }
+
+  const clicked = await evaluate(client, `(() => {
+    const link = [...document.querySelectorAll('a')].find((anchor) => new URL(anchor.href).pathname === '/party');
+    if (!link) return false;
+    link.click();
+    return true;
+  })()`);
+  if (!clicked) throw new Error('mobile-route-scroll-reset: party module link was not found.');
+
+  const deadline = Date.now() + 4_000;
+  while (Date.now() < deadline) {
+    const pathname = await evaluate(client, 'location.pathname');
+    if (pathname === '/party') break;
+    await delay(50);
+  }
+  await waitForSelector(client, '.nature-mobile-shell-header', 4_000);
+  await delay(150);
+
+  const metrics = await evaluate(client, `(() => {
+    const header = document.querySelector('.nature-mobile-shell-header');
+    return {
+      pathname: location.pathname,
+      scrollY: window.scrollY,
+      headerTop: header?.getBoundingClientRect().top ?? null,
+    };
+  })()`);
+
+  if (metrics.pathname !== '/party') {
+    throw new Error(`mobile-route-scroll-reset: navigation ended at ${metrics.pathname}.`);
+  }
+  if (metrics.scrollY > 1) {
+    throw new Error(`mobile-route-scroll-reset: route retained scrollY=${metrics.scrollY}; expected top of page.`);
+  }
+  if (metrics.headerTop === null || Math.abs(metrics.headerTop) > 1) {
+    throw new Error(`mobile-route-scroll-reset: shell header top is ${metrics.headerTop}; expected viewport top.`);
+  }
 }
 
 function assertMetrics(acceptanceCase, metrics, locale) {
