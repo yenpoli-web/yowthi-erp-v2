@@ -13,6 +13,7 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "presentation:acceptance": "node scripts/presentation-acceptance.mjs",
+    "visual:acceptance": "node scripts/visual-acceptance.mjs",
     "build": "vite build",
     "preview": "vite preview"
   },
