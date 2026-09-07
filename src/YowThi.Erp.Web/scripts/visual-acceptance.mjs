@@ -216,7 +216,7 @@ async function main() {
     console.log('- viewport overflow: none');
     console.log('- zh-TW / th-TH static interface mixing: none');
     console.log('- mobile module menu bounds: accepted');
-    console.log('- mobile bottom navigation bounds: accepted');
+    console.log('- mobile fixed bottom navigation: accepted');
   } catch (error) {
     fail(error instanceof Error ? error.message : String(error));
   } finally {
@@ -308,6 +308,9 @@ function assertMetrics(acceptanceCase, metrics, locale) {
     if (!metrics.mobileBottomNavigation || metrics.mobileBottomNavigation.left < -1 || metrics.mobileBottomNavigation.right > width + 1 || metrics.mobileBottomNavigation.bottom > height + 1) {
       throw new Error(`${name}: mobile bottom navigation escapes viewport: ${JSON.stringify(metrics.mobileBottomNavigation)}.`);
     }
+    if (metrics.mobileBottomPosition !== 'fixed') {
+      throw new Error(`${name}: mobile bottom navigation position is ${metrics.mobileBottomPosition ?? 'unset'}, expected fixed.`);
+    }
     if (metrics.mobileBottomItemCount !== 4) {
       throw new Error(`${name}: mobile bottom navigation must expose exactly 4 entries; found ${metrics.mobileBottomItemCount}.`);
     }
@@ -368,6 +371,7 @@ async function inspectPage(client) {
       desktopBrandBackground: brand ? getComputedStyle(brand).backgroundColor : null,
       tabletNavigation: rect(tabletNavigation),
       mobileBottomNavigation: rect(mobileBottomNavigation),
+      mobileBottomPosition: mobileBottomNavigation ? getComputedStyle(mobileBottomNavigation).position : null,
       mobileBottomItemCount: mobileBottomNavigation ? mobileBottomNavigation.querySelectorAll(':scope > a').length : 0,
     };
   })()`);

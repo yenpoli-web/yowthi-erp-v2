@@ -397,14 +397,18 @@
 .nature-mobile-app-shell {
   width: min(calc(100% - 1rem), 44rem);
   padding-top: 0.8rem;
-  padding-bottom: 6.45rem;
+  padding-bottom: calc(5.15rem + env(safe-area-inset-bottom));
 }
 
 .nature-mobile-bottom-navigation {
-  bottom: max(0.45rem, env(safe-area-inset-bottom));
+  position: fixed;
+  left: 50%;
+  bottom: max(0.35rem, env(safe-area-inset-bottom));
+  z-index: 50;
   width: min(calc(100% - 0.8rem), 30rem);
+  transform: translateX(-50%);
   gap: 0.22rem;
-  padding: 0.34rem;
+  padding: 0.28rem;
   border-color: #d5e5d6;
   border-radius: 1rem;
   background: rgba(255, 254, 251, 0.98);
@@ -412,7 +416,7 @@
 }
 
 .nature-mobile-bottom-navigation a {
-  min-height: 3.35rem;
+  min-height: 3rem;
   display: grid;
   place-items: center;
   align-content: center;
@@ -429,8 +433,8 @@
 }
 
 .nature-mobile-bottom-icon {
-  width: 1.15rem;
-  height: 1.15rem;
+  width: 1.08rem;
+  height: 1.08rem;
   fill: none;
   stroke: currentColor;
   stroke-width: 1.8;
