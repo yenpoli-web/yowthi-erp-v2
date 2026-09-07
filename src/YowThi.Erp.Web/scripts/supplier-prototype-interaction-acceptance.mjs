@@ -139,6 +139,7 @@ async function main() {
     await waitFor(cdp, `Boolean(document.querySelector('.supplier-master-prototype'))`, 8_000);
 
     await setLocale(cdp, 'zh-TW');
+    await evaluate(cdp, `Object.defineProperty(globalThis.crypto, 'randomUUID', { configurable: true, value: undefined })`);
     await click(cdp, '.supplier-master-header .supplier-primary-action');
     await waitFor(cdp, `Boolean(document.querySelector('.supplier-editor-footer .supplier-primary-action'))`, 4_000);
 
@@ -182,6 +183,7 @@ async function main() {
 
     console.log('supplier prototype interaction acceptance: PASS');
     console.log('- create + bottom save: PASS');
+    console.log('- create works without crypto.randomUUID: PASS');
     console.log('- save survives full page reload within browser session: PASS');
     console.log('- soft delete appears in data protection: PASS');
     console.log('- hard delete removes protected record: PASS');
