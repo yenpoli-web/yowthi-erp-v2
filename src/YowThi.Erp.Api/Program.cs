@@ -22,6 +22,7 @@ app.UseYowThiApiInfrastructure();
 app.MapYowThiTechnicalEndpoints();
 app.MapPartyEndpoints();
 app.MapSupplierMasterEndpoints();
+app.MapCustomerMasterEndpoints();
 app.MapPartyLifecycleOptionEndpoints();
 app.MapFarmerLifecycleEndpoints();
 app.MapEmployeeLifecycleEndpoints();

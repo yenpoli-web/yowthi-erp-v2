@@ -25,6 +25,7 @@ const cases = [
   { name: 'desktop-finance', experience: 'desktop', width: 1440, height: 900, path: '/finance' },
   { name: 'desktop-inventory', experience: 'desktop', width: 1440, height: 900, path: '/inventory' },
   { name: 'desktop-party', experience: 'desktop', width: 1440, height: 900, path: '/party' },
+  { name: 'desktop-party-customer', experience: 'desktop', width: 1440, height: 900, path: '/party/customers' },
   { name: 'desktop-infrastructure', experience: 'desktop', width: 1440, height: 900, path: '/infrastructure' },
   { name: 'desktop-product', experience: 'desktop', width: 1440, height: 900, path: '/product' },
   { name: 'desktop-data-protection', experience: 'desktop', width: 1440, height: 900, path: '/data-protection' },
@@ -38,6 +39,7 @@ const cases = [
   { name: 'tablet-finance', experience: 'tablet', width: 1024, height: 768, path: '/finance' },
   { name: 'tablet-inventory', experience: 'tablet', width: 1024, height: 768, path: '/inventory' },
   { name: 'tablet-party', experience: 'tablet', width: 1024, height: 768, path: '/party' },
+  { name: 'tablet-party-customer', experience: 'tablet', width: 1024, height: 768, path: '/party/customers' },
   { name: 'tablet-infrastructure', experience: 'tablet', width: 1024, height: 768, path: '/infrastructure' },
   { name: 'tablet-product', experience: 'tablet', width: 1024, height: 768, path: '/product' },
   { name: 'tablet-data-protection', experience: 'tablet', width: 1024, height: 768, path: '/data-protection' },
@@ -51,6 +53,7 @@ const cases = [
   { name: 'mobile-finance', experience: 'mobile', width: 390, height: 844, path: '/finance' },
   { name: 'mobile-inventory', experience: 'mobile', width: 390, height: 844, path: '/inventory' },
   { name: 'mobile-party', experience: 'mobile', width: 390, height: 844, path: '/party' },
+  { name: 'mobile-party-customer', experience: 'mobile', width: 390, height: 844, path: '/party/customers' },
   { name: 'mobile-infrastructure', experience: 'mobile', width: 390, height: 844, path: '/infrastructure' },
   { name: 'mobile-product', experience: 'mobile', width: 390, height: 844, path: '/product' },
   { name: 'mobile-data-protection', experience: 'mobile', width: 390, height: 844, path: '/data-protection' },
@@ -214,6 +217,9 @@ async function main() {
     await runMobileRouteTransitionAcceptance(cdp, baseUrl);
     console.log('visual acceptance: PASS mobile-route-scroll-reset (390x844)');
 
+    await runPartyLifecycleShellAcceptance(cdp, baseUrl);
+    console.log('visual acceptance: PASS party-lifecycle-unified-shell (390x844)');
+
     console.log('visual acceptance: PASS');
     console.log(`- cases: ${results.length}/${cases.length}`);
     console.log('- experiences: desktop / tablet / mobile');
@@ -224,6 +230,8 @@ async function main() {
     console.log('- mobile fixed top shell: accepted');
     console.log('- mobile docked bottom navigation: accepted');
     console.log('- PWA standalone metadata and root scope: accepted');
+    console.log('- party management master-module navigation: 5/5 visible');
+    console.log('- party lifecycle routes use the same master-management shell: accepted');
   } catch (error) {
     fail(error instanceof Error ? error.message : String(error));
   } finally {
@@ -352,6 +360,52 @@ async function runMobileRouteTransitionAcceptance(client, origin) {
   }
 }
 
+async function runPartyLifecycleShellAcceptance(client, origin) {
+  const width = 390;
+  const height = 844;
+  await client.send('Emulation.setDeviceMetricsOverride', {
+    width,
+    height,
+    deviceScaleFactor: 1,
+    mobile: true,
+    screenWidth: width,
+    screenHeight: height,
+  });
+
+  await navigateAndWait(client, `${origin}/party/lifecycle?kind=farmers&ui=mobile`);
+  await waitForSelector(client, '[data-ui-experience="mobile"]', 8_000);
+  await waitForSelector(client, '.supplier-master-prototype', 8_000);
+  await setLocale(client, 'zh-TW');
+  await delay(150);
+
+  const metrics = await evaluate(client, `(() => {
+    const nav = document.querySelector('.party-master-kind-switcher');
+    const active = nav?.querySelector('.is-active');
+    return {
+      pathname: location.pathname,
+      kind: new URLSearchParams(location.search).get('kind'),
+      heading: document.querySelector('.supplier-master-header h1')?.textContent?.trim() ?? null,
+      navCount: nav?.querySelectorAll(':scope > a, :scope > span').length ?? 0,
+      activeText: active?.textContent?.trim() ?? null,
+      unifiedShell: Boolean(document.querySelector('.supplier-master-header') && document.querySelector('.supplier-master-grid')),
+      legacyShellPresent: Boolean(document.querySelector('.procurement-page')),
+    };
+  })()`);
+
+  if (metrics.pathname !== '/party/lifecycle' || metrics.kind !== 'farmers') {
+    throw new Error(`party-lifecycle-unified-shell: route identity mismatch ${metrics.pathname}?kind=${metrics.kind}.`);
+  }
+  if (metrics.heading !== '農戶' || metrics.activeText !== '農戶') {
+    throw new Error(`party-lifecycle-unified-shell: requested farmers but heading/active are ${metrics.heading}/${metrics.activeText}.`);
+  }
+  if (metrics.navCount !== 5) {
+    throw new Error(`party-lifecycle-unified-shell: expected 5 partner master entries, found ${metrics.navCount}.`);
+  }
+  if (!metrics.unifiedShell || metrics.legacyShellPresent) {
+    throw new Error(`party-lifecycle-unified-shell: lifecycle route is not using the unified master shell: ${JSON.stringify(metrics)}.`);
+  }
+}
+
 function assertMetrics(acceptanceCase, metrics, locale) {
   const { width, height, experience, name } = acceptanceCase;
   if (metrics.experience !== experience) {
@@ -371,6 +425,9 @@ function assertMetrics(acceptanceCase, metrics, locale) {
   }
   if (metrics.overflowingInteractives.length > 0) {
     throw new Error(`${name}: interactive controls escape viewport: ${JSON.stringify(metrics.overflowingInteractives.slice(0, 5))}.`);
+  }
+  if (acceptanceCase.path === '/party' && metrics.partyMasterKindCount !== 5) {
+    throw new Error(`${name}: party management must expose all 5 master modules; found ${metrics.partyMasterKindCount}.`);
   }
   if (experience === 'desktop') {
     if (!metrics.desktopSidebar || metrics.desktopSidebar.left < -1 || metrics.desktopSidebar.right > 280) {
@@ -466,6 +523,7 @@ async function inspectPage(client) {
       mobileBottomNavigation: rect(mobileBottomNavigation),
       mobileBottomPosition: mobileBottomNavigation ? getComputedStyle(mobileBottomNavigation).position : null,
       mobileBottomItemCount: mobileBottomNavigation ? mobileBottomNavigation.querySelectorAll(':scope > a').length : 0,
+      partyMasterKindCount: document.querySelectorAll('.party-master-kind-switcher > a, .party-master-kind-switcher > span').length,
     };
   })()`);
 }

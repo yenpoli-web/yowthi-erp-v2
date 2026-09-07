@@ -1,8 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useDeferredValue, useMemo, useRef, useState, type FormEvent, type KeyboardEvent, type ReactNode } from 'react';
-
 import { useOperationalLocale } from '../../app/i18n/locale';
 import { ApiProblemError, changePartyLifecycle, type PartyLifecycleAction } from './partyLifecycle';
+import { PartyMasterNavigation } from './PartyMasterNavigation';
 import {
   createSupplier,
   listSuppliers,
@@ -27,7 +27,7 @@ type SubmissionIdentity = { fingerprint: string; idempotencyKey: string };
 
 const copy = {
   'zh-TW': {
-    eyebrow: '夥伴管理', title: '供應商', newSupplier: '新增供應商', search: '搜尋名稱、電話或銀行',
+    eyebrow: '夥伴管理', title: '供應商', newSupplier: '新增供應商', search: '搜尋名稱、電話或銀行', supplierTab: '供應商', customerTab: '客戶',
     all: '全部', active: '使用中', inactive: '停用', deleted: '已刪除', supplier: '供應商', phone: '電話', status: '狀態', records: '筆資料',
     edit: '編輯', deactivate: '停用', activate: '啟用', softDelete: '刪除', restore: '恢復', basicInfo: '基本資料',
     nameZhTw: '中文名稱', nameThTh: '泰文名稱', contactInfo: '聯絡資料', address: '地址', paymentInfo: '銀行資料', bankName: '銀行名稱', bankAccount: '銀行帳號',
@@ -37,7 +37,7 @@ const copy = {
     stale: '資料已被其他操作更新，請重新整理後再試。', notFound: '供應商資料不存在。', deletedConflict: '這筆供應商已經刪除，請先恢復後再編輯。', idempotency: '相同操作識別已被其他內容使用。',
   },
   'th-TH': {
-    eyebrow: 'จัดการคู่ค้า', title: 'ผู้จำหน่าย', newSupplier: 'เพิ่มผู้จำหน่าย', search: 'ค้นหาชื่อ โทรศัพท์ หรือธนาคาร',
+    eyebrow: 'จัดการคู่ค้า', title: 'ผู้จำหน่าย', newSupplier: 'เพิ่มผู้จำหน่าย', search: 'ค้นหาชื่อ โทรศัพท์ หรือธนาคาร', supplierTab: 'ผู้จำหน่าย', customerTab: 'ลูกค้า',
     all: 'ทั้งหมด', active: 'ใช้งาน', inactive: 'ไม่ใช้งาน', deleted: 'ลบแล้ว', supplier: 'ผู้จำหน่าย', phone: 'โทรศัพท์', status: 'สถานะ', records: 'รายการ',
     edit: 'แก้ไข', deactivate: 'ปิดใช้งาน', activate: 'เปิดใช้งาน', softDelete: 'ลบ', restore: 'กู้คืน', basicInfo: 'ข้อมูลพื้นฐาน',
     nameZhTw: 'ชื่อภาษาจีน', nameThTh: 'ชื่อภาษาไทย', contactInfo: 'ข้อมูลติดต่อ', address: 'ที่อยู่', paymentInfo: 'ข้อมูลธนาคาร', bankName: 'ชื่อธนาคาร', bankAccount: 'เลขบัญชีธนาคาร',
@@ -181,7 +181,7 @@ export function SupplierMasterPage() {
     <section className="supplier-master-prototype" aria-labelledby="supplier-master-title">
       <header className="supplier-master-header">
         <div><p className="eyebrow">{labels.eyebrow}</p><h1 id="supplier-master-title">{labels.title}</h1></div>
-        <div className="supplier-master-header-actions"><button className="supplier-primary-action" type="button" onClick={beginCreate} disabled={busy}><span aria-hidden="true">＋</span>{labels.newSupplier}</button></div>
+        <div className="supplier-master-header-actions"><PartyMasterNavigation activeKind="suppliers" /><button className="supplier-primary-action" type="button" onClick={beginCreate} disabled={busy}><span aria-hidden="true">＋</span>{labels.newSupplier}</button></div>
       </header>
 
       <div className="supplier-master-toolbar">

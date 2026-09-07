@@ -8,6 +8,7 @@ import { InventoryOperationsPage } from '../features/inventory/InventoryOperatio
 import { InfrastructureLifecyclePage } from '../features/infrastructure/InfrastructureLifecyclePage';
 import { LaborDailyWagePage } from '../features/labor/LaborDailyWagePage';
 import { PartyLifecyclePage } from '../features/party/PartyLifecyclePage';
+import { CustomerMasterPage } from '../features/party/CustomerMasterPage';
 import { SupplierMasterPage } from '../features/party/SupplierMasterPage';
 import { SalesProductGroupLifecyclePage } from '../features/product/SalesProductGroupLifecyclePage';
 import { ProcessingExecutionPage } from '../features/processing/ProcessingExecutionPage';
@@ -62,6 +63,10 @@ export const router = createBrowserRouter([
       {
         path: 'party',
         element: <SupplierMasterPage />,
+      },
+      {
+        path: 'party/customers',
+        element: <CustomerMasterPage />,
       },
       {
         path: 'party/lifecycle',
