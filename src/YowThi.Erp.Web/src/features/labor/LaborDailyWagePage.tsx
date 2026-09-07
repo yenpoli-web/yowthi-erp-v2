@@ -1,7 +1,6 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useDeferredValue, useMemo, useRef, useState } from 'react';
 
-import { LocaleControl } from '../../app/i18n/LocaleControl';
 import { useOperationalLocale } from '../../app/i18n/locale';
 import {
   ApiProblemError,
@@ -199,7 +198,6 @@ export function LaborDailyWagePage() {
           <p className="eyebrow">{labels.eyebrow}</p>
           <h1 id="labor-daily-wage-title">{labels.title}</h1>
         </div>
-        <LocaleControl />
       </header>
 
       <div className="procurement-grid">

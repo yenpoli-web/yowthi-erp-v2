@@ -1,7 +1,6 @@
 import { Link } from 'react-router';
 
 import { withDeviceExperienceOverride } from '../device/deviceExperience';
-import { LocaleControl } from '../i18n/LocaleControl';
 import { useOperationalLocale, type OperationalLocale } from '../i18n/locale';
 import {
   getSystemModule,
@@ -60,7 +59,6 @@ export function ModuleIndexPage() {
           <p className="eyebrow">{copy.eyebrow}</p>
           <h1>{copy.title}</h1>
         </div>
-        <LocaleControl />
       </header>
 
       <ModuleAreaSection area="operations" title={copy.operations} locale={locale} />
@@ -81,7 +79,6 @@ export function ModuleSkeletonPage({ moduleKey }: { moduleKey: ModuleKey }) {
           <p className="eyebrow">{copy.eyebrow}</p>
           <h1>{module.label[locale]}</h1>
         </div>
-        <LocaleControl />
       </header>
 
       <div className="entry-form">

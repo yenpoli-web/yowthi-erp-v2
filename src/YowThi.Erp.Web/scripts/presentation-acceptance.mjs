@@ -1,0 +1,116 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const webRoot = fileURLToPath(new URL('..', import.meta.url));
+const srcRoot = path.join(webRoot, 'src');
+
+function fail(message) {
+  console.error(`presentation acceptance: FAIL\n${message}`);
+  process.exit(1);
+}
+
+function read(relativePath) {
+  return fs.readFileSync(path.join(webRoot, relativePath), 'utf8');
+}
+
+function countMatches(text, regex) {
+  return [...text.matchAll(regex)].length;
+}
+
+function collectFiles(directory, suffix, result = []) {
+  for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+    const fullPath = path.join(directory, entry.name);
+    if (entry.isDirectory()) {
+      collectFiles(fullPath, suffix, result);
+    } else if (entry.isFile() && entry.name.endsWith(suffix)) {
+      result.push(fullPath);
+    }
+  }
+  return result;
+}
+
+const shellExpectations = new Map([
+  ['src/app/layouts/DesktopAppShell.tsx', 'desktop'],
+  ['src/app/layouts/TabletAppShell.tsx', 'tablet'],
+  ['src/app/layouts/MobileAppShell.tsx', 'mobile'],
+]);
+
+for (const [relativePath, experience] of shellExpectations) {
+  const source = read(relativePath);
+  const localeControls = countMatches(source, /<LocaleControl\s*\/>/g);
+  if (localeControls !== 1) {
+    fail(`${relativePath} must render exactly one LocaleControl; found ${localeControls}.`);
+  }
+  if (!source.includes(`data-ui-experience="${experience}"`)) {
+    fail(`${relativePath} is missing data-ui-experience="${experience}".`);
+  }
+}
+
+const shellAbsolutePaths = new Set(
+  [...shellExpectations.keys()].map((relativePath) => path.normalize(path.join(webRoot, relativePath))),
+);
+const tsxFiles = collectFiles(srcRoot, '.tsx');
+let pageLocaleControls = 0;
+let placeholderCount = 0;
+const rawEnumPattern = />\s*(SUPPLIER|FARMER|DRAFT|CONFIRMED|WEIGHT_BASED_UNIT|UNIT_BASED|IN_HOUSE|OUTSOURCED|PROCUREMENT_PRODUCT|PROCESS_MATERIAL|SALES_PRODUCT)\s*</g;
+const rawEnumHits = [];
+
+for (const file of tsxFiles) {
+  const source = fs.readFileSync(file, 'utf8');
+  if (!shellAbsolutePaths.has(path.normalize(file))) {
+    pageLocaleControls += countMatches(source, /<LocaleControl\s*\/>/g);
+  }
+  placeholderCount += countMatches(source, /\bplaceholder\s*=/g);
+  const enumMatches = [...source.matchAll(rawEnumPattern)];
+  if (enumMatches.length > 0) {
+    rawEnumHits.push(`${path.relative(webRoot, file)}: ${enumMatches.map((match) => match[1]).join(', ')}`);
+  }
+}
+
+if (pageLocaleControls !== 0) {
+  fail(`LocaleControl must be owned by the application shells only; found ${pageLocaleControls} page-level instance(s).`);
+}
+if (placeholderCount !== 0) {
+  fail(`User-requested hint-free UI requires zero placeholder attributes; found ${placeholderCount}.`);
+}
+if (rawEnumHits.length > 0) {
+  fail(`Raw domain enum values are rendered directly in JSX:\n${rawEnumHits.join('\n')}`);
+}
+
+const localeControl = read('src/app/i18n/LocaleControl.tsx');
+if (!localeControl.includes('<option value="zh-TW">繁體中文</option>')) {
+  fail('LocaleControl is missing the Traditional Chinese option.');
+}
+if (!localeControl.includes('<option value="th-TH">ไทย</option>')) {
+  fail('LocaleControl is missing the Thai option.');
+}
+
+const moduleRegistry = read('src/app/modules/moduleRegistry.ts');
+const operationalModules = countMatches(moduleRegistry, /^\s+webState:\s*'operational',/gm);
+const skeletonModules = countMatches(moduleRegistry, /^\s+webState:\s*'skeleton',/gm);
+const zhLabels = countMatches(moduleRegistry, /label:\s*\{\s*'zh-TW':/g);
+const thLabels = countMatches(moduleRegistry, /'th-TH':/g);
+
+if (operationalModules !== 12 || skeletonModules !== 0) {
+  fail(`Module registry must contain 12 operational modules and 0 skeleton modules; found ${operationalModules}/${skeletonModules}.`);
+}
+if (zhLabels !== 12 || thLabels < 12) {
+  fail(`All 12 modules must carry zh-TW and th-TH labels; found zh-TW=${zhLabels}, th-TH=${thLabels}.`);
+}
+
+const deviceExperience = read('src/app/device/deviceExperience.ts');
+if (!deviceExperience.includes("export type DeviceExperience = 'desktop' | 'tablet' | 'mobile';")) {
+  fail('DeviceExperience must remain exactly desktop | tablet | mobile.');
+}
+if (!deviceExperience.includes("new URLSearchParams(window.location.search).get('ui')")) {
+  fail('Deterministic ?ui= acceptance override is missing.');
+}
+
+console.log('presentation acceptance: PASS');
+console.log('- application shell locale ownership: 3/3');
+console.log('- page-level LocaleControl instances: 0');
+console.log('- placeholder hints: 0');
+console.log('- raw JSX domain enums: 0');
+console.log('- module registry: 12 operational / 12 localized');
+console.log('- deterministic desktop/tablet/mobile override: present');

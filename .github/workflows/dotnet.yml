@@ -71,6 +71,10 @@ jobs:
         working-directory: src/YowThi.Erp.Web
         run: pnpm typecheck
 
+      - name: Frontend presentation acceptance
+        working-directory: src/YowThi.Erp.Web
+        run: pnpm presentation:acceptance
+
       - name: Frontend build
         working-directory: src/YowThi.Erp.Web
         run: pnpm build

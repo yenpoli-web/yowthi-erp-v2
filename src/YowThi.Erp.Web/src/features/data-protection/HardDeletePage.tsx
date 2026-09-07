@@ -1,7 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useDeferredValue, useMemo, useRef, useState } from 'react';
 
-import { LocaleControl } from '../../app/i18n/LocaleControl';
 import { useOperationalLocale } from '../../app/i18n/locale';
 import { ApiProblemError, hardDeleteTarget } from './hardDelete';
 import { hardDeleteCopy } from './hardDeleteCopy';
@@ -142,7 +141,6 @@ export function HardDeletePage() {
           <p className="eyebrow">{labels.eyebrow}</p>
           <h1 id="hard-delete-title">{labels.title}</h1>
         </div>
-        <LocaleControl />
       </header>
 
       <div className="procurement-grid">
