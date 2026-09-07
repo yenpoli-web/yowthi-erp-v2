@@ -8,6 +8,7 @@ import { queryClient } from './app/queryClient';
 import { router } from './app/router';
 import './styles.css';
 import './app/layouts/presentationShell.css';
+import './app/layouts/operationPage.css';
 import './app/modules/homePage.css';
 import './features/processing/processingExecution.css';
 

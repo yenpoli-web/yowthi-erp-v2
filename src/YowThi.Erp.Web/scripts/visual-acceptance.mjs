@@ -16,14 +16,20 @@ const chromePath = chromeCandidates.find((candidate) => fs.existsSync(candidate)
 
 const cases = [
   { name: 'desktop-home', experience: 'desktop', width: 1440, height: 900, path: '/modules' },
-  { name: 'desktop-processing', experience: 'desktop', width: 1440, height: 900, path: '/processing/executions/new' },
+  { name: 'desktop-procurement', experience: 'desktop', width: 1440, height: 900, path: '/procurement/entries/new' },
   { name: 'desktop-outsourced', experience: 'desktop', width: 1440, height: 900, path: '/outsourced/supply-details/new' },
+  { name: 'desktop-processing', experience: 'desktop', width: 1440, height: 900, path: '/processing/executions/new' },
+  { name: 'desktop-sales', experience: 'desktop', width: 1440, height: 900, path: '/sales' },
   { name: 'tablet-home', experience: 'tablet', width: 1024, height: 768, path: '/modules' },
-  { name: 'tablet-processing', experience: 'tablet', width: 1024, height: 768, path: '/processing/executions/new' },
+  { name: 'tablet-procurement', experience: 'tablet', width: 1024, height: 768, path: '/procurement/entries/new' },
   { name: 'tablet-outsourced', experience: 'tablet', width: 1024, height: 768, path: '/outsourced/supply-details/new' },
+  { name: 'tablet-processing', experience: 'tablet', width: 1024, height: 768, path: '/processing/executions/new' },
+  { name: 'tablet-sales', experience: 'tablet', width: 1024, height: 768, path: '/sales' },
   { name: 'mobile-home', experience: 'mobile', width: 390, height: 844, path: '/modules' },
-  { name: 'mobile-processing', experience: 'mobile', width: 390, height: 844, path: '/processing/executions/new' },
+  { name: 'mobile-procurement', experience: 'mobile', width: 390, height: 844, path: '/procurement/entries/new' },
   { name: 'mobile-outsourced', experience: 'mobile', width: 390, height: 844, path: '/outsourced/supply-details/new' },
+  { name: 'mobile-processing', experience: 'mobile', width: 390, height: 844, path: '/processing/executions/new' },
+  { name: 'mobile-sales', experience: 'mobile', width: 390, height: 844, path: '/sales' },
   { name: 'mobile-narrow-home', experience: 'mobile', width: 360, height: 800, path: '/modules' },
 ];
 
@@ -182,7 +188,7 @@ async function main() {
     console.log('visual acceptance: PASS');
     console.log(`- cases: ${results.length}/${cases.length}`);
     console.log('- experiences: desktop / tablet / mobile');
-    console.log('- routes: home / processing / outsourced supply');
+    console.log('- routes: home / procurement / outsourced supply / processing / sales');
     console.log('- viewport overflow: none');
     console.log('- zh-TW / th-TH static interface mixing: none');
     console.log('- mobile module menu bounds: accepted');
