@@ -1,5 +1,10 @@
 import type { OperationalLocale } from './i18n/locale';
-import { systemModules, type ModuleArea, type SystemModuleDefinition } from './modules/moduleRegistry';
+import {
+  systemModules,
+  type ModuleArea,
+  type ModuleKey,
+  type SystemModuleDefinition,
+} from './modules/moduleRegistry';
 
 type LocalizedLabel = Record<OperationalLocale, string>;
 
@@ -10,6 +15,7 @@ export type NavigationGroup = {
 
 export type QuickNavigationItem = {
   to: string;
+  icon: ModuleKey | 'home';
   label: LocalizedLabel;
 };
 
@@ -60,19 +66,23 @@ export const navigationGroups: readonly NavigationGroup[] = (
 
 export const mobileQuickNavigation: readonly QuickNavigationItem[] = [
   {
+    to: '/modules',
+    icon: 'home',
+    label: { 'zh-TW': '首頁', 'th-TH': 'หน้าแรก' },
+  },
+  {
     to: '/procurement/entries/new',
+    icon: 'procurement',
     label: { 'zh-TW': '採購', 'th-TH': 'จัดซื้อ' },
   },
   {
     to: '/processing/executions/new',
+    icon: 'processing',
     label: { 'zh-TW': '加工', 'th-TH': 'แปรรูป' },
   },
   {
     to: '/sales',
+    icon: 'sales',
     label: { 'zh-TW': '銷售', 'th-TH': 'การขาย' },
-  },
-  {
-    to: '/modules',
-    label: { 'zh-TW': '全部', 'th-TH': 'ทั้งหมด' },
   },
 ];

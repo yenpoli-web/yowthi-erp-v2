@@ -47,6 +47,26 @@ for (const [relativePath, experience] of shellExpectations) {
   }
 }
 
+const adaptiveShellExpectations = [
+  {
+    relativePath: 'src/app/layouts/TabletAppShell.tsx',
+    markers: ['nature-tablet-brand-row', 'nature-tablet-navigation', '<ModuleIcon icon="home"'],
+  },
+  {
+    relativePath: 'src/app/layouts/MobileAppShell.tsx',
+    markers: ['nature-mobile-brand-row', 'nature-mobile-module-menu', 'nature-mobile-bottom-navigation'],
+  },
+];
+
+for (const expectation of adaptiveShellExpectations) {
+  const source = read(expectation.relativePath);
+  for (const marker of expectation.markers) {
+    if (!source.includes(marker)) {
+      fail(`${expectation.relativePath} is missing adaptive Nature Green marker: ${marker}.`);
+    }
+  }
+}
+
 const shellAbsolutePaths = new Set(
   [...shellExpectations.keys()].map((relativePath) => path.normalize(path.join(webRoot, relativePath))),
 );
@@ -99,6 +119,27 @@ if (zhLabels !== 12 || thLabels < 12) {
   fail(`All 12 modules must carry zh-TW and th-TH labels; found zh-TW=${zhLabels}, th-TH=${thLabels}.`);
 }
 
+const navigation = read('src/app/navigation.ts');
+if (!navigation.includes("to: '/modules',\n    icon: 'home'")) {
+  fail('Mobile quick navigation must begin with the localized home workspace entry.');
+}
+if (countMatches(navigation, /^\s+icon:\s*'/gm) < 4) {
+  fail('Mobile quick navigation must expose icons for all four primary entries.');
+}
+
+const presentationShell = read('src/app/layouts/presentationShell.css');
+for (const selector of [
+  '.nature-tablet-brand-row',
+  '.nature-tablet-navigation',
+  '.nature-mobile-brand-row',
+  '.nature-mobile-module-menu',
+  '.nature-mobile-bottom-navigation',
+]) {
+  if (!presentationShell.includes(selector)) {
+    fail(`Presentation shell is missing adaptive Nature Green selector: ${selector}.`);
+  }
+}
+
 const deviceExperience = read('src/app/device/deviceExperience.ts');
 if (!deviceExperience.includes("export type DeviceExperience = 'desktop' | 'tablet' | 'mobile';")) {
   fail('DeviceExperience must remain exactly desktop | tablet | mobile.');
@@ -113,4 +154,6 @@ console.log('- page-level LocaleControl instances: 0');
 console.log('- placeholder hints: 0');
 console.log('- raw JSX domain enums: 0');
 console.log('- module registry: 12 operational / 12 localized');
+console.log('- Nature Green tablet/mobile shell markers: present');
+console.log('- mobile primary navigation: localized home + 3 core operations');
 console.log('- deterministic desktop/tablet/mobile override: present');
