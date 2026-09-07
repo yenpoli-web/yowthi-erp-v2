@@ -1,6 +1,6 @@
 # Current Design Checkpoint — YowThi ERP V2
 
-Checkpoint status: **v0.1 implementation baseline through P6 / V8 COMPLETE and P7 system skeleton S0–S12 COMPLETE. Remaining lifecycle / Hard Delete / Batch-control candidates remain explicitly deferred or future target-specific scope. P7 presentation redesign and full zh-TW / th-TH presentation acceptance remain OPEN.**
+Checkpoint status: **v0.1 implementation baseline through P6 / V8 COMPLETE and P7 COMPLETE. The P7 system skeleton S0–S12, Nature Green presentation, Desktop / Tablet / Mobile adaptive UX, and current-route zh-TW / th-TH presentation acceptance are COMPLETE. Remaining lifecycle / Hard Delete / Batch-control candidates remain explicitly deferred or future target-specific scope.**
 
 Purpose: recover the current architecture and implementation state if conversational context is lost.
 
@@ -60,6 +60,7 @@ Later implementation supplements:
 - `docs/27-farmer-hard-delete-control-v0.1.md` — V8-C18 Farmer Hard Delete + Procurement Entry / Finance Payable structural dependency closure / runner-local validation evidence
 - `docs/28-p6-v8-closure-checkpoint-v0.1.md` — formal P6 / V8 closure + deferred/future target-specific scope boundary
 - `docs/29-p7-system-skeleton-closure-checkpoint-v0.1.md` — P7 S0–S12 system-skeleton closure + 12/12 operational web modules + presentation redesign boundary
+- `docs/30-p7-presentation-closure-checkpoint-v0.1.md` — P7 Nature Green presentation closure + Desktop/Tablet/Mobile + current-route zh-TW/th-TH acceptance
 - for their target-specific scopes, these later supplements resolve older omissions without superseding the broader Command/REST architecture
 
 Earlier PostgreSQL Schema Parts remain design history. `docs/10` is the consolidated relational baseline when relational details conflict.
@@ -147,7 +148,7 @@ P6    Business / ERP Control vertical slices             COMPLETE
       C18 Farmer Hard Delete                              COMPLETE
       remaining candidate ERP Control scope               DEFERRED / FUTURE
 P7    React UI system skeleton S0-S12                  COMPLETE
-      Presentation redesign / adaptive UX / i18n        OPEN
+      Nature Green presentation / adaptive UX / i18n    COMPLETE
 P8    CI / production hardening                          FUTURE
 ```
 
@@ -157,15 +158,15 @@ P6/V8 is COMPLETE because remaining candidate control scope is now explicitly de
 
 Formal implementation baseline immediately before this checkpoint-document commit:
 - `main = origin/main`
-- SHA: `137190098bb343ce072957dba25c50631c433092`
-- commit: `feat(data-protection): add hard delete ui`
+- SHA: `cae5a5c0bf2f1cec7bf0ffa96dde7cbafbbe4ced`
+- commit: `feat(web): complete nature green management presentation`
 - promotion: ff-only
 - push: non-force
 - remote fetch/read-back: clean
 - Formal r20 primary channel; Bootstrap r2 remains independent recovery/read-back channel
 
 Current docs checkpoint branch:
-- `p7-closure-checkpoint-validation`
+- `p7-presentation-closure-checkpoint-validation`
 
 C18 implementation validation:
 - branch: `p6-v8-farmer-hard-delete-validation`
@@ -855,9 +856,9 @@ Implemented operational routes now include:
 - `/product`
 - `/data-protection`
 
-P7 system skeleton is formally complete through S0–S12 at `main@137190098bb343ce072957dba25c50631c433092`.
+P7 is formally complete for the current v0.1 route set at `main@cae5a5c0bf2f1cec7bf0ffa96dde7cbafbbe4ced`.
 
-P7 presentation follow-up remains open after system-skeleton closure: the current visual style is not accepted as final, and application-wide Traditional Chinese / Thai presentation completeness plus Desktop / Tablet / Mobile UX acceptance remain to be completed.
+The accepted presentation baseline is Nature Green across Desktop / Tablet / Mobile. Browser visual acceptance covers Home plus all 12 operational modules with 40 / 40 PASS, no horizontal viewport overflow, and current static zh-TW / th-TH interface-language mixing checks passing. The presentation hard gate is part of the self-hosted validation workflow. See `docs/30-p7-presentation-closure-checkpoint-v0.1.md`.
 
 ## 24. P6 / V8 closure state
 
@@ -931,7 +932,7 @@ Formal/Bootstrap operational split:
 ## 26. Recovery
 
 ```text
-main@137190098bb343ce072957dba25c50631c433092
+main@cae5a5c0bf2f1cec7bf0ffa96dde7cbafbbe4ced
 -> P5 PostgreSQL 18 persistence acceptance COMPLETE
 -> P6 V1-V7 COMPLETE
 -> V8-C1 Supplier Hard Delete COMPLETE
@@ -974,15 +975,19 @@ main@137190098bb343ce072957dba25c50631c433092
 -> remaining lifecycle / Hard Delete / Batch-control candidates are DEFERRED / future target-specific scope
 -> P6 / V8 COMPLETE
 -> Formal r20 is primary; Bootstrap r2 remains independent recovery/read-back channel
--> current docs checkpoint branch: p7-closure-checkpoint-validation
+-> current docs checkpoint branch: p7-presentation-closure-checkpoint-validation
 -> authoritative C18 supplement: docs/27-farmer-hard-delete-control-v0.1.md
 -> authoritative P6/V8 closure supplement: docs/28-p6-v8-closure-checkpoint-v0.1.md
 -> authoritative P7 system-skeleton closure supplement: docs/29-p7-system-skeleton-closure-checkpoint-v0.1.md
+-> authoritative P7 presentation closure supplement: docs/30-p7-presentation-closure-checkpoint-v0.1.md
 -> StorageLocation, ProcessMaterial, and ProcessingRoute lifecycle remain DEFERRED candidates due unresolved current-use consistency
 -> ProcurementProduct and SalesProduct lifecycle remain TO VERIFY / DEFERRED candidates where current Business Fact behavior is ambiguous
 -> Farmer Hard Delete dependency closure is COMPLETE for Procurement Entry + Finance Payable typed dependencies
 -> OUT-003 still unresolved; Outsourced Supply Batch Reopen DEFERRED
 -> P6 / V8 COMPLETE; remaining candidate ERP Control scope explicitly deferred/future target-specific
--> P7 system skeleton S0–S12 COMPLETE / 12 of 12 modules operational; visual redesign and full zh-TW/th-TH presentation acceptance remain OPEN
+-> P7 system skeleton S0–S12 COMPLETE / 12 of 12 modules operational
+-> Nature Green presentation + Desktop/Tablet/Mobile adaptive UX COMPLETE for current v0.1 route set
+-> current static zh-TW/th-TH presentation acceptance COMPLETE; browser visual acceptance 40/40 PASS
+-> P7 COMPLETE
 ```
 
