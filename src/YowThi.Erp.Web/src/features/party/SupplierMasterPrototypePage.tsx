@@ -1,34 +1,21 @@
-import { useMemo, useState, type FormEvent, type KeyboardEvent } from 'react';
+import { useMemo, useState, type FormEvent, type KeyboardEvent, type ReactNode } from 'react';
 
 import { useOperationalLocale } from '../../app/i18n/locale';
+import {
+  createPrototypeSupplier,
+  getPrototypeSuppliers,
+  restorePrototypeSupplier,
+  softDeletePrototypeSupplier,
+  togglePrototypeSupplierActive,
+  updatePrototypeSupplier,
+  usePrototypeSuppliers,
+  type PrototypeSupplier,
+  type PrototypeSupplierDraft,
+} from './supplierMasterPrototypeStore';
 import './supplierMasterPrototype.css';
 
 type SupplierFilter = 'all' | 'active' | 'inactive' | 'deleted';
 type EditorMode = 'detail' | 'create' | 'edit';
-
-type PrototypeSupplier = {
-  id: string;
-  nameZhTw: string;
-  nameThTh: string;
-  phone: string;
-  address: string;
-  bankName: string;
-  bankAccount: string;
-  active: boolean;
-  deleted: boolean;
-  rowVersion: number;
-};
-
-type SupplierDraft = Pick<PrototypeSupplier, 'nameZhTw' | 'nameThTh' | 'phone' | 'address' | 'bankName' | 'bankAccount'> & {
-  active: boolean | null;
-};
-
-const prototypeSuppliers: PrototypeSupplier[] = [
-  { id: 'prototype-supplier-001', nameZhTw: '清邁農產合作社', nameThTh: 'สหกรณ์เกษตรเชียงใหม่', phone: '053-245-810', address: 'Chiang Mai', bankName: 'Kasikornbank', bankAccount: '123-4-56789-0', active: true, deleted: false, rowVersion: 4 },
-  { id: 'prototype-supplier-002', nameZhTw: '北泰包材', nameThTh: 'นอร์ทเทิร์นแพ็ก', phone: '081-782-4451', address: 'Lamphun', bankName: 'Bangkok Bank', bankAccount: '215-0-77884-2', active: true, deleted: false, rowVersion: 2 },
-  { id: 'prototype-supplier-003', nameZhTw: '綠源農材', nameThTh: 'กรีนซอร์ส', phone: '089-530-1148', address: 'Chiang Rai', bankName: 'Krungthai Bank', bankAccount: '510-1-90344-6', active: false, deleted: false, rowVersion: 7 },
-  { id: 'prototype-supplier-004', nameZhTw: '舊供應商示例', nameThTh: 'ตัวอย่างผู้จำหน่ายเดิม', phone: '086-220-9971', address: 'Lampang', bankName: 'SCB', bankAccount: '409-2-11880-3', active: false, deleted: true, rowVersion: 5 },
-];
 
 const copy = {
   'zh-TW': {
@@ -36,36 +23,54 @@ const copy = {
     all: '全部', active: '使用中', inactive: '停用', deleted: '已刪除', supplier: '供應商', phone: '電話', status: '狀態', records: '筆資料',
     edit: '編輯', deactivate: '停用', activate: '啟用', softDelete: '刪除', restore: '恢復', basicInfo: '基本資料',
     nameZhTw: '中文名稱', nameThTh: '泰文名稱', contactInfo: '聯絡資料', address: '地址', paymentInfo: '銀行資料', bankName: '銀行名稱', bankAccount: '銀行帳號',
-    activeState: '啟用狀態', chooseState: '請選擇啟用狀態。', nameRequired: '中文名稱與泰文名稱至少填寫一項。',
-    save: '儲存', cancel: '取消', createTitle: '新增供應商', editTitle: '編輯供應商', deleteTitle: '刪除供應商',
-    deleteMessage: '這會將資料設為軟刪除；之後仍可從「已刪除」清單恢復。', confirmDelete: '確認刪除', noResult: '沒有符合條件的供應商。', notProvided: '—',
+    activeState: '啟用狀態', nameRequired: '中文名稱與泰文名稱至少填寫一項。', save: '儲存', cancel: '取消', createTitle: '新增供應商', editTitle: '編輯供應商',
+    deleteTitle: '刪除供應商', deleteMessage: '這會將資料設為軟刪除；之後仍可從「已刪除」清單恢復，也會出現在資料保護區的硬刪除清單。', confirmDelete: '確認刪除',
+    noResult: '沒有符合條件的供應商。', notProvided: '—',
   },
   'th-TH': {
     eyebrow: 'จัดการคู่ค้า', title: 'ผู้จำหน่าย', prototype: 'ต้นแบบการใช้งาน', newSupplier: 'เพิ่มผู้จำหน่าย', search: 'ค้นหาชื่อ โทรศัพท์ หรือธนาคาร',
     all: 'ทั้งหมด', active: 'ใช้งาน', inactive: 'ไม่ใช้งาน', deleted: 'ลบแล้ว', supplier: 'ผู้จำหน่าย', phone: 'โทรศัพท์', status: 'สถานะ', records: 'รายการ',
     edit: 'แก้ไข', deactivate: 'ปิดใช้งาน', activate: 'เปิดใช้งาน', softDelete: 'ลบ', restore: 'กู้คืน', basicInfo: 'ข้อมูลพื้นฐาน',
     nameZhTw: 'ชื่อภาษาจีน', nameThTh: 'ชื่อภาษาไทย', contactInfo: 'ข้อมูลติดต่อ', address: 'ที่อยู่', paymentInfo: 'ข้อมูลธนาคาร', bankName: 'ชื่อธนาคาร', bankAccount: 'เลขบัญชีธนาคาร',
-    activeState: 'สถานะการใช้งาน', chooseState: 'โปรดเลือกสถานะการใช้งาน', nameRequired: 'ต้องระบุชื่อภาษาจีนหรือชื่อภาษาไทยอย่างน้อยหนึ่งรายการ',
-    save: 'บันทึก', cancel: 'ยกเลิก', createTitle: 'เพิ่มผู้จำหน่าย', editTitle: 'แก้ไขผู้จำหน่าย', deleteTitle: 'ลบผู้จำหน่าย',
-    deleteMessage: 'รายการจะถูกลบแบบเก็บประวัติ และสามารถกู้คืนได้จากรายการ “ลบแล้ว”', confirmDelete: 'ยืนยันการลบ', noResult: 'ไม่พบผู้จำหน่ายที่ตรงกับเงื่อนไข', notProvided: '—',
+    activeState: 'สถานะการใช้งาน', nameRequired: 'ต้องระบุชื่อภาษาจีนหรือชื่อภาษาไทยอย่างน้อยหนึ่งรายการ', save: 'บันทึก', cancel: 'ยกเลิก', createTitle: 'เพิ่มผู้จำหน่าย', editTitle: 'แก้ไขผู้จำหน่าย',
+    deleteTitle: 'ลบผู้จำหน่าย', deleteMessage: 'รายการจะถูกลบแบบเก็บประวัติ สามารถกู้คืนได้ และจะแสดงในพื้นที่คุ้มครองสำหรับการลบถาวร', confirmDelete: 'ยืนยันการลบ',
+    noResult: 'ไม่พบผู้จำหน่ายที่ตรงกับเงื่อนไข', notProvided: '—',
   },
 } as const;
 
 type PrototypeLabels = typeof copy['zh-TW'] | typeof copy['th-TH'];
 
+type SupplierDraft = PrototypeSupplierDraft;
+
 function toDraft(item: PrototypeSupplier): SupplierDraft {
-  return { nameZhTw: item.nameZhTw, nameThTh: item.nameThTh, phone: item.phone, address: item.address, bankName: item.bankName, bankAccount: item.bankAccount, active: item.active };
+  return {
+    nameZhTw: item.nameZhTw,
+    nameThTh: item.nameThTh,
+    phone: item.phone,
+    address: item.address,
+    bankName: item.bankName,
+    bankAccount: item.bankAccount,
+    active: item.active,
+  };
 }
 
 function emptyDraft(): SupplierDraft {
-  return { nameZhTw: '', nameThTh: '', phone: '', address: '', bankName: '', bankAccount: '', active: null };
+  return {
+    nameZhTw: '',
+    nameThTh: '',
+    phone: '',
+    address: '',
+    bankName: '',
+    bankAccount: '',
+    active: true,
+  };
 }
 
 export function SupplierMasterPrototypePage() {
   const { locale } = useOperationalLocale();
   const labels = copy[locale];
-  const initial = prototypeSuppliers[0]!;
-  const [items, setItems] = useState<PrototypeSupplier[]>(prototypeSuppliers);
+  const items = usePrototypeSuppliers();
+  const initial = getPrototypeSuppliers()[0]!;
   const [selectedId, setSelectedId] = useState(initial.id);
   const [mode, setMode] = useState<EditorMode>('detail');
   const [draft, setDraft] = useState<SupplierDraft>(() => toDraft(initial));
@@ -82,7 +87,9 @@ export function SupplierMasterPrototypePage() {
         || (filter === 'active' && item.active && !item.deleted)
         || (filter === 'inactive' && !item.active && !item.deleted)
         || (filter === 'deleted' && item.deleted);
-      return matchesFilter && (normalized.length === 0 || [item.nameZhTw, item.nameThTh, item.phone, item.bankName].some((value) => value.toLocaleLowerCase().includes(normalized)));
+      return matchesFilter && (normalized.length === 0
+        || [item.nameZhTw, item.nameThTh, item.phone, item.bankName]
+          .some((value) => value.toLocaleLowerCase().includes(normalized)));
     });
   }, [filter, items, query]);
 
@@ -122,34 +129,41 @@ export function SupplierMasterPrototypePage() {
   }
 
   function cancelEditor() {
-    if (selected !== null) setDraft(toDraft(selected));
+    if (selected !== null) {
+      setDraft(toDraft(selected));
+      setMode('detail');
+    } else {
+      const fallback = getPrototypeSuppliers()[0] ?? null;
+      if (fallback !== null) selectSupplier(fallback);
+      else setMode('create');
+    }
     setFormError(null);
-    setMode('detail');
   }
 
   function saveDraft(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const normalized = {
-      nameZhTw: draft.nameZhTw.trim(), nameThTh: draft.nameThTh.trim(), phone: draft.phone.trim(), address: draft.address.trim(),
-      bankName: draft.bankName.trim(), bankAccount: draft.bankAccount.trim(), active: draft.active,
+    const normalized: PrototypeSupplierDraft = {
+      nameZhTw: draft.nameZhTw.trim(),
+      nameThTh: draft.nameThTh.trim(),
+      phone: draft.phone.trim(),
+      address: draft.address.trim(),
+      bankName: draft.bankName.trim(),
+      bankAccount: draft.bankAccount.trim(),
+      active: draft.active,
     };
     if (!normalized.nameZhTw && !normalized.nameThTh) {
       setFormError(labels.nameRequired);
       return;
     }
-    if (normalized.active === null) {
-      setFormError(labels.chooseState);
-      return;
-    }
 
     if (mode === 'create') {
-      const created: PrototypeSupplier = { id: `prototype-${crypto.randomUUID()}`, ...normalized, active: normalized.active!, deleted: false, rowVersion: 1 };
-      setItems((current) => [created, ...current]);
+      const created = createPrototypeSupplier(normalized);
       setSelectedId(created.id);
       setDraft(toDraft(created));
       setFilter('all');
     } else if (mode === 'edit' && selected !== null) {
-      setItems((current) => current.map((item) => item.id === selected.id ? { ...item, ...normalized, active: normalized.active!, rowVersion: item.rowVersion + 1 } : item));
+      updatePrototypeSupplier(selected.id, normalized);
+      setDraft(normalized);
     }
     setFormError(null);
     setMode('detail');
@@ -157,19 +171,19 @@ export function SupplierMasterPrototypePage() {
 
   function toggleActive() {
     if (selected === null || selected.deleted) return;
-    setItems((current) => current.map((item) => item.id === selected.id ? { ...item, active: !item.active, rowVersion: item.rowVersion + 1 } : item));
+    togglePrototypeSupplierActive(selected.id);
   }
 
   function softDelete() {
     if (selected === null) return;
-    setItems((current) => current.map((item) => item.id === selected.id ? { ...item, deleted: true, rowVersion: item.rowVersion + 1 } : item));
+    softDeletePrototypeSupplier(selected.id);
     setFilter('deleted');
     setDeleteOpen(false);
   }
 
   function restore() {
     if (selected === null) return;
-    setItems((current) => current.map((item) => item.id === selected.id ? { ...item, deleted: false, rowVersion: item.rowVersion + 1 } : item));
+    restorePrototypeSupplier(selected.id);
     setFilter('all');
   }
 
@@ -257,13 +271,13 @@ function SupplierEditor({ mode, draft, labels, error, onDraftChange, onSubmit, o
 }) {
   const update = <K extends keyof SupplierDraft>(key: K, value: SupplierDraft[K]) => onDraftChange({ ...draft, [key]: value });
   return <form className="supplier-editor" onSubmit={onSubmit}>
-    <header className="supplier-detail-header supplier-editor-header"><h2>{mode === 'create' ? labels.createTitle : labels.editTitle}</h2><div className="supplier-detail-actions"><button className="supplier-secondary-action" type="button" onClick={onCancel}>{labels.cancel}</button><button className="supplier-primary-action" type="submit">{labels.save}</button></div></header>
+    <header className="supplier-detail-header supplier-editor-header"><h2>{mode === 'create' ? labels.createTitle : labels.editTitle}</h2></header>
     <FormSection title={labels.basicInfo}>
       <Field label={labels.nameZhTw}><input value={draft.nameZhTw} onChange={(event) => update('nameZhTw', event.target.value)} /></Field>
       <Field label={labels.nameThTh}><input value={draft.nameThTh} onChange={(event) => update('nameThTh', event.target.value)} /></Field>
       <fieldset className="supplier-state-fieldset supplier-form-wide"><legend className="field-label">{labels.activeState}</legend>
-        <label className={draft.active === true ? 'is-selected' : ''}><input type="radio" name="supplier-active-state" checked={draft.active === true} onChange={() => update('active', true)} />{labels.active}</label>
-        <label className={draft.active === false ? 'is-selected' : ''}><input type="radio" name="supplier-active-state" checked={draft.active === false} onChange={() => update('active', false)} />{labels.inactive}</label>
+        <label className={draft.active ? 'is-selected' : ''}><input type="radio" name="supplier-active-state" checked={draft.active} onChange={() => update('active', true)} />{labels.active}</label>
+        <label className={!draft.active ? 'is-selected' : ''}><input type="radio" name="supplier-active-state" checked={!draft.active} onChange={() => update('active', false)} />{labels.inactive}</label>
       </fieldset>
     </FormSection>
     <FormSection title={labels.contactInfo}>
@@ -275,19 +289,23 @@ function SupplierEditor({ mode, draft, labels, error, onDraftChange, onSubmit, o
       <Field label={labels.bankAccount}><input value={draft.bankAccount} onChange={(event) => update('bankAccount', event.target.value)} /></Field>
     </FormSection>
     {error && <div className="problem-banner" role="alert">{error}</div>}
+    <footer className="supplier-editor-footer">
+      <button className="supplier-secondary-action" type="button" onClick={onCancel}>{labels.cancel}</button>
+      <button className="supplier-primary-action" type="submit">{labels.save}</button>
+    </footer>
   </form>;
 }
 
-function DetailSection({ title, children }: { title: string; children: React.ReactNode }) {
+function DetailSection({ title, children }: { title: string; children: ReactNode }) {
   return <section className="supplier-detail-section"><h3>{title}</h3><div className="supplier-detail-fields">{children}</div></section>;
 }
-function FormSection({ title, children }: { title: string; children: React.ReactNode }) {
+function FormSection({ title, children }: { title: string; children: ReactNode }) {
   return <section className="supplier-detail-section"><h3>{title}</h3><div className="supplier-form-grid">{children}</div></section>;
 }
 function DetailField({ label, value, fallback, wide = false }: { label: string; value: string; fallback: string; wide?: boolean }) {
   return <div className={`supplier-detail-field${wide ? ' is-wide' : ''}`}><dt>{label}</dt><dd>{value || fallback}</dd></div>;
 }
-function Field({ label, children, wide = false }: { label: string; children: React.ReactNode; wide?: boolean }) {
+function Field({ label, children, wide = false }: { label: string; children: ReactNode; wide?: boolean }) {
   return <label className={wide ? 'supplier-form-wide' : undefined}><span className="field-label">{label}</span>{children}</label>;
 }
 function StatusPill({ item, labels }: { item: PrototypeSupplier; labels: PrototypeLabels }) {

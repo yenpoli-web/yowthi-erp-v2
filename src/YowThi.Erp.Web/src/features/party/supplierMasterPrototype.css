@@ -529,6 +529,16 @@
   margin-top: 0.85rem;
 }
 
+.supplier-editor-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  margin-top: 1.15rem;
+  padding-top: 1rem;
+  border-top: 1px solid #dfe9e4;
+}
+
 .supplier-dialog-backdrop {
   position: fixed;
   inset: 0;
@@ -688,8 +698,13 @@
     justify-content: flex-start;
   }
 
-  .supplier-detail-actions > button {
+  .supplier-detail-actions > button,
+  .supplier-editor-footer > button {
     flex: 1 1 auto;
+  }
+
+  .supplier-editor-footer {
+    justify-content: stretch;
   }
 
   .supplier-detail-fields,
