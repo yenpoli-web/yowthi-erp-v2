@@ -203,6 +203,68 @@
   color: #176242;
 }
 
+.field-grid > .primary-action {
+  margin-top: 0;
+  border: 1px solid #bfd8c0;
+  background: #eff7ee;
+  color: #24543e;
+  box-shadow: none;
+}
+
+.field-grid > .primary-action:hover:not(:disabled) {
+  border-color: #9fc5a6;
+  background: #e5f2e4;
+  color: #174a35;
+  box-shadow: none;
+}
+
+.field-grid > .primary-action:disabled {
+  opacity: 1;
+  border-color: #0b7b5f;
+  background: #0b7b5f;
+  color: #fff;
+  cursor: default;
+  box-shadow: 0 4px 10px rgba(11, 123, 95, 0.12);
+}
+
+.entry-form > dl {
+  padding: 0.7rem 0.78rem;
+  border: 1px solid #e1e9de;
+  border-radius: 0.72rem;
+  background: #f9fcf7;
+}
+
+.entry-form .result-row:has(> label) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(10rem, 0.38fr);
+  gap: 0.85rem;
+  align-items: end;
+}
+
+.entry-form .result-row:has(> label) > div {
+  min-width: 0;
+  color: #4c6456;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.entry-form .result-row:has(> label) > div strong {
+  display: block;
+  margin-bottom: 0.18rem;
+  color: #1f4432;
+}
+
+.entry-form .result-row > label {
+  display: grid;
+  gap: 0.32rem;
+}
+
+.entry-form .result-row > label span {
+  color: #294a39;
+  font-size: 0.76rem;
+  font-weight: 760;
+}
+
 @media (max-width: 1060px) {
   .procurement-grid {
     grid-template-columns: minmax(0, 1.3fr) minmax(16rem, 0.62fr);
@@ -259,6 +321,15 @@
   .primary-action {
     width: 100%;
     margin-top: 0.78rem;
+  }
+
+  .field-grid > .primary-action {
+    margin-top: 0;
+  }
+
+  .entry-form .result-row:has(> label) {
+    grid-template-columns: 1fr;
+    align-items: stretch;
   }
 
   .result-placeholder {

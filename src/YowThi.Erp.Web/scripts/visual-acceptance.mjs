@@ -20,16 +20,28 @@ const cases = [
   { name: 'desktop-outsourced', experience: 'desktop', width: 1440, height: 900, path: '/outsourced/supply-details/new' },
   { name: 'desktop-processing', experience: 'desktop', width: 1440, height: 900, path: '/processing/executions/new' },
   { name: 'desktop-sales', experience: 'desktop', width: 1440, height: 900, path: '/sales' },
+  { name: 'desktop-sales-handling', experience: 'desktop', width: 1440, height: 900, path: '/sales-handling' },
+  { name: 'desktop-labor', experience: 'desktop', width: 1440, height: 900, path: '/labor' },
+  { name: 'desktop-finance', experience: 'desktop', width: 1440, height: 900, path: '/finance' },
+  { name: 'desktop-inventory', experience: 'desktop', width: 1440, height: 900, path: '/inventory' },
   { name: 'tablet-home', experience: 'tablet', width: 1024, height: 768, path: '/modules' },
   { name: 'tablet-procurement', experience: 'tablet', width: 1024, height: 768, path: '/procurement/entries/new' },
   { name: 'tablet-outsourced', experience: 'tablet', width: 1024, height: 768, path: '/outsourced/supply-details/new' },
   { name: 'tablet-processing', experience: 'tablet', width: 1024, height: 768, path: '/processing/executions/new' },
   { name: 'tablet-sales', experience: 'tablet', width: 1024, height: 768, path: '/sales' },
+  { name: 'tablet-sales-handling', experience: 'tablet', width: 1024, height: 768, path: '/sales-handling' },
+  { name: 'tablet-labor', experience: 'tablet', width: 1024, height: 768, path: '/labor' },
+  { name: 'tablet-finance', experience: 'tablet', width: 1024, height: 768, path: '/finance' },
+  { name: 'tablet-inventory', experience: 'tablet', width: 1024, height: 768, path: '/inventory' },
   { name: 'mobile-home', experience: 'mobile', width: 390, height: 844, path: '/modules' },
   { name: 'mobile-procurement', experience: 'mobile', width: 390, height: 844, path: '/procurement/entries/new' },
   { name: 'mobile-outsourced', experience: 'mobile', width: 390, height: 844, path: '/outsourced/supply-details/new' },
   { name: 'mobile-processing', experience: 'mobile', width: 390, height: 844, path: '/processing/executions/new' },
   { name: 'mobile-sales', experience: 'mobile', width: 390, height: 844, path: '/sales' },
+  { name: 'mobile-sales-handling', experience: 'mobile', width: 390, height: 844, path: '/sales-handling' },
+  { name: 'mobile-labor', experience: 'mobile', width: 390, height: 844, path: '/labor' },
+  { name: 'mobile-finance', experience: 'mobile', width: 390, height: 844, path: '/finance' },
+  { name: 'mobile-inventory', experience: 'mobile', width: 390, height: 844, path: '/inventory' },
   { name: 'mobile-narrow-home', experience: 'mobile', width: 360, height: 800, path: '/modules' },
 ];
 
@@ -188,7 +200,7 @@ async function main() {
     console.log('visual acceptance: PASS');
     console.log(`- cases: ${results.length}/${cases.length}`);
     console.log('- experiences: desktop / tablet / mobile');
-    console.log('- routes: home / procurement / outsourced supply / processing / sales');
+    console.log('- routes: home / procurement / outsourced supply / processing / sales / sales handling / labor / finance / inventory');
     console.log('- viewport overflow: none');
     console.log('- zh-TW / th-TH static interface mixing: none');
     console.log('- mobile module menu bounds: accepted');
