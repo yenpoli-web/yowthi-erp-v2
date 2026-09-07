@@ -203,7 +203,7 @@ export function InfrastructureLifecyclePage() {
           )}
 
           <button
-            className="primary-action"
+            className={`primary-action${action === 'soft-delete' ? ' danger-action' : ''}`}
             type="button"
             onClick={submitLifecycle}
             disabled={mutation.isPending || selected === null}

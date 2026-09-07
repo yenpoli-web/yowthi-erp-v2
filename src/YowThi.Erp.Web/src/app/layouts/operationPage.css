@@ -265,6 +265,45 @@
   font-weight: 760;
 }
 
+.primary-action.danger-action {
+  border-color: #b42318;
+  background: #b42318;
+  color: #fff;
+  box-shadow: 0 6px 14px rgba(180, 35, 24, 0.14);
+}
+
+.primary-action.danger-action:hover:not(:disabled) {
+  border-color: #912018;
+  background: #912018;
+  color: #fff;
+  box-shadow: 0 7px 17px rgba(180, 35, 24, 0.18);
+}
+
+.destructive-confirmation {
+  max-width: none;
+  margin: 0.9rem 0 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  padding: 0.72rem 0.78rem;
+  border: 1px solid #f2c8c3;
+  border-radius: 0.72rem;
+  background: #fff7f5;
+  color: #7a271a;
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
+.destructive-confirmation input[type="checkbox"] {
+  flex: 0 0 auto;
+  margin-top: 0.18rem;
+  accent-color: #b42318;
+}
+
+.destructive-confirmation strong {
+  color: #912018;
+}
+
 @media (max-width: 1060px) {
   .procurement-grid {
     grid-template-columns: minmax(0, 1.3fr) minmax(16rem, 0.62fr);

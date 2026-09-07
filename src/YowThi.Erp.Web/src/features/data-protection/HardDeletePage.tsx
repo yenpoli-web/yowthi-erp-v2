@@ -197,7 +197,7 @@ export function HardDeletePage() {
             </dl>
           )}
 
-          <label className="page-intro">
+          <label className="page-intro destructive-confirmation">
             <input
               type="checkbox"
               checked={confirmed}
@@ -219,7 +219,7 @@ export function HardDeletePage() {
           )}
 
           <button
-            className="primary-action"
+            className="primary-action danger-action"
             type="button"
             onClick={submitHardDelete}
             disabled={mutation.isPending || selected === null || !confirmed}

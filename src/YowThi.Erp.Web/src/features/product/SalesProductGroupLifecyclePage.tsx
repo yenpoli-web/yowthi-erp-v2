@@ -135,7 +135,7 @@ export function SalesProductGroupLifecyclePage() {
         <div className="entry-form">
           <div className="field-grid">
             <div className="option-picker full-width">
-              <span className="field-label">Sales Product Group</span>
+              <span className="field-label">{labels.entityLabel}</span>
               <input
                 value={search}
                 onChange={(event) => {
@@ -163,7 +163,7 @@ export function SalesProductGroupLifecyclePage() {
 
           {selected && (
             <dl>
-              <ResultRow label="Sales Product Group" value={selected.displayName} />
+              <ResultRow label={labels.entityLabel} value={selected.displayName} />
               <ResultRow label={labels.activeLabel} value={selected.active ? labels.active : labels.inactive} />
               <ResultRow label={labels.lifecycleState} value={selected.deleted ? labels.deleted : labels.current} />
               <ResultRow label={labels.rowVersion} value={String(selected.rowVersion)} />
@@ -178,7 +178,7 @@ export function SalesProductGroupLifecyclePage() {
           )}
 
           <button
-            className="primary-action"
+            className={`primary-action${action === 'soft-delete' ? ' danger-action' : ''}`}
             type="button"
             onClick={submitLifecycle}
             disabled={mutation.isPending || selected === null}

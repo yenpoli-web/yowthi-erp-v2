@@ -24,6 +24,10 @@ const cases = [
   { name: 'desktop-labor', experience: 'desktop', width: 1440, height: 900, path: '/labor' },
   { name: 'desktop-finance', experience: 'desktop', width: 1440, height: 900, path: '/finance' },
   { name: 'desktop-inventory', experience: 'desktop', width: 1440, height: 900, path: '/inventory' },
+  { name: 'desktop-party', experience: 'desktop', width: 1440, height: 900, path: '/party' },
+  { name: 'desktop-infrastructure', experience: 'desktop', width: 1440, height: 900, path: '/infrastructure' },
+  { name: 'desktop-product', experience: 'desktop', width: 1440, height: 900, path: '/product' },
+  { name: 'desktop-data-protection', experience: 'desktop', width: 1440, height: 900, path: '/data-protection' },
   { name: 'tablet-home', experience: 'tablet', width: 1024, height: 768, path: '/modules' },
   { name: 'tablet-procurement', experience: 'tablet', width: 1024, height: 768, path: '/procurement/entries/new' },
   { name: 'tablet-outsourced', experience: 'tablet', width: 1024, height: 768, path: '/outsourced/supply-details/new' },
@@ -33,6 +37,10 @@ const cases = [
   { name: 'tablet-labor', experience: 'tablet', width: 1024, height: 768, path: '/labor' },
   { name: 'tablet-finance', experience: 'tablet', width: 1024, height: 768, path: '/finance' },
   { name: 'tablet-inventory', experience: 'tablet', width: 1024, height: 768, path: '/inventory' },
+  { name: 'tablet-party', experience: 'tablet', width: 1024, height: 768, path: '/party' },
+  { name: 'tablet-infrastructure', experience: 'tablet', width: 1024, height: 768, path: '/infrastructure' },
+  { name: 'tablet-product', experience: 'tablet', width: 1024, height: 768, path: '/product' },
+  { name: 'tablet-data-protection', experience: 'tablet', width: 1024, height: 768, path: '/data-protection' },
   { name: 'mobile-home', experience: 'mobile', width: 390, height: 844, path: '/modules' },
   { name: 'mobile-procurement', experience: 'mobile', width: 390, height: 844, path: '/procurement/entries/new' },
   { name: 'mobile-outsourced', experience: 'mobile', width: 390, height: 844, path: '/outsourced/supply-details/new' },
@@ -42,6 +50,10 @@ const cases = [
   { name: 'mobile-labor', experience: 'mobile', width: 390, height: 844, path: '/labor' },
   { name: 'mobile-finance', experience: 'mobile', width: 390, height: 844, path: '/finance' },
   { name: 'mobile-inventory', experience: 'mobile', width: 390, height: 844, path: '/inventory' },
+  { name: 'mobile-party', experience: 'mobile', width: 390, height: 844, path: '/party' },
+  { name: 'mobile-infrastructure', experience: 'mobile', width: 390, height: 844, path: '/infrastructure' },
+  { name: 'mobile-product', experience: 'mobile', width: 390, height: 844, path: '/product' },
+  { name: 'mobile-data-protection', experience: 'mobile', width: 390, height: 844, path: '/data-protection' },
   { name: 'mobile-narrow-home', experience: 'mobile', width: 360, height: 800, path: '/modules' },
 ];
 
@@ -200,7 +212,7 @@ async function main() {
     console.log('visual acceptance: PASS');
     console.log(`- cases: ${results.length}/${cases.length}`);
     console.log('- experiences: desktop / tablet / mobile');
-    console.log('- routes: home / procurement / outsourced supply / processing / sales / sales handling / labor / finance / inventory');
+    console.log('- routes: home / procurement / outsourced supply / processing / sales / sales handling / labor / finance / inventory / party / infrastructure / product / data protection');
     console.log('- viewport overflow: none');
     console.log('- zh-TW / th-TH static interface mixing: none');
     console.log('- mobile module menu bounds: accepted');
@@ -314,7 +326,7 @@ async function inspectPage(client) {
       return { left: value.left, top: value.top, right: value.right, bottom: value.bottom, width: value.width, height: value.height };
     })() : null;
     const staticSelectors = [
-      'h1', 'h2', 'h3', 'button', 'label:not(.locale-control)',
+      'h1', 'h2', 'h3', 'button', 'label:not(.locale-control)', '.field-label',
       '.reference-desktop-navigation a', '.nature-tablet-navigation a',
       '.nature-mobile-bottom-navigation a', '.nature-mobile-navigation-links a',
       '.nature-mobile-menu-home', '.workspace-topbar strong', '.nature-mobile-toolbar strong'
