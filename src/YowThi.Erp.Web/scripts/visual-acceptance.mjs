@@ -230,6 +230,7 @@ async function main() {
     console.log('- mobile fixed top shell: accepted');
     console.log('- mobile docked bottom navigation: accepted');
     console.log('- PWA standalone metadata and root scope: accepted');
+    console.log('- mobile form controls >= 16px to prevent iOS focus zoom: accepted');
     console.log('- party management master-module navigation: 5/5 visible');
     console.log('- party lifecycle routes use the same master-management shell: accepted');
   } catch (error) {
@@ -461,6 +462,9 @@ function assertMetrics(acceptanceCase, metrics, locale) {
     if (metrics.mobileBottomItemCount !== 4) {
       throw new Error(`${name}: mobile bottom navigation must expose exactly 4 entries; found ${metrics.mobileBottomItemCount}.`);
     }
+    if (metrics.mobileUndersizedFormControls.length > 0) {
+      throw new Error(`${name}: mobile form controls below 16px can trigger iOS focus zoom: ${JSON.stringify(metrics.mobileUndersizedFormControls.slice(0, 5))}.`);
+    }
   }
 }
 
@@ -504,6 +508,14 @@ async function inspectPage(client) {
     const tabletNavigation = document.querySelector('.nature-tablet-navigation');
     const mobileHeader = document.querySelector('.nature-mobile-shell-header');
     const mobileBottomNavigation = document.querySelector('.nature-mobile-bottom-navigation');
+    const mobileUndersizedFormControls = [...document.querySelectorAll('input, select, textarea')]
+      .filter(visible)
+      .map((element) => ({
+        tag: element.tagName,
+        type: element.getAttribute('type') ?? '',
+        fontSize: Number.parseFloat(getComputedStyle(element).fontSize),
+      }))
+      .filter((item) => Number.isFinite(item.fontSize) && item.fontSize < 16);
     return {
       experience: shell?.getAttribute('data-ui-experience') ?? null,
       lang: document.documentElement.lang,
@@ -523,6 +535,7 @@ async function inspectPage(client) {
       mobileBottomNavigation: rect(mobileBottomNavigation),
       mobileBottomPosition: mobileBottomNavigation ? getComputedStyle(mobileBottomNavigation).position : null,
       mobileBottomItemCount: mobileBottomNavigation ? mobileBottomNavigation.querySelectorAll(':scope > a').length : 0,
+      mobileUndersizedFormControls,
       partyMasterKindCount: document.querySelectorAll('.party-master-kind-switcher > a, .party-master-kind-switcher > span').length,
     };
   })()`);
