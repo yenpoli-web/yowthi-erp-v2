@@ -96,7 +96,8 @@ public static class SupplierMasterEndpoints
             Normalize(request.BankAccount),
             Normalize(request.Phone),
             Normalize(request.Address),
-            request.Active);
+            request.Active,
+            Normalize(request.Code));
         var canonicalPayload = JsonPayload.FromUtf8Json(
             JsonSerializer.SerializeToUtf8Bytes(
                 new CanonicalCreateSupplierRequest(CreateCommandType, command),
@@ -140,7 +141,8 @@ public static class SupplierMasterEndpoints
             Normalize(request.BankAccount),
             Normalize(request.Phone),
             Normalize(request.Address),
-            request.Active);
+            request.Active,
+            Normalize(request.Code));
         var canonicalPayload = JsonPayload.FromUtf8Json(
             JsonSerializer.SerializeToUtf8Bytes(
                 new CanonicalUpdateSupplierRequest(UpdateCommandType, command),
@@ -206,7 +208,8 @@ public sealed record CreateSupplierRequest(
     string? BankAccount,
     string? Phone,
     string? Address,
-    bool Active);
+    bool Active,
+    string? Code = null);
 
 public sealed record UpdateSupplierRequest(
     long ExpectedRowVersion,
@@ -216,4 +219,5 @@ public sealed record UpdateSupplierRequest(
     string? BankAccount,
     string? Phone,
     string? Address,
-    bool Active);
+    bool Active,
+    string? Code = null);

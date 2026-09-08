@@ -200,13 +200,14 @@ internal sealed class PostgreSqlCustomerMasterExecutor : ICustomerMasterExecutor
         await using var insert = CreateSqlCommand(
             """
             INSERT INTO party.customers
-                (id, name_zh_tw, name_th_th, phone, active, row_version,
+                (id, code, name_zh_tw, name_th_th, phone, active, row_version,
                  created_at, created_by_account_id, deleted_at, deleted_by_account_id)
             VALUES
-                (@id, @name_zh_tw, @name_th_th, @phone, @active, 1,
+                (@id, @code, @name_zh_tw, @name_th_th, @phone, @active, 1,
                  @created_at, @created_by_account_id, NULL, NULL);
             """);
         insert.Parameters.AddWithValue("id", customerId);
+        AddNullableText(insert, "code", command.Code);
         AddNullableText(insert, "name_zh_tw", command.NameZhTw);
         AddNullableText(insert, "name_th_th", command.NameThTh);
         AddNullableText(insert, "phone", command.Phone);
@@ -247,7 +248,8 @@ internal sealed class PostgreSqlCustomerMasterExecutor : ICustomerMasterExecutor
         await using var update = CreateSqlCommand(
             """
             UPDATE party.customers
-            SET name_zh_tw = @name_zh_tw,
+            SET code = @code,
+                name_zh_tw = @name_zh_tw,
                 name_th_th = @name_th_th,
                 phone = @phone,
                 active = @active,
@@ -259,6 +261,7 @@ internal sealed class PostgreSqlCustomerMasterExecutor : ICustomerMasterExecutor
             """);
         update.Parameters.AddWithValue("customer_id", command.CustomerId);
         update.Parameters.AddWithValue("expected_row_version", command.ExpectedRowVersion);
+        AddNullableText(update, "code", command.Code);
         AddNullableText(update, "name_zh_tw", command.NameZhTw);
         AddNullableText(update, "name_th_th", command.NameThTh);
         AddNullableText(update, "phone", command.Phone);

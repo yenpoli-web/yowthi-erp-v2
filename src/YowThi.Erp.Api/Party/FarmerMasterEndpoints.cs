@@ -96,7 +96,8 @@ public static class FarmerMasterEndpoints
             Normalize(request.BankAccount),
             Normalize(request.Phone),
             Normalize(request.Address),
-            request.Active);
+            request.Active,
+            Normalize(request.Code));
         var canonicalPayload = JsonPayload.FromUtf8Json(
             JsonSerializer.SerializeToUtf8Bytes(
                 new CanonicalCreateFarmerRequest(CreateCommandType, command),
@@ -140,7 +141,8 @@ public static class FarmerMasterEndpoints
             Normalize(request.BankAccount),
             Normalize(request.Phone),
             Normalize(request.Address),
-            request.Active);
+            request.Active,
+            Normalize(request.Code));
         var canonicalPayload = JsonPayload.FromUtf8Json(
             JsonSerializer.SerializeToUtf8Bytes(
                 new CanonicalUpdateFarmerRequest(UpdateCommandType, command),
@@ -206,7 +208,8 @@ public sealed record CreateFarmerRequest(
     string? BankAccount,
     string? Phone,
     string? Address,
-    bool Active);
+    bool Active,
+    string? Code = null);
 
 public sealed record UpdateFarmerRequest(
     long ExpectedRowVersion,
@@ -216,4 +219,5 @@ public sealed record UpdateFarmerRequest(
     string? BankAccount,
     string? Phone,
     string? Address,
-    bool Active);
+    bool Active,
+    string? Code = null);

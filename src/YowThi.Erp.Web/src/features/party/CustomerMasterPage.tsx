@@ -15,6 +15,7 @@ import './supplierMasterPrototype.css';
 
 type EditorMode = 'detail' | 'create' | 'edit';
 type CustomerDraft = {
+  code: string;
   nameZhTw: string;
   nameThTh: string;
   phone: string;
@@ -24,19 +25,19 @@ type SubmissionIdentity = { fingerprint: string; idempotencyKey: string };
 
 const copy = {
   'zh-TW': {
-    eyebrow: '夥伴管理', title: '客戶', newCustomer: '新增客戶', search: '搜尋名稱或電話',
+    eyebrow: '夥伴管理', title: '客戶', newCustomer: '新增客戶', search: '搜尋編號、名稱或電話',
     supplierTab: '供應商', customerTab: '客戶', all: '全部', active: '使用中', inactive: '停用', deleted: '已刪除', customer: '客戶', phone: '電話', status: '狀態', records: '筆資料',
     edit: '編輯', deactivate: '停用', activate: '啟用', softDelete: '刪除', restore: '恢復', basicInfo: '基本資料', contactInfo: '聯絡資料',
-    nameZhTw: '中文名稱', nameThTh: '泰文名稱', activeState: '啟用狀態', nameRequired: '中文名稱與泰文名稱至少填寫一項。', save: '儲存', saving: '儲存中…', cancel: '取消', createTitle: '新增客戶', editTitle: '編輯客戶',
+    code: '編號', nameZhTw: '中文名稱', nameThTh: '泰文名稱', activeState: '啟用狀態', nameRequired: '中文名稱與泰文名稱至少填寫一項。', save: '儲存', saving: '儲存中…', cancel: '取消', createTitle: '新增客戶', editTitle: '編輯客戶',
     deleteTitle: '刪除客戶', deleteMessage: '這會將資料設為軟刪除；之後可從「已刪除」恢復，並會出現在資料保護的永久刪除清單。', confirmDelete: '確認刪除',
     noResult: '沒有符合條件的客戶。', notProvided: '—', queryFailed: '無法載入客戶資料', unexpected: '操作失敗，請重新整理後再試。',
     stale: '資料已被其他操作更新，請重新整理後再試。', notFound: '客戶資料不存在。', deletedConflict: '這筆客戶已經刪除，請先恢復後再編輯。', idempotency: '相同操作識別已被其他內容使用。',
   },
   'th-TH': {
-    eyebrow: 'จัดการคู่ค้า', title: 'ลูกค้า', newCustomer: 'เพิ่มลูกค้า', search: 'ค้นหาชื่อหรือโทรศัพท์',
+    eyebrow: 'จัดการคู่ค้า', title: 'ลูกค้า', newCustomer: 'เพิ่มลูกค้า', search: 'ค้นหารหัส ชื่อ หรือโทรศัพท์',
     supplierTab: 'ผู้จำหน่าย', customerTab: 'ลูกค้า', all: 'ทั้งหมด', active: 'ใช้งาน', inactive: 'ไม่ใช้งาน', deleted: 'ลบแล้ว', customer: 'ลูกค้า', phone: 'โทรศัพท์', status: 'สถานะ', records: 'รายการ',
     edit: 'แก้ไข', deactivate: 'ปิดใช้งาน', activate: 'เปิดใช้งาน', softDelete: 'ลบ', restore: 'กู้คืน', basicInfo: 'ข้อมูลพื้นฐาน', contactInfo: 'ข้อมูลติดต่อ',
-    nameZhTw: 'ชื่อภาษาจีน', nameThTh: 'ชื่อภาษาไทย', activeState: 'สถานะการใช้งาน', nameRequired: 'ต้องระบุชื่อภาษาจีนหรือชื่อภาษาไทยอย่างน้อยหนึ่งรายการ', save: 'บันทึก', saving: 'กำลังบันทึก…', cancel: 'ยกเลิก', createTitle: 'เพิ่มลูกค้า', editTitle: 'แก้ไขลูกค้า',
+    code: 'รหัส', nameZhTw: 'ชื่อภาษาจีน', nameThTh: 'ชื่อภาษาไทย', activeState: 'สถานะการใช้งาน', nameRequired: 'ต้องระบุชื่อภาษาจีนหรือชื่อภาษาไทยอย่างน้อยหนึ่งรายการ', save: 'บันทึก', saving: 'กำลังบันทึก…', cancel: 'ยกเลิก', createTitle: 'เพิ่มลูกค้า', editTitle: 'แก้ไขลูกค้า',
     deleteTitle: 'ลบลูกค้า', deleteMessage: 'รายการจะถูกลบแบบเก็บประวัติ สามารถกู้คืนได้ และจะแสดงในพื้นที่คุ้มครองสำหรับการลบถาวร', confirmDelete: 'ยืนยันการลบ',
     noResult: 'ไม่พบลูกค้าที่ตรงกับเงื่อนไข', notProvided: '—', queryFailed: 'ไม่สามารถโหลดข้อมูลลูกค้าได้', unexpected: 'ดำเนินการไม่สำเร็จ กรุณารีเฟรชแล้วลองใหม่',
     stale: 'ข้อมูลถูกแก้ไขโดยการทำงานอื่น กรุณารีเฟรชแล้วลองใหม่', notFound: 'ไม่พบข้อมูลลูกค้า', deletedConflict: 'ลูกค้านี้ถูกลบแล้ว กรุณากู้คืนก่อนแก้ไข', idempotency: 'รหัสการทำงานเดียวกันถูกใช้กับข้อมูลอื่นแล้ว',
@@ -46,14 +47,14 @@ const copy = {
 type Labels = typeof copy['zh-TW'] | typeof copy['th-TH'];
 
 function toDraft(item: CustomerMasterItem): CustomerDraft {
-  return { nameZhTw: item.nameZhTw ?? '', nameThTh: item.nameThTh ?? '', phone: item.phone ?? '', active: item.active };
+  return { code: item.code ?? '', nameZhTw: item.nameZhTw ?? '', nameThTh: item.nameThTh ?? '', phone: item.phone ?? '', active: item.active };
 }
 function emptyDraft(): CustomerDraft {
-  return { nameZhTw: '', nameThTh: '', phone: '', active: true };
+  return { code: '', nameZhTw: '', nameThTh: '', phone: '', active: true };
 }
 function toRequest(draft: CustomerDraft): CustomerDraftRequest {
   const optional = (value: string) => value.trim() || null;
-  return { nameZhTw: optional(draft.nameZhTw), nameThTh: optional(draft.nameThTh), phone: optional(draft.phone), active: draft.active };
+  return { code: optional(draft.code), nameZhTw: optional(draft.nameZhTw), nameThTh: optional(draft.nameThTh), phone: optional(draft.phone), active: draft.active };
 }
 
 export function CustomerMasterPage() {
@@ -202,11 +203,11 @@ export function CustomerMasterPage() {
 }
 
 function CustomerDetail({ item, displayName, secondaryName, labels, busy, onEdit, onToggleActive, onDelete, onRestore }: { item: CustomerMasterItem; displayName: string; secondaryName: string; labels: Labels; busy: boolean; onEdit: () => void; onToggleActive: () => void; onDelete: () => void; onRestore: () => void }) {
-  return <><header className="supplier-detail-header"><div><div className="supplier-detail-title-row"><h2>{displayName}</h2><StatusPill item={item} labels={labels} /></div>{secondaryName && <p>{secondaryName}</p>}</div><div className="supplier-detail-actions">{item.deletedAt ? <button className="supplier-primary-action" type="button" disabled={busy} onClick={onRestore}>{labels.restore}</button> : <><button className="supplier-secondary-action" type="button" disabled={busy} onClick={onEdit}>{labels.edit}</button><button className="supplier-secondary-action" type="button" disabled={busy} onClick={onToggleActive}>{item.active ? labels.deactivate : labels.activate}</button><button className="supplier-danger-ghost-action" type="button" disabled={busy} onClick={onDelete}>{labels.softDelete}</button></>}</div></header><DetailSection title={labels.basicInfo}><DetailField label={labels.nameZhTw} value={item.nameZhTw} fallback={labels.notProvided} /><DetailField label={labels.nameThTh} value={item.nameThTh} fallback={labels.notProvided} /></DetailSection><DetailSection title={labels.contactInfo}><DetailField label={labels.phone} value={item.phone} fallback={labels.notProvided} /></DetailSection></>;
+  return <><header className="supplier-detail-header"><div><div className="supplier-detail-title-row"><h2>{displayName}</h2><StatusPill item={item} labels={labels} /></div>{secondaryName && <p>{secondaryName}</p>}</div><div className="supplier-detail-actions">{item.deletedAt ? <button className="supplier-primary-action" type="button" disabled={busy} onClick={onRestore}>{labels.restore}</button> : <><button className="supplier-secondary-action" type="button" disabled={busy} onClick={onEdit}>{labels.edit}</button><button className="supplier-secondary-action" type="button" disabled={busy} onClick={onToggleActive}>{item.active ? labels.deactivate : labels.activate}</button><button className="supplier-danger-ghost-action" type="button" disabled={busy} onClick={onDelete}>{labels.softDelete}</button></>}</div></header><DetailSection title={labels.basicInfo}><DetailField label={labels.code} value={item.code} fallback={labels.notProvided} /><DetailField label={labels.nameZhTw} value={item.nameZhTw} fallback={labels.notProvided} /><DetailField label={labels.nameThTh} value={item.nameThTh} fallback={labels.notProvided} /></DetailSection><DetailSection title={labels.contactInfo}><DetailField label={labels.phone} value={item.phone} fallback={labels.notProvided} /></DetailSection></>;
 }
 function CustomerEditor({ mode, draft, labels, error, busy, onDraftChange, onSubmit, onCancel }: { mode: 'create' | 'edit'; draft: CustomerDraft; labels: Labels; error: string | null; busy: boolean; onDraftChange: (draft: CustomerDraft) => void; onSubmit: (event: FormEvent<HTMLFormElement>) => void; onCancel: () => void }) {
   const update = <K extends keyof CustomerDraft>(key: K, value: CustomerDraft[K]) => onDraftChange({ ...draft, [key]: value });
-  return <form className="supplier-editor" onSubmit={onSubmit}><header className="supplier-detail-header supplier-editor-header"><h2>{mode === 'create' ? labels.createTitle : labels.editTitle}</h2></header><FormSection title={labels.basicInfo}><Field label={labels.nameZhTw}><input value={draft.nameZhTw} onChange={(event) => update('nameZhTw', event.target.value)} /></Field><Field label={labels.nameThTh}><input value={draft.nameThTh} onChange={(event) => update('nameThTh', event.target.value)} /></Field><fieldset className="supplier-state-fieldset supplier-form-wide"><legend className="field-label">{labels.activeState}</legend><label className={draft.active ? 'is-selected' : ''}><input type="radio" name="customer-active-state" checked={draft.active} onChange={() => update('active', true)} />{labels.active}</label><label className={!draft.active ? 'is-selected' : ''}><input type="radio" name="customer-active-state" checked={!draft.active} onChange={() => update('active', false)} />{labels.inactive}</label></fieldset></FormSection><FormSection title={labels.contactInfo}><Field label={labels.phone}><input value={draft.phone} inputMode="tel" onChange={(event) => update('phone', event.target.value)} /></Field></FormSection>{error && <div className="problem-banner" role="alert">{error}</div>}<footer className="supplier-editor-footer"><button className="supplier-secondary-action" type="button" disabled={busy} onClick={onCancel}>{labels.cancel}</button><button className="supplier-primary-action" type="submit" disabled={busy}>{busy ? labels.saving : labels.save}</button></footer></form>;
+  return <form className="supplier-editor" onSubmit={onSubmit}><header className="supplier-detail-header supplier-editor-header"><h2>{mode === 'create' ? labels.createTitle : labels.editTitle}</h2></header><FormSection title={labels.basicInfo}><Field label={labels.code}><input value={draft.code} onChange={(event) => update('code', event.target.value)} /></Field><Field label={labels.nameZhTw}><input value={draft.nameZhTw} onChange={(event) => update('nameZhTw', event.target.value)} /></Field><Field label={labels.nameThTh}><input value={draft.nameThTh} onChange={(event) => update('nameThTh', event.target.value)} /></Field><fieldset className="supplier-state-fieldset supplier-form-wide"><legend className="field-label">{labels.activeState}</legend><label className={draft.active ? 'is-selected' : ''}><input type="radio" name="customer-active-state" checked={draft.active} onChange={() => update('active', true)} />{labels.active}</label><label className={!draft.active ? 'is-selected' : ''}><input type="radio" name="customer-active-state" checked={!draft.active} onChange={() => update('active', false)} />{labels.inactive}</label></fieldset></FormSection><FormSection title={labels.contactInfo}><Field label={labels.phone}><input value={draft.phone} inputMode="tel" onChange={(event) => update('phone', event.target.value)} /></Field></FormSection>{error && <div className="problem-banner" role="alert">{error}</div>}<footer className="supplier-editor-footer"><button className="supplier-secondary-action" type="button" disabled={busy} onClick={onCancel}>{labels.cancel}</button><button className="supplier-primary-action" type="submit" disabled={busy}>{busy ? labels.saving : labels.save}</button></footer></form>;
 }
 function DetailSection({ title, children }: { title: string; children: ReactNode }) { return <section className="supplier-detail-section"><h3>{title}</h3><div className="supplier-detail-fields">{children}</div></section>; }
 function FormSection({ title, children }: { title: string; children: ReactNode }) { return <section className="supplier-detail-section"><h3>{title}</h3><div className="supplier-form-grid">{children}</div></section>; }

@@ -92,7 +92,7 @@ public static class ProcurementEntryOptionEndpoints
         return TypedResults.Ok(new ProcurementSourceOptionsResponse(
             sourceType.ToString(),
             page.Items
-                .Select(item => new ProcurementSourceOptionResponse(item.Id, item.DisplayName))
+                .Select(item => new ProcurementSourceOptionResponse(item.Id, item.Code, item.DisplayName))
                 .ToArray(),
             EncodeCursor(page.NextOffset)));
     }
@@ -313,6 +313,7 @@ public sealed record ProcurementProductOptionsResponse(
 
 public sealed record ProcurementSourceOptionResponse(
     Guid Id,
+    string? Code,
     string DisplayName);
 
 public sealed record ProcurementSourceOptionsResponse(

@@ -12,7 +12,8 @@ public sealed record CreateFarmerCommand(
     string? BankAccount,
     string? Phone,
     string? Address,
-    bool Active);
+    bool Active,
+    string? Code = null);
 
 public sealed record CreateFarmerExecution(
     CommandId CommandId,
@@ -29,7 +30,8 @@ public sealed record UpdateFarmerCommand(
     string? BankAccount,
     string? Phone,
     string? Address,
-    bool Active);
+    bool Active,
+    string? Code = null);
 
 public sealed record UpdateFarmerExecution(
     CommandId CommandId,
@@ -68,6 +70,7 @@ public sealed record FarmerMasterQuery(
 
 public sealed record FarmerMasterItem(
     Guid Id,
+    string? Code,
     string? NameZhTw,
     string? NameThTh,
     string? BankName,

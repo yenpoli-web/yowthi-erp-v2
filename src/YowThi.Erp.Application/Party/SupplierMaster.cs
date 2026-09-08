@@ -12,7 +12,8 @@ public sealed record CreateSupplierCommand(
     string? BankAccount,
     string? Phone,
     string? Address,
-    bool Active);
+    bool Active,
+    string? Code = null);
 
 public sealed record CreateSupplierExecution(
     CommandId CommandId,
@@ -29,7 +30,8 @@ public sealed record UpdateSupplierCommand(
     string? BankAccount,
     string? Phone,
     string? Address,
-    bool Active);
+    bool Active,
+    string? Code = null);
 
 public sealed record UpdateSupplierExecution(
     CommandId CommandId,
@@ -68,6 +70,7 @@ public sealed record SupplierMasterQuery(
 
 public sealed record SupplierMasterItem(
     Guid Id,
+    string? Code,
     string? NameZhTw,
     string? NameThTh,
     string? BankName,

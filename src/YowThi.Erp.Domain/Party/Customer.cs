@@ -5,6 +5,7 @@ namespace YowThi.Erp.Domain.Party;
 public sealed class Customer : IHasRowVersion
 {
     public Guid Id { get; private set; }
+    public string? Code { get; private set; }
     public string? NameZhTw { get; private set; }
     public string? NameThTh { get; private set; }
     public string? Phone { get; private set; }

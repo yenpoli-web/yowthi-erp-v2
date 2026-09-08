@@ -93,7 +93,8 @@ public static class CustomerMasterEndpoints
             Normalize(request.NameZhTw),
             Normalize(request.NameThTh),
             Normalize(request.Phone),
-            request.Active);
+            request.Active,
+            Normalize(request.Code));
         var canonicalPayload = JsonPayload.FromUtf8Json(
             JsonSerializer.SerializeToUtf8Bytes(
                 new CanonicalCreateCustomerRequest(CreateCommandType, command),
@@ -134,7 +135,8 @@ public static class CustomerMasterEndpoints
             Normalize(request.NameZhTw),
             Normalize(request.NameThTh),
             Normalize(request.Phone),
-            request.Active);
+            request.Active,
+            Normalize(request.Code));
         var canonicalPayload = JsonPayload.FromUtf8Json(
             JsonSerializer.SerializeToUtf8Bytes(
                 new CanonicalUpdateCustomerRequest(UpdateCommandType, command),
@@ -197,11 +199,13 @@ public sealed record CreateCustomerRequest(
     string? NameZhTw,
     string? NameThTh,
     string? Phone,
-    bool Active);
+    bool Active,
+    string? Code = null);
 
 public sealed record UpdateCustomerRequest(
     long ExpectedRowVersion,
     string? NameZhTw,
     string? NameThTh,
     string? Phone,
-    bool Active);
+    bool Active,
+    string? Code = null);

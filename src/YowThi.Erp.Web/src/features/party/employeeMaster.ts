@@ -7,6 +7,7 @@ export type EmployeeMasterStatus = 'all' | 'active' | 'inactive' | 'deleted';
 
 export interface EmployeeMasterItem {
   id: string;
+  code: string | null;
   nameZhTw: string | null;
   nameThTh: string | null;
   bankName: string | null;
@@ -25,6 +26,7 @@ export interface EmployeeMasterPage {
 }
 
 export interface EmployeeDraftRequest {
+  code: string | null;
   nameZhTw: string | null;
   nameThTh: string | null;
   bankName: string | null;

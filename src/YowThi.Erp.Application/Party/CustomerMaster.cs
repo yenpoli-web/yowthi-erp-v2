@@ -9,7 +9,8 @@ public sealed record CreateCustomerCommand(
     string? NameZhTw,
     string? NameThTh,
     string? Phone,
-    bool Active);
+    bool Active,
+    string? Code = null);
 
 public sealed record CreateCustomerExecution(
     CommandId CommandId,
@@ -23,7 +24,8 @@ public sealed record UpdateCustomerCommand(
     string? NameZhTw,
     string? NameThTh,
     string? Phone,
-    bool Active);
+    bool Active,
+    string? Code = null);
 
 public sealed record UpdateCustomerExecution(
     CommandId CommandId,
@@ -62,6 +64,7 @@ public sealed record CustomerMasterQuery(
 
 public sealed record CustomerMasterItem(
     Guid Id,
+    string? Code,
     string? NameZhTw,
     string? NameThTh,
     string? Phone,

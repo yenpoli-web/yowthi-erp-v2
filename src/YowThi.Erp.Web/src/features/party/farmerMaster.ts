@@ -7,6 +7,7 @@ export type FarmerMasterStatus = 'all' | 'active' | 'inactive' | 'deleted';
 
 export interface FarmerMasterItem {
   id: string;
+  code: string | null;
   nameZhTw: string | null;
   nameThTh: string | null;
   bankName: string | null;
@@ -25,6 +26,7 @@ export interface FarmerMasterPage {
 }
 
 export interface FarmerDraftRequest {
+  code: string | null;
   nameZhTw: string | null;
   nameThTh: string | null;
   bankName: string | null;

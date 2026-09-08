@@ -96,7 +96,8 @@ public static class EmployeeMasterEndpoints
             Normalize(request.BankAccount),
             Normalize(request.Phone),
             Normalize(request.Address),
-            request.Active);
+            request.Active,
+            Normalize(request.Code));
         var canonicalPayload = JsonPayload.FromUtf8Json(
             JsonSerializer.SerializeToUtf8Bytes(
                 new CanonicalCreateEmployeeRequest(CreateCommandType, command),
@@ -140,7 +141,8 @@ public static class EmployeeMasterEndpoints
             Normalize(request.BankAccount),
             Normalize(request.Phone),
             Normalize(request.Address),
-            request.Active);
+            request.Active,
+            Normalize(request.Code));
         var canonicalPayload = JsonPayload.FromUtf8Json(
             JsonSerializer.SerializeToUtf8Bytes(
                 new CanonicalUpdateEmployeeRequest(UpdateCommandType, command),
@@ -206,7 +208,8 @@ public sealed record CreateEmployeeRequest(
     string? BankAccount,
     string? Phone,
     string? Address,
-    bool Active);
+    bool Active,
+    string? Code = null);
 
 public sealed record UpdateEmployeeRequest(
     long ExpectedRowVersion,
@@ -216,4 +219,5 @@ public sealed record UpdateEmployeeRequest(
     string? BankAccount,
     string? Phone,
     string? Address,
-    bool Active);
+    bool Active,
+    string? Code = null);

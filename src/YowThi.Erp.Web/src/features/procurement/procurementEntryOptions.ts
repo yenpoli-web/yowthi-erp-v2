@@ -15,6 +15,7 @@ export interface ProcurementProductOptionsResponse {
 
 export interface ProcurementSourceOption {
   id: string;
+  code: string | null;
   displayName: string;
 }
 

@@ -19,6 +19,7 @@ public sealed record ProcurementProductOption(
 
 public sealed record ProcurementSourceOption(
     Guid Id,
+    string? Code,
     string DisplayName);
 
 public sealed record ProcurementReceiptStorageLocationOption(

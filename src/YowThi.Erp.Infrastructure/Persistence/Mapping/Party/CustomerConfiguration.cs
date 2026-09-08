@@ -18,6 +18,7 @@ internal sealed class CustomerConfiguration : IEntityTypeConfiguration<Customer>
 
         builder.HasKey(x => x.Id).HasName("pk_customers");
         builder.Property(x => x.Id).HasColumnName("id").ValueGeneratedNever();
+        builder.Property(x => x.Code).HasColumnName("code").HasColumnType("text");
         builder.Property(x => x.NameZhTw).HasColumnName("name_zh_tw").HasColumnType("text");
         builder.Property(x => x.NameThTh).HasColumnName("name_th_th").HasColumnType("text");
         builder.Property(x => x.Phone).HasColumnName("phone").HasColumnType("text");

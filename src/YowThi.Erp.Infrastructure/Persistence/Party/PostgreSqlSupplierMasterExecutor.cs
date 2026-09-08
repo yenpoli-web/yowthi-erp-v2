@@ -200,13 +200,14 @@ internal sealed class PostgreSqlSupplierMasterExecutor : ISupplierMasterExecutor
         await using var insert = CreateSqlCommand(
             """
             INSERT INTO party.suppliers
-                (id, name_zh_tw, name_th_th, bank_name, bank_account, phone, address,
+                (id, code, name_zh_tw, name_th_th, bank_name, bank_account, phone, address,
                  active, row_version, created_at, created_by_account_id, deleted_at, deleted_by_account_id)
             VALUES
-                (@id, @name_zh_tw, @name_th_th, @bank_name, @bank_account, @phone, @address,
+                (@id, @code, @name_zh_tw, @name_th_th, @bank_name, @bank_account, @phone, @address,
                  @active, 1, @created_at, @created_by_account_id, NULL, NULL);
             """);
         insert.Parameters.AddWithValue("id", supplierId);
+        AddNullableText(insert, "code", command.Code);
         AddNullableText(insert, "name_zh_tw", command.NameZhTw);
         AddNullableText(insert, "name_th_th", command.NameThTh);
         AddNullableText(insert, "bank_name", command.BankName);
@@ -250,7 +251,8 @@ internal sealed class PostgreSqlSupplierMasterExecutor : ISupplierMasterExecutor
         await using var update = CreateSqlCommand(
             """
             UPDATE party.suppliers
-            SET name_zh_tw = @name_zh_tw,
+            SET code = @code,
+                name_zh_tw = @name_zh_tw,
                 name_th_th = @name_th_th,
                 bank_name = @bank_name,
                 bank_account = @bank_account,
@@ -265,6 +267,7 @@ internal sealed class PostgreSqlSupplierMasterExecutor : ISupplierMasterExecutor
             """);
         update.Parameters.AddWithValue("supplier_id", command.SupplierId);
         update.Parameters.AddWithValue("expected_row_version", command.ExpectedRowVersion);
+        AddNullableText(update, "code", command.Code);
         AddNullableText(update, "name_zh_tw", command.NameZhTw);
         AddNullableText(update, "name_th_th", command.NameThTh);
         AddNullableText(update, "bank_name", command.BankName);

@@ -12,7 +12,8 @@ public sealed record CreateOutsourcedVendorCommand(
     string? BankAccount,
     string? Phone,
     string? Address,
-    bool Active);
+    bool Active,
+    string? Code = null);
 
 public sealed record CreateOutsourcedVendorExecution(
     CommandId CommandId,
@@ -29,7 +30,8 @@ public sealed record UpdateOutsourcedVendorCommand(
     string? BankAccount,
     string? Phone,
     string? Address,
-    bool Active);
+    bool Active,
+    string? Code = null);
 
 public sealed record UpdateOutsourcedVendorExecution(
     CommandId CommandId,
@@ -68,6 +70,7 @@ public sealed record OutsourcedVendorMasterQuery(
 
 public sealed record OutsourcedVendorMasterItem(
     Guid Id,
+    string? Code,
     string? NameZhTw,
     string? NameThTh,
     string? BankName,

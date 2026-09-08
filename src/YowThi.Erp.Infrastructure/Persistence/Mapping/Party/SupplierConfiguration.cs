@@ -24,6 +24,7 @@ internal sealed class SupplierConfiguration : IEntityTypeConfiguration<Supplier>
     private static void ConfigureColumns(EntityTypeBuilder<Supplier> builder)
     {
         builder.Property(x => x.Id).HasColumnName("id").ValueGeneratedNever();
+        builder.Property(x => x.Code).HasColumnName("code").HasColumnType("text");
         builder.Property(x => x.NameZhTw).HasColumnName("name_zh_tw").HasColumnType("text");
         builder.Property(x => x.NameThTh).HasColumnName("name_th_th").HasColumnType("text");
         builder.Property(x => x.BankName).HasColumnName("bank_name").HasColumnType("text");

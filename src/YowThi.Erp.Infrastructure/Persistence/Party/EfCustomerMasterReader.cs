@@ -33,7 +33,8 @@ internal sealed class EfCustomerMasterReader : ICustomerMasterReader
         {
             var pattern = $"%{search}%";
             customers = customers.Where(x =>
-                (x.NameZhTw != null && EF.Functions.ILike(x.NameZhTw, pattern))
+                (x.Code != null && EF.Functions.ILike(x.Code, pattern))
+                || (x.NameZhTw != null && EF.Functions.ILike(x.NameZhTw, pattern))
                 || (x.NameThTh != null && EF.Functions.ILike(x.NameThTh, pattern))
                 || (x.Phone != null && EF.Functions.ILike(x.Phone, pattern)));
         }
@@ -45,6 +46,7 @@ internal sealed class EfCustomerMasterReader : ICustomerMasterReader
             .Take(query.Limit + 1)
             .Select(x => new CustomerMasterItem(
                 x.Id,
+                x.Code,
                 x.NameZhTw,
                 x.NameThTh,
                 x.Phone,

@@ -165,7 +165,7 @@ Relations:
 
 No Universal Party relation.
 
-Supplier/Farmer/Employee/Outsourced Vendor retain bilingual name plus bank/phone/address attributes already confirmed. Customer retains bilingual name/phone. No unconfirmed name/phone/bank uniqueness is added.
+Supplier/Farmer/Employee/Outsourced Vendor retain bilingual name plus bank/phone/address attributes already confirmed. Customer retains bilingual name/phone. Supplier, Farmer, Employee, Customer, and Outsourced Vendor each also carry their own optional business `code` field; this code is user/business data and is unrelated to the technical UUID primary key or any system-generated sequence. Existing rows may remain null until an actual business code is recorded. No uniqueness, requiredness, format, or immutability constraint is introduced for these codes until separately confirmed. No unconfirmed name/phone/bank uniqueness is added.
 
 ## 8. Infrastructure schema
 

@@ -7,6 +7,7 @@ export type CustomerMasterStatus = 'all' | 'active' | 'inactive' | 'deleted';
 
 export interface CustomerMasterItem {
   id: string;
+  code: string | null;
   nameZhTw: string | null;
   nameThTh: string | null;
   phone: string | null;
@@ -22,6 +23,7 @@ export interface CustomerMasterPage {
 }
 
 export interface CustomerDraftRequest {
+  code: string | null;
   nameZhTw: string | null;
   nameThTh: string | null;
   phone: string | null;

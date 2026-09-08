@@ -5,6 +5,7 @@ namespace YowThi.Erp.Domain.Party;
 public sealed class OutsourcedVendor : IHasRowVersion
 {
     public Guid Id { get; private set; }
+    public string? Code { get; private set; }
     public string? NameZhTw { get; private set; }
     public string? NameThTh { get; private set; }
     public string? BankName { get; private set; }

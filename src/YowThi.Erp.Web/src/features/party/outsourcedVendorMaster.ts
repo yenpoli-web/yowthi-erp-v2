@@ -7,6 +7,7 @@ export type OutsourcedVendorMasterStatus = 'all' | 'active' | 'inactive' | 'dele
 
 export interface OutsourcedVendorMasterItem {
   id: string;
+  code: string | null;
   nameZhTw: string | null;
   nameThTh: string | null;
   bankName: string | null;
@@ -25,6 +26,7 @@ export interface OutsourcedVendorMasterPage {
 }
 
 export interface OutsourcedVendorDraftRequest {
+  code: string | null;
   nameZhTw: string | null;
   nameThTh: string | null;
   bankName: string | null;

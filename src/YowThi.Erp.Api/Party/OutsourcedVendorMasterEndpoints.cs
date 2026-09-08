@@ -96,7 +96,8 @@ public static class OutsourcedVendorMasterEndpoints
             Normalize(request.BankAccount),
             Normalize(request.Phone),
             Normalize(request.Address),
-            request.Active);
+            request.Active,
+            Normalize(request.Code));
         var canonicalPayload = JsonPayload.FromUtf8Json(
             JsonSerializer.SerializeToUtf8Bytes(
                 new CanonicalCreateOutsourcedVendorRequest(CreateCommandType, command),
@@ -140,7 +141,8 @@ public static class OutsourcedVendorMasterEndpoints
             Normalize(request.BankAccount),
             Normalize(request.Phone),
             Normalize(request.Address),
-            request.Active);
+            request.Active,
+            Normalize(request.Code));
         var canonicalPayload = JsonPayload.FromUtf8Json(
             JsonSerializer.SerializeToUtf8Bytes(
                 new CanonicalUpdateOutsourcedVendorRequest(UpdateCommandType, command),
@@ -206,7 +208,8 @@ public sealed record CreateOutsourcedVendorRequest(
     string? BankAccount,
     string? Phone,
     string? Address,
-    bool Active);
+    bool Active,
+    string? Code = null);
 
 public sealed record UpdateOutsourcedVendorRequest(
     long ExpectedRowVersion,
@@ -216,4 +219,5 @@ public sealed record UpdateOutsourcedVendorRequest(
     string? BankAccount,
     string? Phone,
     string? Address,
-    bool Active);
+    bool Active,
+    string? Code = null);

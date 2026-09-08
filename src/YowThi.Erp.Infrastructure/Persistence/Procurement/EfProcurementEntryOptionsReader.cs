@@ -168,7 +168,8 @@ internal sealed class EfProcurementEntryOptionsReader(ErpDbContext dbContext) : 
         {
             var search = query.Search;
             suppliers = suppliers.Where(supplier =>
-                (supplier.NameZhTw != null && supplier.NameZhTw.Contains(search))
+                (supplier.Code != null && supplier.Code.Contains(search))
+                || (supplier.NameZhTw != null && supplier.NameZhTw.Contains(search))
                 || (supplier.NameThTh != null && supplier.NameThTh.Contains(search)));
         }
 
@@ -178,12 +179,14 @@ internal sealed class EfProcurementEntryOptionsReader(ErpDbContext dbContext) : 
                 .ThenBy(supplier => supplier.Id)
                 .Select(supplier => new ProcurementSourceOption(
                     supplier.Id,
+                    supplier.Code,
                     supplier.NameZhTw ?? supplier.NameThTh!))
             : suppliers
                 .OrderBy(supplier => supplier.NameThTh ?? supplier.NameZhTw)
                 .ThenBy(supplier => supplier.Id)
                 .Select(supplier => new ProcurementSourceOption(
                     supplier.Id,
+                    supplier.Code,
                     supplier.NameThTh ?? supplier.NameZhTw!));
 
         return await MaterializePageAsync(ordered, query, cancellationToken);
@@ -202,7 +205,8 @@ internal sealed class EfProcurementEntryOptionsReader(ErpDbContext dbContext) : 
         {
             var search = query.Search;
             farmers = farmers.Where(farmer =>
-                (farmer.NameZhTw != null && farmer.NameZhTw.Contains(search))
+                (farmer.Code != null && farmer.Code.Contains(search))
+                || (farmer.NameZhTw != null && farmer.NameZhTw.Contains(search))
                 || (farmer.NameThTh != null && farmer.NameThTh.Contains(search)));
         }
 
@@ -212,12 +216,14 @@ internal sealed class EfProcurementEntryOptionsReader(ErpDbContext dbContext) : 
                 .ThenBy(farmer => farmer.Id)
                 .Select(farmer => new ProcurementSourceOption(
                     farmer.Id,
+                    farmer.Code,
                     farmer.NameZhTw ?? farmer.NameThTh!))
             : farmers
                 .OrderBy(farmer => farmer.NameThTh ?? farmer.NameZhTw)
                 .ThenBy(farmer => farmer.Id)
                 .Select(farmer => new ProcurementSourceOption(
                     farmer.Id,
+                    farmer.Code,
                     farmer.NameThTh ?? farmer.NameZhTw!));
 
         return await MaterializePageAsync(ordered, query, cancellationToken);

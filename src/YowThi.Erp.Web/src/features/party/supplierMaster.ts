@@ -7,6 +7,7 @@ export type SupplierMasterStatus = 'all' | 'active' | 'inactive' | 'deleted';
 
 export interface SupplierMasterItem {
   id: string;
+  code: string | null;
   nameZhTw: string | null;
   nameThTh: string | null;
   bankName: string | null;
@@ -25,6 +26,7 @@ export interface SupplierMasterPage {
 }
 
 export interface SupplierDraftRequest {
+  code: string | null;
   nameZhTw: string | null;
   nameThTh: string | null;
   bankName: string | null;

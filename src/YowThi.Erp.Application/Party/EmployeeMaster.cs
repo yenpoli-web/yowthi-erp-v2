@@ -12,7 +12,8 @@ public sealed record CreateEmployeeCommand(
     string? BankAccount,
     string? Phone,
     string? Address,
-    bool Active);
+    bool Active,
+    string? Code = null);
 
 public sealed record CreateEmployeeExecution(
     CommandId CommandId,
@@ -29,7 +30,8 @@ public sealed record UpdateEmployeeCommand(
     string? BankAccount,
     string? Phone,
     string? Address,
-    bool Active);
+    bool Active,
+    string? Code = null);
 
 public sealed record UpdateEmployeeExecution(
     CommandId CommandId,
@@ -68,6 +70,7 @@ public sealed record EmployeeMasterQuery(
 
 public sealed record EmployeeMasterItem(
     Guid Id,
+    string? Code,
     string? NameZhTw,
     string? NameThTh,
     string? BankName,
