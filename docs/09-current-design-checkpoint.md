@@ -1,6 +1,6 @@
 # Current Design Checkpoint — YowThi ERP V2
 
-Checkpoint status: **v0.1 implementation baseline through P6 / V8 COMPLETE and P7 COMPLETE. P8-S1 Supplier Master is formally on main. P8-S2 Customer Master plus iOS viewport stabilization is locally validated but not yet promoted. P8 Security Foundation is locally validated: persisted Account-to-Capability authorization, Development-only passwordless Test Admin, real API runtime composition, the forward 56th-relation migration, and same-origin PWA → API → PostgreSQL Supplier/Customer runtime acceptance are PASS. Exact-SHA self-hosted validation and formal promotion remain pending.**
+Checkpoint status: **v0.1 implementation baseline through P6 / V8 COMPLETE and P7 COMPLETE. P8-S1 Supplier Master, P8-S2 Customer Master + iOS viewport stabilization, and P8 Security Foundation are formally on main. Persisted Account-to-Capability authorization, Development-only passwordless Test Admin, Account Management, the forward 56th-relation migration, and same-origin PWA → API → PostgreSQL Supplier/Customer runtime acceptance are COMPLETE.**
 
 Purpose: recover the current architecture and implementation state if conversational context is lost.
 
@@ -158,8 +158,8 @@ P7    React UI system skeleton S0-S12                  COMPLETE
       Nature Green presentation / adaptive UX / i18n    COMPLETE
 P8    Master-management / security runtime foundation     ACTIVE
       S1 Supplier Master                                  COMPLETE / MAIN
-      S2 Customer Master + iOS viewport stabilization     LOCAL VALIDATED / NOT PROMOTED
-      Security Foundation                                 LOCAL VALIDATED / SELF-HOSTED PENDING
+      S2 Customer Master + iOS viewport stabilization     COMPLETE / MAIN
+      Security Foundation                                 COMPLETE / MAIN
 ```
 
 P6/V8 is COMPLETE because remaining candidate control scope is now explicitly deferred or future target-specific scope; unresolved Business Facts remain governed by the Gap Register.
@@ -168,18 +168,23 @@ P6/V8 is COMPLETE because remaining candidate control scope is now explicitly de
 
 Current formal Git baseline:
 - `main = origin/main`
-- SHA: `ca58feb98dc0faa9233ef9f2ca9991607abeef81`
-- commit: `feat(party): implement supplier master management`
-- P8-S1 Supplier Master exact-SHA self-hosted validation: SUCCESS
-- promotion: ff-only
+- SHA: `1d2bade844be82b93c150b486abd182cd78b6ef4`
+- commit: `feat(security): implement persisted account authorization`
+- absorbed sequence from prior main: P8-S2 Customer Master + iOS viewport stabilization, then P8 Security Foundation
+- exact-SHA validation branch: `p8-security-foundation-validation`
+- exact-SHA self-hosted run: `34183279488` — SUCCESS
+- job: `build-test` on runner `YowThi-ERP-V2`
+- required labels: `self-hosted`, `yowthi-erp-v2`
+- `eligibleForMainFastForward=true`
+- promotion: ff-only, ahead 3 / behind 0
 - push: non-force
-- remote fetch/read-back: synchronized
+- remote fetch/read-back: `main = origin/main = 1d2bade844be82b93c150b486abd182cd78b6ef4`
 - Formal r20 primary channel; Bootstrap r2 remains independent recovery/read-back channel
 
-Current active validation branch:
-- `p8-security-foundation-validation`
-- branch base/HEAD before Security Foundation commit: `bea088968b28a59ac48763a8a48df672a26523f9`
-- this branch includes the locally validated P8-S2 Customer Master and iOS viewport stabilization that are not yet on main
+Current closure validation branch:
+- `p8-security-foundation-closure-validation`
+- base: formal main `1d2bade844be82b93c150b486abd182cd78b6ef4`
+- purpose: record the completed P8-S2 + Security Foundation formal baseline before the next P8 master-management slice
 
 C18 implementation validation:
 - branch: `p6-v8-farmer-hard-delete-validation`
@@ -870,12 +875,12 @@ Implemented operational routes now include:
 - `/product`
 - `/data-protection`
 
-Active P8 Security Foundation candidate route:
+Implemented P8 Security Foundation route:
 - `/security/accounts`
 
 P7 is formally complete for the current v0.1 route set at `main@cae5a5c0bf2f1cec7bf0ffa96dde7cbafbbe4ced`.
 
-The accepted presentation baseline is Nature Green across Desktop / Tablet / Mobile. Browser visual acceptance covers Home plus all 12 operational modules with 40 / 40 PASS, no horizontal viewport overflow, and current static zh-TW / th-TH interface-language mixing checks passing. The presentation hard gate is part of the self-hosted validation workflow. See `docs/30-p7-presentation-closure-checkpoint-v0.1.md`.
+The accepted presentation baseline is Nature Green across Desktop / Tablet / Mobile. P7 browser visual acceptance historically covered Home plus 12 operational modules with 40 / 40 PASS. The current P8 Security Foundation candidate extends the registry to 13 operational/localized modules and browser visual acceptance to 46 / 46 PASS, including `/security/accounts` on Desktop / Tablet / Mobile, with no horizontal viewport overflow and no current static zh-TW / th-TH interface-language mixing. The presentation/visual hard gates remain part of the self-hosted validation workflow. See `docs/30-p7-presentation-closure-checkpoint-v0.1.md` for the P7 presentation baseline.
 
 ## 24. P6 / V8 closure state
 
@@ -1007,14 +1012,19 @@ main@cae5a5c0bf2f1cec7bf0ffa96dde7cbafbbe4ced
 -> current static zh-TW/th-TH presentation acceptance COMPLETE; browser visual acceptance 40/40 PASS
 -> P7 COMPLETE
 -> P8-S1 Supplier Master COMPLETE / main@ca58feb98dc0faa9233ef9f2ca9991607abeef81
--> P8-S2 Customer Master + iOS viewport stabilization locally validated at bea088968b28a59ac48763a8a48df672a26523f9; NOT YET PROMOTED
--> active branch p8-security-foundation-validation
+-> P8-S2 Customer Master + iOS viewport stabilization COMPLETE and absorbed into formal main
+-> P8 Security Foundation COMPLETE / main@1d2bade844be82b93c150b486abd182cd78b6ef4
 -> approved Security relational revision: 56 relations / 14 schemas
 -> system.account_capability_grants persisted authorization relation
 -> Development-only passwordless Test Admin with all explicit capabilities; no wildcard authorization bypass
 -> forward migration 20260908002500_P8SecurityFoundation applied/accepted in development PostgreSQL; InitialV01 remains immutable
 -> local Release build: 0 warnings / 0 errors; full .NET hard gates: 358/358 PASS, 0 skipped
+-> frontend lint/typecheck/build/presentation PASS; current browser visual acceptance 46/46 PASS
 -> same-origin PWA 4173 -> API 5180 -> PostgreSQL runtime acceptance PASS for Development Test Admin, Account Management, Supplier/Customer reads, and authenticated CSRF-protected writes
--> next hard gate: exact candidate SHA self-hosted restore/build/test before formal main promotion
+-> exact validation branch p8-security-foundation-validation@1d2bade844be82b93c150b486abd182cd78b6ef4
+-> self-hosted run 34183279488 / build-test / YowThi-ERP-V2 / SUCCESS / eligibleForMainFastForward=true
+-> ff-only main promotion + non-force push + fetch/read-back COMPLETE
+-> main = origin/main = 1d2bade844be82b93c150b486abd182cd78b6ef4
+-> next: continue P8 target-specific master-management slices without inventing new Business Rules
 ```
 
