@@ -32,6 +32,7 @@ app.MapSecurityAccountEndpoints();
 app.MapPartyEndpoints();
 app.MapSupplierMasterEndpoints();
 app.MapCustomerMasterEndpoints();
+app.MapFarmerMasterEndpoints();
 app.MapPartyLifecycleOptionEndpoints();
 app.MapFarmerLifecycleEndpoints();
 app.MapEmployeeLifecycleEndpoints();

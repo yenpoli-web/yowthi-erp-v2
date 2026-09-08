@@ -12,7 +12,7 @@ const targets: readonly { kind: PartyLifecycleKind; route: string }[] = [
   { kind: 'suppliers', route: '/party' },
   { kind: 'customers', route: '/party/customers' },
   { kind: 'outsourced-vendors', route: '/party/lifecycle?kind=outsourced-vendors' },
-  { kind: 'farmers', route: '/party/lifecycle?kind=farmers' },
+  { kind: 'farmers', route: '/party/farmers' },
   { kind: 'employees', route: '/party/lifecycle?kind=employees' },
 ];
 

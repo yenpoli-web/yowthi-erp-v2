@@ -1,6 +1,6 @@
 # Current Design Checkpoint — YowThi ERP V2
 
-Checkpoint status: **v0.1 implementation baseline through P6 / V8 COMPLETE and P7 COMPLETE. P8-S1 Supplier Master, P8-S2 Customer Master + iOS viewport stabilization, and P8 Security Foundation are formally on main. Persisted Account-to-Capability authorization, Development-only passwordless Test Admin, Account Management, the forward 56th-relation migration, and same-origin PWA → API → PostgreSQL Supplier/Customer runtime acceptance are COMPLETE.**
+Checkpoint status: **v0.1 implementation baseline through P6 / V8 COMPLETE and P7 COMPLETE. P8-S1 Supplier Master, P8-S2 Customer Master + iOS viewport stabilization, and P8 Security Foundation are formally on main. P8-S3 Farmer Master is locally validated on `p8-s3-farmer-master-validation`: Release build 0 warnings / 0 errors, 364/364 .NET tests PASS, 49/49 browser visual acceptance PASS, and same-origin PWA → API → PostgreSQL Farmer list/create/readback/update/Hard Delete cleanup PASS. Exact-SHA self-hosted validation and formal promotion remain pending.**
 
 Purpose: recover the current architecture and implementation state if conversational context is lost.
 
@@ -160,6 +160,7 @@ P8    Master-management / security runtime foundation     ACTIVE
       S1 Supplier Master                                  COMPLETE / MAIN
       S2 Customer Master + iOS viewport stabilization     COMPLETE / MAIN
       Security Foundation                                 COMPLETE / MAIN
+      S3 Farmer Master                                     LOCAL VALIDATED / SELF-HOSTED PENDING
 ```
 
 P6/V8 is COMPLETE because remaining candidate control scope is now explicitly deferred or future target-specific scope; unresolved Business Facts remain governed by the Gap Register.
@@ -871,6 +872,7 @@ Implemented operational routes now include:
 - `/inventory`
 - `/party`
 - `/party/customers`
+- `/party/farmers`
 - `/infrastructure`
 - `/product`
 - `/data-protection`
@@ -880,7 +882,7 @@ Implemented P8 Security Foundation route:
 
 P7 is formally complete for the current v0.1 route set at `main@cae5a5c0bf2f1cec7bf0ffa96dde7cbafbbe4ced`.
 
-The accepted presentation baseline is Nature Green across Desktop / Tablet / Mobile. P7 browser visual acceptance historically covered Home plus 12 operational modules with 40 / 40 PASS. The current P8 Security Foundation candidate extends the registry to 13 operational/localized modules and browser visual acceptance to 46 / 46 PASS, including `/security/accounts` on Desktop / Tablet / Mobile, with no horizontal viewport overflow and no current static zh-TW / th-TH interface-language mixing. The presentation/visual hard gates remain part of the self-hosted validation workflow. See `docs/30-p7-presentation-closure-checkpoint-v0.1.md` for the P7 presentation baseline.
+The accepted presentation baseline is Nature Green across Desktop / Tablet / Mobile. P7 browser visual acceptance historically covered Home plus 12 operational modules with 40 / 40 PASS. The current P8 Security Foundation candidate extends the registry to 13 operational/localized modules and browser visual acceptance to 49 / 49 PASS, including `/security/accounts` and `/party/farmers` on Desktop / Tablet / Mobile, with no horizontal viewport overflow and no current static zh-TW / th-TH interface-language mixing. The presentation/visual hard gates remain part of the self-hosted validation workflow. See `docs/30-p7-presentation-closure-checkpoint-v0.1.md` for the P7 presentation baseline.
 
 ## 24. P6 / V8 closure state
 
