@@ -71,7 +71,7 @@ export const mobileQuickNavigation: readonly QuickNavigationItem[] = [
     label: { 'zh-TW': '首頁', 'th-TH': 'หน้าแรก' },
   },
   {
-    to: '/procurement/entries/new',
+    to: '/procurement',
     icon: 'procurement',
     label: { 'zh-TW': '採購', 'th-TH': 'จัดซื้อ' },
   },

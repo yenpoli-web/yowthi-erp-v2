@@ -227,6 +227,107 @@ public sealed class ConfirmProcurementEntryIntegrationTests
     }
 
     [Fact]
+    public async Task Procurement_workspace_reader_returns_one_batch_with_supplier_and_farmer_details()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var scenario = await SeedScenarioAsync(productHasDefaultLocation: true, cancellationToken);
+        var supplierCommandId = Guid.CreateVersion7();
+        var farmerCommandId = Guid.CreateVersion7();
+        var commandIds = new[] { supplierCommandId, farmerCommandId };
+
+        try
+        {
+            var supplierResult = await ExecuteAsync(
+                Execution(
+                    supplierCommandId,
+                    scenario.ActorAccountId,
+                    Hash(10),
+                    new ConfirmProcurementEntryCommand(
+                        scenario.ProcurementDate,
+                        scenario.ProductId,
+                        ProcurementSourceType.SUPPLIER,
+                        scenario.SupplierId,
+                        null,
+                        12.5m,
+                        10m,
+                        false,
+                        null)),
+                cancellationToken);
+            var farmerResult = await ExecuteAsync(
+                Execution(
+                    farmerCommandId,
+                    scenario.ActorAccountId,
+                    Hash(11),
+                    new ConfirmProcurementEntryCommand(
+                        scenario.ProcurementDate,
+                        scenario.ProductId,
+                        ProcurementSourceType.FARMER,
+                        null,
+                        scenario.FarmerId,
+                        4m,
+                        8m,
+                        true,
+                        scenario.ExplicitLocationId)),
+                cancellationToken);
+
+            Assert.True(supplierResult.IsSuccess);
+            Assert.True(farmerResult.IsSuccess);
+            Assert.Equal(supplierResult.Value.ProcurementBatchId, farmerResult.Value.ProcurementBatchId);
+
+            var services = new ServiceCollection();
+            services.AddErpPersistence(GetConnectionString());
+            await using var provider = services.BuildServiceProvider();
+            await using var scope = provider.CreateAsyncScope();
+            var reader = scope.ServiceProvider.GetRequiredService<IProcurementWorkspaceReader>();
+
+            var page = await reader.GetBatchesAsync(
+                new ProcurementBatchListQuery("zh-TW", "P6 product", 0, 100),
+                cancellationToken);
+            Assert.Contains(page.Items, item => item.Id == supplierResult.Value.ProcurementBatchId);
+
+            var workspace = await reader.GetBatchAsync(
+                supplierResult.Value.ProcurementBatchId,
+                "zh-TW",
+                cancellationToken);
+
+            Assert.NotNull(workspace);
+            Assert.Equal(scenario.ProcurementDate, workspace.ProcurementDate);
+            Assert.Equal(scenario.ProductId, workspace.ProcurementProductId);
+            Assert.Equal("P6 product", workspace.ProcurementProductDisplayName);
+            Assert.Equal("kg", workspace.UnitCode);
+            Assert.Equal("OPEN", workspace.ProcurementStatus);
+            Assert.Equal("ACTIVE", workspace.LifecycleStatus);
+            Assert.Equal(2, workspace.Entries.Count);
+
+            var supplierEntry = Assert.Single(
+                workspace.Entries,
+                item => item.Id == supplierResult.Value.ProcurementEntryId);
+            Assert.Equal("SUPPLIER", supplierEntry.SourceType);
+            Assert.Equal(scenario.SupplierId, supplierEntry.SourceId);
+            Assert.Equal("P6 supplier", supplierEntry.SourceDisplayName);
+            Assert.Equal(12.5m, supplierEntry.NetQuantity);
+            Assert.Equal(scenario.DefaultLocationId, supplierEntry.ReceiptStorageLocationId);
+            Assert.Equal("P6 default location", supplierEntry.ReceiptStorageLocationDisplayName);
+
+            var farmerEntry = Assert.Single(
+                workspace.Entries,
+                item => item.Id == farmerResult.Value.ProcurementEntryId);
+            Assert.Equal("FARMER", farmerEntry.SourceType);
+            Assert.Equal(scenario.FarmerId, farmerEntry.SourceId);
+            Assert.Equal("P6 farmer", farmerEntry.SourceDisplayName);
+            Assert.Equal(4m, farmerEntry.NetQuantity);
+            Assert.Equal(scenario.ExplicitLocationId, farmerEntry.ReceiptStorageLocationId);
+            Assert.Equal("P6 explicit location", farmerEntry.ReceiptStorageLocationDisplayName);
+
+            Assert.Null(await reader.GetBatchAsync(Guid.CreateVersion7(), "zh-TW", cancellationToken));
+        }
+        finally
+        {
+            await CleanupScenarioAsync(scenario, commandIds, cancellationToken);
+        }
+    }
+
+    [Fact]
     public async Task Missing_default_receipt_location_requires_explicit_choice_without_persisting_command()
     {
         var cancellationToken = TestContext.Current.CancellationToken;

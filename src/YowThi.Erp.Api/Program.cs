@@ -40,6 +40,7 @@ app.MapFarmerLifecycleEndpoints();
 app.MapEmployeeLifecycleEndpoints();
 app.MapProcurementEndpoints();
 app.MapProcurementEntryOptionEndpoints();
+app.MapProcurementWorkspaceEndpoints();
 app.MapProcessingEndpoints();
 app.MapProcessingExecutionOptionEndpoints();
 app.MapInventoryEndpoints();

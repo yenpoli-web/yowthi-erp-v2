@@ -29,7 +29,7 @@ export interface SystemModuleDefinition {
 export const systemModules: readonly SystemModuleDefinition[] = [
   {
     key: 'procurement',
-    route: '/procurement/entries/new',
+    route: '/procurement',
     area: 'operations',
     webState: 'operational',
     label: { 'zh-TW': '採購管理', 'th-TH': 'จัดซื้อ' },

@@ -17,7 +17,7 @@ const chromePath = chromeCandidates.find((candidate) => fs.existsSync(candidate)
 
 const cases = [
   { name: 'desktop-home', experience: 'desktop', width: 1440, height: 900, path: '/modules' },
-  { name: 'desktop-procurement', experience: 'desktop', width: 1440, height: 900, path: '/procurement/entries/new' },
+  { name: 'desktop-procurement', experience: 'desktop', width: 1440, height: 900, path: '/procurement' },
   { name: 'desktop-outsourced', experience: 'desktop', width: 1440, height: 900, path: '/outsourced/supply-details/new' },
   { name: 'desktop-processing', experience: 'desktop', width: 1440, height: 900, path: '/processing/executions/new' },
   { name: 'desktop-sales', experience: 'desktop', width: 1440, height: 900, path: '/sales' },
@@ -37,7 +37,7 @@ const cases = [
   { name: 'desktop-security', experience: 'desktop', width: 1440, height: 900, path: '/security/accounts' },
   { name: 'desktop-data-protection', experience: 'desktop', width: 1440, height: 900, path: '/data-protection' },
   { name: 'tablet-home', experience: 'tablet', width: 1024, height: 768, path: '/modules' },
-  { name: 'tablet-procurement', experience: 'tablet', width: 1024, height: 768, path: '/procurement/entries/new' },
+  { name: 'tablet-procurement', experience: 'tablet', width: 1024, height: 768, path: '/procurement' },
   { name: 'tablet-outsourced', experience: 'tablet', width: 1024, height: 768, path: '/outsourced/supply-details/new' },
   { name: 'tablet-processing', experience: 'tablet', width: 1024, height: 768, path: '/processing/executions/new' },
   { name: 'tablet-sales', experience: 'tablet', width: 1024, height: 768, path: '/sales' },
@@ -57,7 +57,7 @@ const cases = [
   { name: 'tablet-security', experience: 'tablet', width: 1024, height: 768, path: '/security/accounts' },
   { name: 'tablet-data-protection', experience: 'tablet', width: 1024, height: 768, path: '/data-protection' },
   { name: 'mobile-home', experience: 'mobile', width: 390, height: 844, path: '/modules' },
-  { name: 'mobile-procurement', experience: 'mobile', width: 390, height: 844, path: '/procurement/entries/new' },
+  { name: 'mobile-procurement', experience: 'mobile', width: 390, height: 844, path: '/procurement' },
   { name: 'mobile-outsourced', experience: 'mobile', width: 390, height: 844, path: '/outsourced/supply-details/new' },
   { name: 'mobile-processing', experience: 'mobile', width: 390, height: 844, path: '/processing/executions/new' },
   { name: 'mobile-sales', experience: 'mobile', width: 390, height: 844, path: '/sales' },

@@ -143,6 +143,36 @@ public sealed class ApiShellContractTests
     }
 
     [Fact]
+    public async Task Procurement_workspace_queries_are_authenticated_reads_without_idempotency()
+    {
+        await using var app = CreateApp(Environments.Development);
+        app.MapProcurementWorkspaceEndpoints();
+
+        var expected = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["/api/v1/procurement/batches"] = ProcurementWorkspaceEndpoints.ListBatchesOperationId,
+            ["/api/v1/procurement/batches/{procurementBatchId:guid}"] = ProcurementWorkspaceEndpoints.GetBatchWorkspaceOperationId,
+        };
+
+        foreach (var pair in expected)
+        {
+            var endpoint = Assert.Single(
+                GetRouteEndpoints(app),
+                endpoint => endpoint.RoutePattern.RawText == pair.Key);
+
+            Assert.Contains(HttpMethods.Get, endpoint.Metadata.GetMetadata<IHttpMethodMetadata>()?.HttpMethods ?? []);
+            Assert.Equal(pair.Value, endpoint.Metadata.GetMetadata<IEndpointNameMetadata>()?.EndpointName);
+            Assert.Contains(
+                endpoint.Metadata.GetOrderedMetadata<IAuthorizeData>(),
+                metadata => metadata.Policy == CapabilityPolicies.ProcurementConfirm);
+            Assert.Null(endpoint.Metadata.GetMetadata<RequiresIdempotencyKeyMetadata>());
+            Assert.Contains(
+                endpoint.Metadata.GetOrderedMetadata<IProducesResponseTypeMetadata>(),
+                metadata => metadata.StatusCode == StatusCodes.Status200OK);
+        }
+    }
+
+    [Fact]
     public async Task Health_probe_is_minimal_anonymous_and_excluded_from_OpenApi()
     {
         await using var app = CreateApp(Environments.Development);

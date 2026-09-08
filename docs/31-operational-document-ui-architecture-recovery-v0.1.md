@@ -56,7 +56,7 @@ Confirmed model:
 - Header identity: Procurement Date + Procurement Product
 - Details: `ProcurementEntry`
 - Existing add-detail command: `ConfirmProcurementEntry` resolves/locks the date+product Batch and appends one Entry atomically with Inventory/Finance/Audit/Outbox effects.
-- Existing lifecycle: Complete/Close/Reopen controls remain target-specific.
+- Existing control commands: Close and Reopen are implemented and remain target-specific. The `COMPLETED` procurement state exists in the model and `PROC-001` governs late entry after completion, but no formal `CompleteProcurementBatch` command/API exists in the current repository. UI recovery must not invent that transition; it remains a separate contract gap to resolve before exposing a Complete action.
 
 Recovery requirement:
 - `/procurement` becomes the module workspace.

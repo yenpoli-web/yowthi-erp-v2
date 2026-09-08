@@ -1,0 +1,291 @@
+.procurement-detail-form {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.82rem;
+  border: 1px solid #cfe0cd;
+  border-radius: 0.78rem;
+  background: #f9fcf7;
+}
+
+.procurement-detail-form-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  padding-bottom: 0.62rem;
+  border-bottom: 1px solid #dbe8d8;
+}
+
+.procurement-detail-form-header > div:first-child {
+  display: grid;
+  gap: 0.08rem;
+}
+
+.procurement-detail-form-header > div:first-child > span,
+.procurement-detail-primary-row > label > span,
+.procurement-detail-secondary-row > label > span,
+.procurement-readonly-field > span {
+  color: #64786c;
+  font-size: 0.72rem;
+  font-weight: 720;
+}
+
+.procurement-detail-form-header h3 {
+  margin: 0;
+  color: #183f2d;
+  font-size: 1.02rem;
+}
+
+.procurement-detail-header-context {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.35rem 0.9rem;
+  color: #557064;
+  font-size: 0.76rem;
+}
+
+.procurement-detail-primary-row {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(5.5rem, 0.72fr) minmax(12rem, 2.2fr) minmax(8rem, 1fr) minmax(7rem, 1fr) minmax(8rem, 1fr);
+  gap: 0.55rem;
+  align-items: end;
+}
+
+.procurement-detail-primary-row > label,
+.procurement-detail-primary-row > .searchable-select,
+.procurement-detail-secondary-row > label,
+.procurement-detail-secondary-row > .searchable-select,
+.procurement-readonly-field {
+  min-width: 0;
+  display: grid;
+  gap: 0.3rem;
+}
+
+.procurement-detail-primary-row input,
+.procurement-detail-secondary-row select {
+  width: 100%;
+  min-height: 2.58rem;
+  padding: 0.52rem 0.62rem;
+  border: 1px solid #cadac6;
+  border-radius: 0.58rem;
+  background: #fff;
+  color: #203d2e;
+  font-size: 1rem;
+}
+
+.procurement-number-with-unit {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.procurement-number-with-unit > span {
+  min-width: 2.4rem;
+  color: #60776b;
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+.procurement-readonly-field strong {
+  min-height: 2.58rem;
+  display: flex;
+  align-items: center;
+  padding: 0.52rem 0.62rem;
+  border: 1px solid #d7e3d4;
+  border-radius: 0.58rem;
+  background: #eff6ed;
+  color: #173b2a;
+  overflow-wrap: anywhere;
+}
+
+.procurement-source-code-field strong {
+  font-variant-numeric: tabular-nums;
+}
+
+.procurement-amount-field strong {
+  justify-content: flex-end;
+  font-variant-numeric: tabular-nums;
+}
+
+.procurement-detail-secondary-row {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(7.5rem, 0.7fr) minmax(12rem, 1.8fr) auto auto;
+  gap: 0.55rem;
+  align-items: end;
+}
+
+.procurement-detail-pickup {
+  min-height: 2.58rem;
+  display: inline-flex !important;
+  grid-template-columns: none !important;
+  align-items: center;
+  align-self: end;
+  gap: 0.45rem !important;
+  padding: 0.48rem 0.62rem;
+  border: 1px solid #d7e3d4;
+  border-radius: 0.58rem;
+  background: #fff;
+  color: #294a39;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.procurement-detail-pickup input {
+  width: 1.05rem;
+  height: 1.05rem;
+}
+
+.procurement-detail-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: end;
+  gap: 0.45rem;
+}
+
+.procurement-detail-form-actions button {
+  min-height: 2.58rem;
+  padding: 0.52rem 0.78rem;
+  border-radius: 0.58rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.procurement-detail-form-actions .secondary-action {
+  border: 1px solid #c9d9c6;
+  background: #fff;
+  color: #315443;
+}
+
+.procurement-detail-form-actions .primary-action {
+  border: 1px solid #0b7b5f;
+  background: #0b7b5f;
+  color: #fff;
+}
+
+@media (max-width: 1100px) {
+  .procurement-detail-primary-row {
+    grid-template-columns: minmax(4.8rem, 0.72fr) minmax(10rem, 1.9fr) minmax(7rem, 1fr) minmax(6.5rem, 1fr) minmax(7rem, 1fr);
+    gap: 0.45rem;
+  }
+
+  .procurement-detail-secondary-row {
+    grid-template-columns: minmax(7rem, 0.7fr) minmax(10rem, 1.5fr) auto;
+  }
+
+  .procurement-detail-form-actions {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 699px) {
+  .procurement-detail-form {
+    padding: 0.7rem;
+    gap: 0.62rem;
+  }
+
+  .procurement-detail-form-header {
+    display: grid;
+    gap: 0.35rem;
+  }
+
+  .procurement-detail-header-context {
+    justify-content: flex-start;
+  }
+
+  .procurement-detail-primary-row {
+    grid-template-columns: minmax(5rem, 0.72fr) minmax(0, 2fr);
+    gap: 0.48rem;
+  }
+
+  .procurement-source-code-field {
+    grid-column: 1;
+  }
+
+  .procurement-detail-primary-row > .searchable-select {
+    grid-column: 2;
+  }
+
+  .procurement-quantity-field,
+  .procurement-unit-price-field,
+  .procurement-amount-field {
+    grid-row: 2;
+  }
+
+  .procurement-quantity-field {
+    grid-column: 1;
+  }
+
+  .procurement-unit-price-field {
+    grid-column: 2;
+  }
+
+  .procurement-amount-field {
+    grid-column: 3;
+  }
+
+  .procurement-detail-primary-row {
+    grid-template-columns: minmax(4.8rem, 0.78fr) minmax(0, 1.7fr) minmax(5.4rem, 1fr);
+  }
+
+  .procurement-detail-primary-row > .searchable-select {
+    grid-column: 2 / 4;
+  }
+
+  .procurement-quantity-field {
+    grid-column: 1;
+  }
+
+  .procurement-unit-price-field {
+    grid-column: 2;
+  }
+
+  .procurement-amount-field {
+    grid-column: 3;
+  }
+
+  .procurement-detail-primary-row input,
+  .procurement-detail-secondary-row select,
+  .procurement-detail-form-actions button {
+    font-size: 1rem;
+  }
+
+  .procurement-readonly-field strong {
+    min-height: 2.62rem;
+    padding-inline: 0.48rem;
+  }
+
+  .procurement-number-with-unit {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.12rem;
+  }
+
+  .procurement-number-with-unit > span {
+    min-width: 0;
+    text-align: left;
+    font-size: 0.66rem;
+  }
+
+  .procurement-amount-field strong {
+    justify-content: flex-start;
+    font-size: 0.82rem;
+  }
+
+  .procurement-detail-secondary-row {
+    grid-template-columns: 1fr;
+  }
+
+  .procurement-detail-pickup {
+    width: 100%;
+  }
+
+  .procurement-detail-form-actions {
+    display: grid;
+    grid-template-columns: 0.8fr 1.2fr;
+    width: 100%;
+  }
+}

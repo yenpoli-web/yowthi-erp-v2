@@ -17,6 +17,7 @@ import { SalesProductGroupLifecyclePage } from '../features/product/SalesProduct
 import { SalesProductGroupMasterPage } from '../features/product/SalesProductGroupMasterPage';
 import { ProcessingExecutionPage } from '../features/processing/ProcessingExecutionPage';
 import { ProcurementEntryPage } from '../features/procurement/ProcurementEntryPage';
+import { ProcurementWorkspacePage } from '../features/procurement/ProcurementWorkspacePage';
 import { SalesConfirmationPage } from '../features/sales/SalesConfirmationPage';
 import { SalesPackagingWorkPage } from '../features/sales-handling/SalesPackagingWorkPage';
 import { SalesPackagingItemMasterPage } from '../features/sales-handling/SalesPackagingItemMasterPage';
@@ -33,6 +34,10 @@ export const router = createBrowserRouter([
       {
         index: true,
         element: <Navigate to="/modules" replace />,
+      },
+      {
+        path: 'procurement',
+        element: <ProcurementWorkspacePage />,
       },
       {
         path: 'procurement/entries/new',
