@@ -72,7 +72,10 @@ const shellAbsolutePaths = new Set(
 );
 const tsxFiles = collectFiles(srcRoot, '.tsx');
 let pageLocaleControls = 0;
+let manualLocaleControlMarkupCount = 0;
 let placeholderCount = 0;
+let legacyOptionPickerCount = 0;
+let persistentHintCount = 0;
 const rawEnumPattern = />\s*(SUPPLIER|FARMER|DRAFT|CONFIRMED|WEIGHT_BASED_UNIT|UNIT_BASED|IN_HOUSE|OUTSOURCED|PROCUREMENT_PRODUCT|PROCESS_MATERIAL|SALES_PRODUCT)\s*</g;
 const rawEnumHits = [];
 
@@ -81,7 +84,10 @@ for (const file of tsxFiles) {
   if (!shellAbsolutePaths.has(path.normalize(file))) {
     pageLocaleControls += countMatches(source, /<LocaleControl\s*\/>/g);
   }
+  manualLocaleControlMarkupCount += countMatches(source, /<label\s+className="locale-control">/g);
   placeholderCount += countMatches(source, /\bplaceholder\s*=/g);
+  legacyOptionPickerCount += countMatches(source, /className="option-picker(?:\s|")/g);
+  persistentHintCount += countMatches(source, /className="(?:default-hint|required-hint)"/g);
   const enumMatches = [...source.matchAll(rawEnumPattern)];
   if (enumMatches.length > 0) {
     rawEnumHits.push(`${path.relative(webRoot, file)}: ${enumMatches.map((match) => match[1]).join(', ')}`);
@@ -90,6 +96,16 @@ for (const file of tsxFiles) {
 
 if (pageLocaleControls !== 0) {
   fail(`LocaleControl must be owned by the application shells only; found ${pageLocaleControls} page-level instance(s).`);
+}
+const manualPageLocaleControls = Math.max(0, manualLocaleControlMarkupCount - 1);
+if (manualPageLocaleControls > 2) {
+  fail(`Operational UI recovery allows at most 2 remaining page-level locale controls; found ${manualPageLocaleControls}.`);
+}
+if (legacyOptionPickerCount > 18) {
+  fail(`Operational UI recovery allows at most 18 remaining stacked option-picker controls; found ${legacyOptionPickerCount}.`);
+}
+if (persistentHintCount > 9) {
+  fail(`Operational UI recovery allows at most 9 remaining persistent hint controls; found ${persistentHintCount}.`);
 }
 if (placeholderCount !== 0) {
   fail(`User-requested hint-free UI requires zero placeholder attributes; found ${placeholderCount}.`);
@@ -150,7 +166,8 @@ if (!deviceExperience.includes("new URLSearchParams(window.location.search).get(
 
 console.log('presentation acceptance: PASS');
 console.log('- application shell locale ownership: 3/3');
-console.log('- page-level LocaleControl instances: 0');
+console.log('- page-level LocaleControl component instances: 0');
+console.log(`- recovery debt: ${manualPageLocaleControls}/2 page locale controls, ${legacyOptionPickerCount}/18 legacy option-pickers, ${persistentHintCount}/9 persistent hints`);
 console.log('- placeholder hints: 0');
 console.log('- raw JSX domain enums: 0');
 console.log('- module registry: 13 operational / 13 localized');

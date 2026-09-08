@@ -7,6 +7,7 @@ import {
   useState,
 } from 'react';
 
+import { SearchableSelect } from '../../app/forms/SearchableSelect';
 import { type OperationalLocale, useOperationalLocale } from '../../app/i18n/locale';
 import {
   ApiProblemError,
@@ -130,7 +131,7 @@ const copy = {
 } as const;
 
 export function ProcurementEntryPage() {
-  const { locale, setLocale } = useOperationalLocale();
+  const { locale } = useOperationalLocale();
   const [sourceType, setSourceType] = useState<ProcurementSourceType>('SUPPLIER');
   const [productSearch, setProductSearch] = useState('');
   const [sourceSearch, setSourceSearch] = useState('');
@@ -227,23 +228,10 @@ export function ProcurementEntryPage() {
   const productItems = includeSelected(productQuery.data?.items ?? [], selectedProduct);
   const sourceItems = includeSelected(sourceQuery.data?.items ?? [], selectedSource);
   const locationItems = includeSelected(locationQuery.data?.items ?? [], selectedLocation);
-  const applicableDefault = locationQuery.data?.items.find((item) => item.isProductDefault) ?? null;
   const requiresExplicitLocation =
     selectedProduct !== null
     && locationQuery.isSuccess
     && locationQuery.data.defaultStorageLocationId === null;
-
-  function handleLocaleChange(next: OperationalLocale) {
-    setLocale(next);
-    setProductSearch('');
-    setSourceSearch('');
-    setLocationSearch('');
-    setSelectedProduct(null);
-    setSelectedSource(null);
-    setSelectedLocation(null);
-    mutation.reset();
-    setLocalError(null);
-  }
 
   function handleSourceTypeChange(next: ProcurementSourceType) {
     setSourceType(next);
@@ -338,13 +326,6 @@ export function ProcurementEntryPage() {
           <h1 id="procurement-entry-title">{labels.title}</h1>
         </div>
 
-        <label className="locale-control">
-          <span>{labels.locale}</span>
-          <select value={locale} onChange={(event) => handleLocaleChange(event.target.value as OperationalLocale)}>
-            <option value="zh-TW">繁體中文</option>
-            <option value="th-TH">ไทย</option>
-          </select>
-        </label>
       </header>
 
       <div className="procurement-grid">
@@ -367,49 +348,35 @@ export function ProcurementEntryPage() {
               </select>
             </label>
 
-            <div className="option-picker full-width">
-              <span className="field-label">{labels.product}</span>
-              <input
-                value={productSearch}
-                onChange={(event) => setProductSearch(event.target.value)}
-                aria-label={labels.productSearch}
-              />
-              <select
-                value={selectedProduct?.id ?? ''}
-                onChange={(event) => handleProductChange(event.target.value)}
-                required
-              >
-                <option value="">{productQuery.isPending ? labels.loading : labels.productSelect}</option>
-                {productItems.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.displayName} · {item.unitCode}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <SearchableSelect
+              label={labels.product}
+              value={selectedProduct?.id ?? ''}
+              options={productItems.map((item) => ({ id: item.id, label: item.displayName, secondaryLabel: item.unitCode }))}
+              onChange={handleProductChange}
+              searchValue={productSearch}
+              onSearchChange={setProductSearch}
+              searchLabel={labels.productSearch}
+              chooseLabel={labels.productSelect}
+              loadingLabel={labels.loading}
+              loading={productQuery.isPending}
+            />
 
-            <div className="option-picker full-width">
-              <span className="field-label">{labels.source}</span>
-              <input
-                value={sourceSearch}
-                onChange={(event) => setSourceSearch(event.target.value)}
-                aria-label={labels.sourceSearch}
-              />
-              <select
-                value={selectedSource?.id ?? ''}
-                onChange={(event) =>
-                  setSelectedSource(sourceItems.find((item) => item.id === event.target.value) ?? null)
-                }
-                required
-              >
-                <option value="">{sourceQuery.isPending ? labels.loading : labels.sourceSelect}</option>
-                {sourceItems.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.displayName}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <SearchableSelect
+              label={labels.source}
+              value={selectedSource?.id ?? ''}
+              options={sourceItems.map((item) => ({ id: item.id, label: item.displayName }))}
+              onChange={(id) => {
+                setSelectedSource(sourceItems.find((item) => item.id === id) ?? null);
+                mutation.reset();
+                setLocalError(null);
+              }}
+              searchValue={sourceSearch}
+              onSearchChange={setSourceSearch}
+              searchLabel={labels.sourceSearch}
+              chooseLabel={labels.sourceSelect}
+              loadingLabel={labels.loading}
+              loading={sourceQuery.isPending}
+            />
 
             <label>
               <span>
@@ -424,46 +391,28 @@ export function ProcurementEntryPage() {
               <input type="number" name="unitPrice" min="0" step="any" inputMode="decimal" required />
             </label>
 
-            <div className="option-picker full-width">
-              <span className="field-label">{labels.location}</span>
-              <input
-                value={locationSearch}
-                onChange={(event) => setLocationSearch(event.target.value)}
-                aria-label={labels.locationSearch}
-                disabled={selectedProduct === null}
-              />
-              <select
-                value={selectedLocation?.id ?? ''}
-                onChange={(event) =>
-                  setSelectedLocation(locationItems.find((item) => item.id === event.target.value) ?? null)
-                }
-                disabled={selectedProduct === null || locationQuery.isPending}
-                required={requiresExplicitLocation}
-              >
-                <option value="">
-                  {locationQuery.isPending
-                    ? labels.loading
-                    : locationQuery.data?.defaultStorageLocationId
-                      ? labels.useDefault
-                      : labels.locationSelect}
-                </option>
-                {locationItems.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.displayName}
-                    {item.code ? ` · ${item.code}` : ''}
-                    {item.isProductDefault ? ` · ${labels.defaultLocation}` : ''}
-                  </option>
-                ))}
-              </select>
-              {applicableDefault && selectedLocation === null && (
-                <small className="default-hint">
-                  {labels.defaultLocation}: {applicableDefault.displayName}
-                </small>
-              )}
-              {requiresExplicitLocation && selectedLocation === null && (
-                <small className="required-hint">{labels.explicitLocationRequired}</small>
-              )}
-            </div>
+            <SearchableSelect
+              label={labels.location}
+              value={selectedLocation?.id ?? ''}
+              options={locationItems.map((item) => ({
+                id: item.id,
+                label: item.displayName,
+                secondaryLabel: [item.code, item.isProductDefault ? labels.defaultLocation : null].filter(Boolean).join(' · '),
+              }))}
+              onChange={(id) => {
+                setSelectedLocation(locationItems.find((item) => item.id === id) ?? null);
+                mutation.reset();
+                setLocalError(null);
+              }}
+              searchValue={locationSearch}
+              onSearchChange={setLocationSearch}
+              searchLabel={labels.locationSearch}
+              chooseLabel={labels.locationSelect}
+              loadingLabel={labels.loading}
+              emptyOptionLabel={locationQuery.data?.defaultStorageLocationId ? labels.useDefault : undefined}
+              disabled={selectedProduct === null}
+              loading={locationQuery.isPending}
+            />
           </div>
 
           <label className="checkbox-field">

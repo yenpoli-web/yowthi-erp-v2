@@ -1,6 +1,6 @@
 # Current Design Checkpoint — YowThi ERP V2
 
-Checkpoint status: **v0.1 implementation baseline through P6 / V8 COMPLETE and P7 COMPLETE. P8-S1 Supplier Master, P8-S2 Customer Master + iOS viewport stabilization, P8 Security Foundation, P8-S3 Farmer Master, P8-S4 Outsourced Vendor Master, P8-S5 Employee Master, P8-S6 Sales Packaging Item Master, and P8-S7 Sales Product Group Master are formally on main. P8-S7 isolated Release build 0 warnings / 0 errors while canonical 5180 remained online, 388/388 .NET tests PASS, 61/61 browser visual acceptance PASS, Development Test Admin → isolated API 5184 → PostgreSQL Product Group list/create/readback/update/soft-delete/restore acceptance PASS with cleanup complete, and exact-SHA self-hosted validation run `34198641030` are COMPLETE. No relation/schema/migration change, no Product Group Hard Delete target was introduced, and existing Sales Product typed-FK/lifecycle behavior remains unchanged.**
+Checkpoint status: **P6 / V8 backend/control baseline remains COMPLETE. P8-S1 through P8-S7 master/security slices are formally on main through closure `e3cca04bc805d12f212467db0f68424cd4c71657`. P7 command-form routes and Nature Green Desktop/Tablet/Mobile shell were historically validated, but the interpretation that the operational UI layer was complete is WITHDRAWN. Operational Document UI Architecture Recovery is ACTIVE because document Header/Detail semantics were flattened into command forms, entity search/select controls were duplicated, page-level locale controls and persistent hint UI remained, and prior presentation acceptance contained false-positive gaps. `docs/31-operational-document-ui-architecture-recovery-v0.1.md` is the active UI recovery baseline. No Business Rule is changed by this recovery.**
 
 Purpose: recover the current architecture and implementation state if conversational context is lost.
 
@@ -38,14 +38,15 @@ Physical inventory reconciliation:
 Recovery precedence:
 1. Business Discovery / Command Contracts / Business Rule Gap Register for real Business Facts
 2. `docs/17-erp-registration-data-control-boundary-v0.1.md`
-3. this current checkpoint
-4. `docs/10-relational-model-consolidation-v0.1.md`
-5. `docs/11-ef-core-mapping-architecture-v0.1.md`
-6. `docs/12-rest-api-architecture-v0.1.md`
-7. `docs/13-implementation-sequencing-build-plan-v0.1.md`
-8. `docs/14-github-cost-governance-v0.1.md`
-9. `docs/15-authn-authz-implementation-architecture-v0.1.md`
-10. `docs/16-adaptive-web-ui-architecture-v0.1.md` and applicable ADRs
+3. `docs/31-operational-document-ui-architecture-recovery-v0.1.md` for operational/document UI recovery
+4. this current checkpoint
+5. `docs/10-relational-model-consolidation-v0.1.md`
+6. `docs/11-ef-core-mapping-architecture-v0.1.md`
+7. `docs/12-rest-api-architecture-v0.1.md`
+8. `docs/13-implementation-sequencing-build-plan-v0.1.md`
+9. `docs/14-github-cost-governance-v0.1.md`
+10. `docs/15-authn-authz-implementation-architecture-v0.1.md`
+11. `docs/16-adaptive-web-ui-architecture-v0.1.md` and applicable ADRs
 
 Later implementation supplements:
 - `docs/18-procurement-batch-reopen-control-v0.1.md` — V8-C9 Procurement Batch Reopen
@@ -60,7 +61,8 @@ Later implementation supplements:
 - `docs/27-farmer-hard-delete-control-v0.1.md` — V8-C18 Farmer Hard Delete + Procurement Entry / Finance Payable structural dependency closure / runner-local validation evidence
 - `docs/28-p6-v8-closure-checkpoint-v0.1.md` — formal P6 / V8 closure + deferred/future target-specific scope boundary
 - `docs/29-p7-system-skeleton-closure-checkpoint-v0.1.md` — P7 S0–S12 system-skeleton closure + 12/12 operational web modules + presentation redesign boundary
-- `docs/30-p7-presentation-closure-checkpoint-v0.1.md` — P7 Nature Green presentation closure + Desktop/Tablet/Mobile + current-route zh-TW/th-TH acceptance
+- `docs/30-p7-presentation-closure-checkpoint-v0.1.md` — historical P7 Nature Green presentation closure + Desktop/Tablet/Mobile + current-route zh-TW/th-TH acceptance
+- `docs/31-operational-document-ui-architecture-recovery-v0.1.md` — ACTIVE recovery baseline for module workspaces, Header/Detail separation, searchable selectors, locale ownership, hint-free UI, and operational completeness gates
 - for their target-specific scopes, these later supplements resolve older omissions without superseding the broader Command/REST architecture
 
 Earlier PostgreSQL Schema Parts remain design history. `docs/10` is the consolidated relational baseline when relational details conflict.
@@ -154,8 +156,9 @@ P6    Business / ERP Control vertical slices             COMPLETE
       C17 Outsourced Vendor Hard Delete                  COMPLETE
       C18 Farmer Hard Delete                              COMPLETE
       remaining candidate ERP Control scope               DEFERRED / FUTURE
-P7    React UI system skeleton S0-S12                  COMPLETE
-      Nature Green presentation / adaptive UX / i18n    COMPLETE
+P7    React command-form system skeleton S0-S12         HISTORICALLY VALIDATED
+      Nature Green adaptive shell / visual baseline     HISTORICALLY VALIDATED
+      Operational Document UI Architecture              RECOVERY ACTIVE
 P8    Master-management / security runtime foundation     ACTIVE
       S1 Supplier Master                                  COMPLETE / MAIN
       S2 Customer Master + iOS viewport stabilization     COMPLETE / MAIN
@@ -173,22 +176,21 @@ P6/V8 is COMPLETE because remaining candidate control scope is now explicitly de
 
 Current formal Git baseline:
 - `main = origin/main`
-- SHA: `a01a45bebc6e874be63e3715a5170c5d4fa848f3`
-- commit: `feat(product): implement sales product group master management`
-- exact-SHA validation branch: `p8-s7-sales-product-group-master-validation`
-- exact-SHA self-hosted run: `34198641030` — SUCCESS
+- SHA: `e3cca04bc805d12f212467db0f68424cd4c71657`
+- commit: `docs: checkpoint p8 s7 sales product group master`
+- implementation validation branch: `p8-s7-sales-product-group-master-validation`
+- implementation SHA: `a01a45bebc6e874be63e3715a5170c5d4fa848f3`
+- implementation self-hosted run: `34198641030` — SUCCESS
+- closure validation branch: `p8-s7-sales-product-group-master-closure-validation`
+- closure SHA: `e3cca04bc805d12f212467db0f68424cd4c71657`
+- closure self-hosted run: `34199419321` — SUCCESS
 - job: `build-test` on runner `YowThi-ERP-V2`
 - required labels: `self-hosted`, `yowthi-erp-v2`
 - `eligibleForMainFastForward=true`
-- promotion: ff-only, ahead 1 / behind 0
-- push: non-force
-- remote fetch/read-back: `main = origin/main = a01a45bebc6e874be63e3715a5170c5d4fa848f3`
-- Formal r20 primary channel; Bootstrap r2 remains independent recovery/read-back channel
-
-Current closure validation branch:
-- `p8-s7-sales-product-group-master-closure-validation`
-- base: formal main `a01a45bebc6e874be63e3715a5170c5d4fa848f3`
-- purpose: record the completed P8-S7 Sales Product Group Master formal baseline before the next P8 master-management slice
+- promotion: ff-only; push non-force; final fetch/read-back confirmed `main = origin/main = e3cca04bc805d12f212467db0f68424cd4c71657`
+- current recovery branch: `p8-operational-ui-recovery-validation`, base `e3cca04bc805d12f212467db0f68424cd4c71657`
+- separate local-only Warehouse WIP: `p8-s8-warehouse-master-validation@6fbf8229601c7b5bedcca9a90d3536d711812fde`; not pushed, not on main, runtime acceptance pending
+- Formal r20 primary channel; P28 loopback remains independent recovery/read-back channel
 
 C18 implementation validation:
 - branch: `p6-v8-farmer-hard-delete-validation`
@@ -864,7 +866,7 @@ Presentation experiences:
 - Tablet
 - Mobile
 
-Implemented operational routes now include:
+Historical command-form routes currently present pending Operational UI Recovery include:
 - `/procurement/entries/new`
 - `/outsourced/supply-details/new`
 - `/processing/executions/new`
@@ -887,9 +889,9 @@ Implemented operational routes now include:
 Implemented P8 Security Foundation route:
 - `/security/accounts`
 
-P7 is formally complete for the current v0.1 route set at `main@cae5a5c0bf2f1cec7bf0ffa96dde7cbafbbe4ced`.
+P7 historically validated the command-form route set and adaptive shell at `main@cae5a5c0bf2f1cec7bf0ffa96dde7cbafbbe4ced`. That evidence remains valid for build/layout history but no longer establishes operational-module completeness. Operational UI Recovery is active under `docs/31-operational-document-ui-architecture-recovery-v0.1.md`.
 
-The accepted presentation baseline is Nature Green across Desktop / Tablet / Mobile. P7 browser visual acceptance historically covered Home plus 12 operational modules with 40 / 40 PASS. The current P8 baseline extends the registry to 13 operational/localized modules and browser visual acceptance to 61 / 61 PASS, including `/security/accounts`, `/party/farmers`, `/party/outsourced-vendors`, `/party/employees`, `/sales-handling/packaging-items`, the `/product` Sales Product Group Master, and preserved `/product/lifecycle` on Desktop / Tablet / Mobile, with no horizontal viewport overflow and no current static zh-TW / th-TH interface-language mixing. The presentation/visual hard gates remain part of the self-hosted validation workflow. See `docs/30-p7-presentation-closure-checkpoint-v0.1.md` for the P7 presentation baseline.
+Nature Green remains the accepted adaptive shell/presentation style across Desktop / Tablet / Mobile. Historical browser visual acceptance remains useful evidence for viewport overflow, static locale mixing, mobile control sizing, and route rendering. It is explicitly NOT evidence that an operational module has correct document semantics. Recovery discovered false-positive acceptance gaps: manually rendered page-level `.locale-control` blocks and persistent hint classes were not covered by the old presentation script, and visual cases did not assert Header/Detail workspace semantics. See `docs/30-p7-presentation-closure-checkpoint-v0.1.md` for historical presentation evidence and `docs/31-operational-document-ui-architecture-recovery-v0.1.md` for the active completeness gates.
 
 ## 24. P6 / V8 closure state
 
@@ -1067,6 +1069,12 @@ main@cae5a5c0bf2f1cec7bf0ffa96dde7cbafbbe4ced
 -> no relation/schema/migration change; no Product Group Hard Delete target introduced; existing Sales Product typed-FK/lifecycle behavior remains unchanged
 -> exact P8-S7 self-hosted run 34198641030 SUCCESS; build-test on YowThi-ERP-V2; eligibleForMainFastForward=true
 -> ff-only main promotion + non-force push + fetch/read-back COMPLETE
--> P8-S7 closure checkpoint validation active on p8-s7-sales-product-group-master-closure-validation
+-> P8-S7 closure checkpoint COMPLETE / main@e3cca04bc805d12f212467db0f68424cd4c71657 / self-hosted run 34199419321 SUCCESS
+-> 2026-09-08 Operational UI audit found systemic Header/Detail flattening in command-form pages, stacked search+select controls, duplicate page locale controls, persistent hint UI, and acceptance false positives
+-> interpretation that P7 operational modules were complete is withdrawn; P7 build/layout history remains valid
+-> docs/31-operational-document-ui-architecture-recovery-v0.1.md is ACTIVE
+-> p8-operational-ui-recovery-validation created from formal main e3cca04bc805d12f212467db0f68424cd4c71657
+-> Warehouse S8 preserved separately as local-only WIP p8-s8-warehouse-master-validation@6fbf8229601c7b5bedcca9a90d3536d711812fde; not formal, not pushed
+-> next hard gate: strengthen acceptance, shared searchable selector, correct module roots, then Procurement Batch/Entry workspace
 ```
 
