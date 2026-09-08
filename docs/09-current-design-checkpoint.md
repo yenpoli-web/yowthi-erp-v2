@@ -1,6 +1,6 @@
 # Current Design Checkpoint — YowThi ERP V2
 
-Checkpoint status: **v0.1 implementation baseline through P6 / V8 COMPLETE and P7 COMPLETE. P8-S1 Supplier Master, P8-S2 Customer Master + iOS viewport stabilization, and P8 Security Foundation are formally on main. P8-S3 Farmer Master is locally validated on `p8-s3-farmer-master-validation`: Release build 0 warnings / 0 errors, 364/364 .NET tests PASS, 49/49 browser visual acceptance PASS, and same-origin PWA → API → PostgreSQL Farmer list/create/readback/update/Hard Delete cleanup PASS. Exact-SHA self-hosted validation and formal promotion remain pending.**
+Checkpoint status: **v0.1 implementation baseline through P6 / V8 COMPLETE and P7 COMPLETE. P8-S1 Supplier Master, P8-S2 Customer Master + iOS viewport stabilization, P8 Security Foundation, and P8-S3 Farmer Master are formally on main. Farmer Master Release build 0 warnings / 0 errors, 364/364 .NET tests, 49/49 browser visual acceptance, same-origin PWA → API → PostgreSQL runtime acceptance, and exact-SHA self-hosted validation are COMPLETE.**
 
 Purpose: recover the current architecture and implementation state if conversational context is lost.
 
@@ -160,7 +160,7 @@ P8    Master-management / security runtime foundation     ACTIVE
       S1 Supplier Master                                  COMPLETE / MAIN
       S2 Customer Master + iOS viewport stabilization     COMPLETE / MAIN
       Security Foundation                                 COMPLETE / MAIN
-      S3 Farmer Master                                     LOCAL VALIDATED / SELF-HOSTED PENDING
+      S3 Farmer Master                                     COMPLETE / MAIN
 ```
 
 P6/V8 is COMPLETE because remaining candidate control scope is now explicitly deferred or future target-specific scope; unresolved Business Facts remain governed by the Gap Register.
@@ -169,23 +169,22 @@ P6/V8 is COMPLETE because remaining candidate control scope is now explicitly de
 
 Current formal Git baseline:
 - `main = origin/main`
-- SHA: `1d2bade844be82b93c150b486abd182cd78b6ef4`
-- commit: `feat(security): implement persisted account authorization`
-- absorbed sequence from prior main: P8-S2 Customer Master + iOS viewport stabilization, then P8 Security Foundation
-- exact-SHA validation branch: `p8-security-foundation-validation`
-- exact-SHA self-hosted run: `34183279488` — SUCCESS
+- SHA: `e929a92fcf859a97078a9f55104955f020288cac`
+- commit: `feat(party): implement farmer master management`
+- exact-SHA validation branch: `p8-s3-farmer-master-validation`
+- exact-SHA self-hosted run: `34185619700` — SUCCESS
 - job: `build-test` on runner `YowThi-ERP-V2`
 - required labels: `self-hosted`, `yowthi-erp-v2`
 - `eligibleForMainFastForward=true`
-- promotion: ff-only, ahead 3 / behind 0
+- promotion: ff-only, ahead 1 / behind 0
 - push: non-force
-- remote fetch/read-back: `main = origin/main = 1d2bade844be82b93c150b486abd182cd78b6ef4`
+- remote fetch/read-back: `main = origin/main = e929a92fcf859a97078a9f55104955f020288cac`
 - Formal r20 primary channel; Bootstrap r2 remains independent recovery/read-back channel
 
 Current closure validation branch:
-- `p8-security-foundation-closure-validation`
-- base: formal main `1d2bade844be82b93c150b486abd182cd78b6ef4`
-- purpose: record the completed P8-S2 + Security Foundation formal baseline before the next P8 master-management slice
+- `p8-s3-farmer-master-closure-validation`
+- base: formal main `e929a92fcf859a97078a9f55104955f020288cac`
+- purpose: record the completed P8-S3 Farmer Master formal baseline before the next P8 master-management slice
 
 C18 implementation validation:
 - branch: `p6-v8-farmer-hard-delete-validation`
@@ -882,7 +881,7 @@ Implemented P8 Security Foundation route:
 
 P7 is formally complete for the current v0.1 route set at `main@cae5a5c0bf2f1cec7bf0ffa96dde7cbafbbe4ced`.
 
-The accepted presentation baseline is Nature Green across Desktop / Tablet / Mobile. P7 browser visual acceptance historically covered Home plus 12 operational modules with 40 / 40 PASS. The current P8 Security Foundation candidate extends the registry to 13 operational/localized modules and browser visual acceptance to 49 / 49 PASS, including `/security/accounts` and `/party/farmers` on Desktop / Tablet / Mobile, with no horizontal viewport overflow and no current static zh-TW / th-TH interface-language mixing. The presentation/visual hard gates remain part of the self-hosted validation workflow. See `docs/30-p7-presentation-closure-checkpoint-v0.1.md` for the P7 presentation baseline.
+The accepted presentation baseline is Nature Green across Desktop / Tablet / Mobile. P7 browser visual acceptance historically covered Home plus 12 operational modules with 40 / 40 PASS. The current P8 baseline extends the registry to 13 operational/localized modules and browser visual acceptance to 49 / 49 PASS, including `/security/accounts` and `/party/farmers` on Desktop / Tablet / Mobile, with no horizontal viewport overflow and no current static zh-TW / th-TH interface-language mixing. The presentation/visual hard gates remain part of the self-hosted validation workflow. See `docs/30-p7-presentation-closure-checkpoint-v0.1.md` for the P7 presentation baseline.
 
 ## 24. P6 / V8 closure state
 
@@ -1027,6 +1026,10 @@ main@cae5a5c0bf2f1cec7bf0ffa96dde7cbafbbe4ced
 -> self-hosted run 34183279488 / build-test / YowThi-ERP-V2 / SUCCESS / eligibleForMainFastForward=true
 -> ff-only main promotion + non-force push + fetch/read-back COMPLETE
 -> main = origin/main = 1d2bade844be82b93c150b486abd182cd78b6ef4
+-> P8-S3 Farmer Master COMPLETE / main@e929a92fcf859a97078a9f55104955f020288cac
+-> exact P8-S3 self-hosted run 34185619700 SUCCESS; build-test on YowThi-ERP-V2; eligibleForMainFastForward=true
+-> Farmer runtime list/create/readback/update/Hard Delete cleanup PASS; no P8-S3 acceptance Farmer retained
+-> main = origin/main = e929a92fcf859a97078a9f55104955f020288cac
 -> next: continue P8 target-specific master-management slices without inventing new Business Rules
 ```
 
