@@ -1,6 +1,6 @@
 # Current Design Checkpoint — YowThi ERP V2
 
-Checkpoint status: **v0.1 implementation baseline through P6 / V8 COMPLETE and P7 COMPLETE. P8-S1 Supplier Master, P8-S2 Customer Master + iOS viewport stabilization, P8 Security Foundation, P8-S3 Farmer Master, P8-S4 Outsourced Vendor Master, and P8-S5 Employee Master are formally on main. P8-S6 Sales Packaging Item Master is locally validated on `p8-s6-sales-packaging-item-master-validation`: Release build 0 warnings / 0 errors, 382/382 .NET tests PASS, 58/58 browser visual acceptance PASS, and same-origin PWA → API → PostgreSQL Packaging Item list/create/readback/update/soft-delete/restore acceptance PASS with cleanup complete. Development Test Admin login through 4173 → 5180 is restored and verified. No relation/schema/migration change, no Packaging Item Hard Delete target was introduced, and HANDLING-001 / HANDLING-002 plus existing sales-packaging wage behavior remain unchanged. Exact-SHA self-hosted validation and formal promotion remain pending.**
+Checkpoint status: **v0.1 implementation baseline through P6 / V8 COMPLETE and P7 COMPLETE. P8-S1 Supplier Master, P8-S2 Customer Master + iOS viewport stabilization, P8 Security Foundation, P8-S3 Farmer Master, P8-S4 Outsourced Vendor Master, P8-S5 Employee Master, and P8-S6 Sales Packaging Item Master are formally on main. P8-S6 Release build 0 warnings / 0 errors, 382/382 .NET tests PASS, 58/58 browser visual acceptance PASS, same-origin PWA → API → PostgreSQL Packaging Item list/create/readback/update/soft-delete/restore acceptance PASS with cleanup complete, and exact-SHA self-hosted validation run `34195069733` are COMPLETE. Development Test Admin login through 4173 → 5180 is restored and verified. No relation/schema/migration change, no Packaging Item Hard Delete target was introduced, and HANDLING-001 / HANDLING-002 plus existing sales-packaging wage behavior remain unchanged.**
 
 Purpose: recover the current architecture and implementation state if conversational context is lost.
 
@@ -163,7 +163,7 @@ P8    Master-management / security runtime foundation     ACTIVE
       S3 Farmer Master                                     COMPLETE / MAIN
       S4 Outsourced Vendor Master                          COMPLETE / MAIN
       S5 Employee Master                                   COMPLETE / MAIN
-      S6 Sales Packaging Item Master                       LOCAL VALIDATED / SELF-HOSTED PENDING
+      S6 Sales Packaging Item Master                       COMPLETE / MAIN
 ```
 
 P6/V8 is COMPLETE because remaining candidate control scope is now explicitly deferred or future target-specific scope; unresolved Business Facts remain governed by the Gap Register.
@@ -172,22 +172,22 @@ P6/V8 is COMPLETE because remaining candidate control scope is now explicitly de
 
 Current formal Git baseline:
 - `main = origin/main`
-- SHA: `db2342f398efa2a8c0b51c76354fd53b0c6a5b53`
-- commit: `docs: checkpoint p8 s5 employee master`
-- exact-SHA validation branch: `p8-s5-employee-master-closure-validation`
-- exact-SHA self-hosted run: `34192036031` — SUCCESS
+- SHA: `e71e5fa092fe1d54a244e91eb4e1743bedd1bda5`
+- commit: `feat(sales-handling): implement packaging item master management`
+- exact-SHA validation branch: `p8-s6-sales-packaging-item-master-validation`
+- exact-SHA self-hosted run: `34195069733` — SUCCESS
 - job: `build-test` on runner `YowThi-ERP-V2`
 - required labels: `self-hosted`, `yowthi-erp-v2`
 - `eligibleForMainFastForward=true`
 - promotion: ff-only, ahead 1 / behind 0
 - push: non-force
-- remote fetch/read-back: `main = origin/main = db2342f398efa2a8c0b51c76354fd53b0c6a5b53`
+- remote fetch/read-back: `main = origin/main = e71e5fa092fe1d54a244e91eb4e1743bedd1bda5`
 - Formal r20 primary channel; Bootstrap r2 remains independent recovery/read-back channel
 
-Current active validation branch:
-- `p8-s6-sales-packaging-item-master-validation`
-- base: formal main `db2342f398efa2a8c0b51c76354fd53b0c6a5b53`
-- purpose: implement target-specific Sales Packaging Item Master management without changing HANDLING-001 / HANDLING-002, Sales Packaging Work wage behavior, or existing packaging-item lifecycle/current-use rules
+Current closure validation branch:
+- `p8-s6-sales-packaging-item-master-closure-validation`
+- base: formal main `e71e5fa092fe1d54a244e91eb4e1743bedd1bda5`
+- purpose: record the completed P8-S6 Sales Packaging Item Master formal baseline before the next P8 master-management slice
 
 C18 implementation validation:
 - branch: `p6-v8-farmer-hard-delete-validation`
@@ -1050,11 +1050,13 @@ main@cae5a5c0bf2f1cec7bf0ffa96dde7cbafbbe4ced
 -> exact P8-S5 self-hosted run 34190350814 SUCCESS; build-test on YowThi-ERP-V2; eligibleForMainFastForward=true
 -> ff-only main promotion + non-force push + fetch/read-back COMPLETE
 -> P8-S5 closure checkpoint COMPLETE / main@db2342f398efa2a8c0b51c76354fd53b0c6a5b53 / self-hosted run 34192036031 SUCCESS
--> P8-S6 Sales Packaging Item Master LOCAL VALIDATED on p8-s6-sales-packaging-item-master-validation
+-> P8-S6 Sales Packaging Item Master COMPLETE / main@e71e5fa092fe1d54a244e91eb4e1743bedd1bda5
 -> local Release build 0 warnings / 0 errors; .NET 382/382 PASS; browser visual acceptance 58/58 PASS
 -> same-origin PWA 4173 -> API 5180 -> PostgreSQL Packaging Item list/create/readback/update/soft-delete/restore acceptance PASS; acceptance Packaging Item + CommandExecution/Audit cleanup PASS
 -> Development Test Admin login/session/capability readback through 4173 -> 5180 PASS after canonical 5180 runtime recovery
 -> no relation/schema/migration change; no Packaging Item Hard Delete target introduced; HANDLING-001 / HANDLING-002 and existing Sales Packaging Work wage behavior remain unchanged
--> next hard gate: exact candidate SHA self-hosted restore/build/test before formal main promotion
+-> exact P8-S6 self-hosted run 34195069733 SUCCESS; build-test on YowThi-ERP-V2; eligibleForMainFastForward=true
+-> ff-only main promotion + non-force push + fetch/read-back COMPLETE
+-> P8-S6 closure checkpoint validation active on p8-s6-sales-packaging-item-master-closure-validation
 ```
 
