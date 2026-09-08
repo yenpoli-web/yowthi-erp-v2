@@ -112,11 +112,11 @@ const skeletonModules = countMatches(moduleRegistry, /^\s+webState:\s*'skeleton'
 const zhLabels = countMatches(moduleRegistry, /label:\s*\{\s*'zh-TW':/g);
 const thLabels = countMatches(moduleRegistry, /'th-TH':/g);
 
-if (operationalModules !== 12 || skeletonModules !== 0) {
-  fail(`Module registry must contain 12 operational modules and 0 skeleton modules; found ${operationalModules}/${skeletonModules}.`);
+if (operationalModules !== 13 || skeletonModules !== 0) {
+  fail(`Module registry must contain 13 operational modules and 0 skeleton modules; found ${operationalModules}/${skeletonModules}.`);
 }
-if (zhLabels !== 12 || thLabels < 12) {
-  fail(`All 12 modules must carry zh-TW and th-TH labels; found zh-TW=${zhLabels}, th-TH=${thLabels}.`);
+if (zhLabels !== 13 || thLabels < 13) {
+  fail(`All 13 modules must carry zh-TW and th-TH labels; found zh-TW=${zhLabels}, th-TH=${thLabels}.`);
 }
 
 const navigation = read('src/app/navigation.ts');
@@ -153,7 +153,7 @@ console.log('- application shell locale ownership: 3/3');
 console.log('- page-level LocaleControl instances: 0');
 console.log('- placeholder hints: 0');
 console.log('- raw JSX domain enums: 0');
-console.log('- module registry: 12 operational / 12 localized');
+console.log('- module registry: 13 operational / 13 localized');
 console.log('- Nature Green tablet/mobile shell markers: present');
 console.log('- mobile primary navigation: localized home + 3 core operations');
 console.log('- deterministic desktop/tablet/mobile override: present');

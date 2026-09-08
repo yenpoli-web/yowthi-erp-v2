@@ -10,7 +10,7 @@ namespace YowThi.Erp.ArchitectureTests;
 public sealed class M2RelationalModelTests
 {
     [Fact]
-    public void M2_foundation_schemas_remain_exactly_twenty_relations()
+    public void M2_foundation_schemas_remain_exactly_twenty_one_relations()
     {
         using var context = CreateContext();
         var model = GetDesignTimeModel(context);
@@ -34,6 +34,7 @@ public sealed class M2RelationalModelTests
             "product.procurement_products",
             "product.sales_product_groups",
             "product.sales_products",
+            "system.account_capability_grants",
             "system.accounts",
             "system.command_executions",
             "system.outbox_messages",

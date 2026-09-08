@@ -8,7 +8,7 @@ namespace YowThi.Erp.ArchitectureTests;
 public sealed class M1RelationalModelTests
 {
     [Fact]
-    public void M1_system_and_party_subset_remains_exactly_the_expected_eight_tables()
+    public void M1_system_and_party_subset_remains_exactly_the_expected_nine_tables()
     {
         using var context = CreateContext();
         var model = GetDesignTimeModel(context);
@@ -20,6 +20,7 @@ public sealed class M1RelationalModelTests
             "party.farmers",
             "party.outsourced_vendors",
             "party.suppliers",
+            "system.account_capability_grants",
             "system.accounts",
             "system.command_executions",
             "system.outbox_messages",
@@ -40,9 +41,9 @@ public sealed class M1RelationalModelTests
         using var context = CreateContext();
         var model = GetDesignTimeModel(context);
 
-        foreach (var table in new[] { "accounts", "suppliers", "farmers", "employees", "customers", "outsourced_vendors" })
+        foreach (var table in new[] { "accounts", "account_capability_grants", "suppliers", "farmers", "employees", "customers", "outsourced_vendors" })
         {
-            var entityType = GetTable(model, table == "accounts" ? "system" : "party", table);
+            var entityType = GetTable(model, table is "accounts" or "account_capability_grants" ? "system" : "party", table);
             var rowVersion = entityType.FindProperty("RowVersion");
 
             Assert.NotNull(rowVersion);
@@ -89,6 +90,32 @@ public sealed class M1RelationalModelTests
 
         Assert.Equal("ux_accounts_identity_issuer_subject", identityIndex.GetDatabaseName());
         Assert.Equal("identity_issuer IS NOT NULL", identityIndex.GetFilter());
+    }
+
+    [Fact]
+    public void Account_capability_grants_are_explicit_unique_restrict_rows()
+    {
+        using var context = CreateContext();
+        var model = GetDesignTimeModel(context);
+        var grants = GetTable(model, "system", "account_capability_grants");
+
+        Assert.Equal(2, grants.GetForeignKeys().Count());
+        Assert.All(grants.GetForeignKeys(), foreignKey =>
+        {
+            Assert.Equal("accounts", foreignKey.PrincipalEntityType.GetTableName());
+            Assert.Equal(DeleteBehavior.Restrict, foreignKey.DeleteBehavior);
+        });
+
+        var unique = Assert.Single(
+            grants.GetIndexes(),
+            index => index.IsUnique
+                && index.Properties.Select(property => property.Name)
+                    .SequenceEqual(new[] { "AccountId", "CapabilityName" }, StringComparer.Ordinal));
+        Assert.Equal("ux_account_capability_grants_account_capability", unique.GetDatabaseName());
+
+        var checks = grants.GetCheckConstraints().Select(check => check.Name).ToHashSet(StringComparer.Ordinal);
+        Assert.Contains("ck_account_capability_grants_capability_nonblank", checks);
+        Assert.Contains("ck_account_capability_grants_row_version", checks);
     }
 
     [Fact]

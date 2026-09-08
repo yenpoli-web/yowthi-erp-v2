@@ -15,6 +15,7 @@ const moduleIconPaths: Record<ModuleIconKey, readonly string[]> = {
   party: ['M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z', 'M2 21a7 7 0 0 1 14 0', 'M17 11a3 3 0 1 0 0-6', 'M16 16a5 5 0 0 1 6 5'],
   infrastructure: ['M4 21V8h16v13', 'M8 21v-5h8v5', 'M8 11h2', 'M14 11h2', 'M8 7V3h8v4'],
   product: ['M3 8 12 3l9 5-9 5z', 'M3 8v8l9 5 9-5V8', 'M12 13v8'],
+  security: ['M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z', 'M3 21a6 6 0 0 1 12 0', 'M17 10h4v7h-6v-5a2 2 0 0 1 2-2Z', 'M18 10V8a1 1 0 0 1 2 0v2'],
   'data-protection': ['M12 3 5 6v5c0 5 3 8 7 10 4-2 7-5 7-10V6z', 'm9 12 2 2 4-4'],
 };
 

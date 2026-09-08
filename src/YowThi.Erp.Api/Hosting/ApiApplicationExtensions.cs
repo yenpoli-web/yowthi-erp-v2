@@ -1,3 +1,5 @@
+using YowThi.Erp.Api.Authorization;
+
 namespace YowThi.Erp.Api.Hosting;
 
 public static class ApiApplicationExtensions
@@ -6,9 +8,14 @@ public static class ApiApplicationExtensions
     {
         ArgumentNullException.ThrowIfNull(app);
 
+        app.UseForwardedHeaders();
         app.UseExceptionHandler();
         app.UseStatusCodePages();
         app.UseRateLimiter();
+        app.UseAuthentication();
+        app.UseMiddleware<SecurityActorResolutionMiddleware>();
+        app.UseMiddleware<ApiAntiforgeryMiddleware>();
+        app.UseAuthorization();
 
         return app;
     }

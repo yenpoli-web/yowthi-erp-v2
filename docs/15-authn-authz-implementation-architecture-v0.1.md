@@ -1,7 +1,7 @@
 # AuthN/AuthZ Implementation Architecture v0.1 — YowThi ERP V2
 
 Status: **DECISION / v0.1**
-Revision basis: P3.5 AuthN/AuthZ Candidate Architecture, formally confirmed on 2026-08-28.
+Revision basis: P3.5 AuthN/AuthZ Candidate Architecture, formally confirmed on 2026-08-28; revised by the approved P8 Security Foundation on 2026-09-08 for persisted account capability administration and Development Test Admin login.
 
 ## 1. Purpose and precedence
 
@@ -20,9 +20,10 @@ Implementation precedence remains:
 
 Auth-specific relational correction:
 - this document is the later confirmed correction to earlier statements in `docs/10` section 6 and `docs/08-postgresql-schema-v0.1/06-audit-system.md` section 2 that external identity mapping was not yet defined
-- only the confirmed `system.accounts.identity_issuer` / `identity_subject` addition is superseding those earlier statements
+- `system.accounts.identity_issuer` / `identity_subject` remain the external identity binding
+- the approved P8 Security Foundation adds `system.account_capability_grants` for persistent explicit Account-to-Capability authorization
 - all other relational rules in `docs/10` remain authoritative
-- relation count remains 55 and schema count remains 14
+- relation count is 56 and schema count remains 14
 
 ## 2. Security goals
 
@@ -35,18 +36,20 @@ The v0.1 authentication/authorization design must:
 - use operation/capability authorization rather than inventing business roles
 - allow an account to be disabled centrally and rejected on subsequent requests
 - keep test authentication isolated from staging/production
-- preserve the existing no-password-bootstrap prohibition for deployed ERP APIs
+- permit passwordless Development Test Admin login only in the Development environment when explicitly enabled, while making that route impossible to enable in staging/production
 - not treat Tailscale or network location as application authentication
 
 ## 3. Authentication mechanism
 
-v0.1 uses a provider-neutral external OpenID Connect Identity Provider.
+Deployed ERP authentication uses a provider-neutral external OpenID Connect Identity Provider.
 
-Interactive browser authentication:
+Interactive deployed browser authentication:
 - OpenID Connect Authorization Code flow
 - PKCE
 - confidential server-side client where the provider supports/requires it
 - ASP.NET Core authentication middleware owns the protocol exchange
+
+Development additionally supports one explicit passwordless test-login route. That route is not an OIDC substitute for deployed environments: it is mapped only when the host environment is `Development` and `Security:DevelopmentTestAdmin:Enabled=true`. Attempting to enable it outside Development is a startup error.
 
 The specific Identity Provider is deployment-configured.
 The ERP architecture does not hard-code Microsoft, Google, or another provider as a domain fact.
@@ -66,7 +69,8 @@ After successful OIDC authentication, the ERP uses an ASP.NET Core encrypted aut
 
 Cookie baseline:
 - `HttpOnly`
-- `Secure`
+- `Secure` is mandatory outside the Development environment
+- Development loopback HTTP acceptance may use `CookieSecurePolicy.SameAsRequest`; staging/production use `CookieSecurePolicy.Always`
 - appropriate `SameSite` mode for the confirmed deployment topology
 - finite configured lifetime
 - no unbounded persistent login
@@ -159,32 +163,34 @@ Multiple external identities per account are not introduced without a later form
 
 ## 9. Relation-count decision
 
-P3.5 does not introduce:
+P3.5 originally introduced no authorization relation. The approved P8 Security Foundation is the formal later persistence revision and introduces exactly one authorization relation:
+- `system.account_capability_grants`
+
+It still does not introduce:
 - `roles`
-- `permissions`
+- `permissions` as a separate capability-master relation
 - `account_roles`
-- `account_permissions`
 - `external_identities`
 - `sessions`
 - `password_credentials`
 - `refresh_tokens`
 
-Formal relational count therefore remains:
+Formal relational count is now:
 
 ```text
-55 relations
+56 relations
 14 schemas
 ```
 
-If a later security requirement genuinely needs additional persistence, it must go through the relational revision rule before migration/application implementation.
+Capabilities remain code-defined technical authorization contracts; Account-to-Capability assignment is persisted. Additional security persistence still requires a formal relational revision.
 
 ## 10. Account provisioning
 
-v0.1 uses pre-provisioned ERP accounts.
+ERP accounts are explicitly provisioned. Successful OIDC authentication still does not automatically create a new ERP account.
 
-Successful OIDC authentication does not automatically create a new ERP account.
+Normal account provisioning and maintenance is now available through the authorized Account Management slice guarded by `security.account.manage`. The account can optionally be bound to one exact `(identity_issuer, identity_subject)` pair and receives explicit persisted capability grants.
 
-Request resolution:
+OIDC login resolution:
 
 ```text
 validated OIDC principal
@@ -192,23 +198,26 @@ validated OIDC principal
 → lookup system.accounts
 → account not found: reject
 → account inactive: reject
-→ account active: resolve ActorAccountId
+→ issue ERP cookie containing persistent Account UUID
 ```
 
-Unknown authenticated identities do not become ERP users merely by reaching the login callback.
+Subsequent ERP requests resolve that persistent Account UUID against `system.accounts`, require `active = true`, then load current active capability grants. Unknown authenticated identities do not become ERP users merely by reaching the login callback.
 
-## 11. Bootstrap boundary
+## 11. Bootstrap / Development Test Admin boundary
 
-The first ERP account may be provisioned using an explicit host-side deployment/maintenance mechanism.
+The approved P8 Security Foundation provides a Development-only bootstrap account for local acceptance work.
 
-Requirements:
-- not an anonymous HTTP ERP endpoint
-- not a staging/production no-password bypass
-- not a permanent hard-coded account
-- operator action is explicit and auditable operationally
-- account receives an application-generated UUID and explicit external `(issuer, subject)` binding
+Development Test Admin requirements:
+- a real `system.accounts` row with an application-generated UUID v7
+- fixed technical development identity `(urn:yowthi:development, test-admin)`
+- explicit grant rows for every currently known capability, including `security.account.manage`
+- no wildcard `*`, bypass authorization handler, or generic `SuperAdmin` role
+- ordinary Account Management cannot disable it, rebind it, or reduce its grants
+- passwordless login endpoint exists only in Development and only when explicitly enabled
+- staging/production configuration attempting to enable the route fails startup
+- Tailscale membership is network reachability only and is never treated as ERP authentication
 
-A future in-product Security Administration workflow may replace manual provisioning only after its command/authorization design is formally defined.
+Production/staging initial account provisioning remains an explicit deployment/maintenance concern until the configured OIDC-backed Account Management workflow is available there.
 
 ## 12. Account active-state enforcement
 
@@ -233,11 +242,12 @@ The API authentication/actor-resolution layer produces the existing Application 
 Application write flow is conceptually:
 
 ```text
-OIDC/Cookie authentication
-→ validated principal
-→ system.accounts lookup by issuer + subject
+OIDC login or Development-only test login
+→ ERP encrypted cookie with persistent Account UUID
+→ system.accounts lookup by Account UUID
 → active-account validation
-→ ActorAccountId
+→ load active system.account_capability_grants
+→ ActorAccountId + capability claims
 → capability authorization
 → endpoint/Application command
 ```
@@ -277,38 +287,19 @@ None of these ordinary lifecycle capabilities implies permission for physical de
 
 ## 15. Capability assignment v0.1
 
-v0.1 capability grants are deployment-configured and keyed by persistent ERP Account UUID.
-
-Conceptual configuration:
-
-```text
-sales.confirm
-  → account UUID A
-  → account UUID B
-
-finance.pay
-  → account UUID A
-
-party.supplier.lifecycle
-  → account UUID B
-
-party.customer.lifecycle
-  → account UUID B
-
-procurement.batch.lifecycle
-  → account UUID B
-```
+Capability assignments are persisted in `system.account_capability_grants` and keyed by persistent ERP Account UUID plus exact capability name.
 
 Rules:
-- exact capability names
-- exact account UUID grants
+- exact capability names from the code-defined capability registry
+- one structural grant identity per `(account_id, capability_name)`
+- active/inactive grant state is explicit
 - no wildcard super-user role
 - no inference from display name, email, phone, or Employee record
 - no automatic capability assignment from unconfirmed organization/business roles
+- authorization is re-resolved from persistent Account and current active grants on authenticated requests, so permission changes do not depend on waiting for cookie expiry
+- Account Management itself requires `security.account.manage`
 
-The mechanism may later move to persisted authorization administration only through a formal architecture revision.
-
-Target-specific ERP lifecycle/correction capabilities may be added with their implementation slices without creating a new Business Rule or business-role hierarchy. Their grants remain explicit deployment configuration.
+Target-specific ERP lifecycle/correction capabilities may be added with their implementation slices without creating a new Business Rule or business-role hierarchy. New capability identifiers are added to the code registry; grants remain explicit persisted security state.
 
 `finance.correct` is the ERP Control capability used by V8-C6 `CorrectPaymentAmount`. It is separate from `finance.pay`: permission to register a Payment does not automatically imply permission to amend a previously registered Payment. This authorization distinction is technical security architecture, not a YowThi business-role hierarchy.
 
@@ -324,7 +315,7 @@ data-protection.hard-delete
 
 It does not invent a `SuperAdmin` role.
 
-Who receives this capability is a controlled security configuration decision, not a new Business Rule encoded in the domain model.
+Who receives this capability is a controlled Account Management security decision, not a new Business Rule encoded in the domain model.
 
 `data-protection.hard-delete` is deliberately separate from ordinary lifecycle capabilities such as `party.supplier.lifecycle`, `party.customer.lifecycle`, and `procurement.batch.lifecycle`. Possession of an ordinary lifecycle capability must not imply Hard Delete authority, and Hard Delete authority must not be reused as the normal lifecycle permission.
 
@@ -351,6 +342,8 @@ This protection is independent of CommandId/idempotency.
 Baseline:
 - server issues/validates ASP.NET Core antiforgery tokens
 - React sends the request token in a dedicated header
+- antiforgery cookies follow the same environment boundary as the session cookie: Development loopback HTTP may use `SameAsRequest`; non-Development remains `Secure=Always`
+- the request-token cookie exposed to React is non-`HttpOnly` by design, while the framework antiforgery cookie remains `HttpOnly`
 
 Confirmed technical header name:
 
@@ -384,13 +377,15 @@ Only claims from a successful configured authentication scheme may reach account
 
 ## 21. Test authentication boundary
 
-API contract/integration tests may use a dedicated test authentication handler/principal.
+API contract/integration tests may use a dedicated test authentication handler/principal. Interactive local Development may additionally use the persisted Development Test Admin described above.
 
 The test scheme must:
 - live only in test composition/configuration
 - never become the default staging/production authentication path
-- never create a deployment no-password bypass
+- never create a deployed no-password bypass
 - still exercise authenticated/unauthenticated and capability metadata behavior
+
+The Development Test Admin must exercise the same persistent Account, capability policy, ActorContext, command idempotency, Audit, and PostgreSQL paths as normal ERP operations; only credential entry/OIDC challenge is bypassed in Development.
 
 ## 22. Logging and secret handling
 
@@ -419,19 +414,20 @@ It does not create a server-side sessions relation in v0.1.
 
 A future requirement for centralized session enumeration/revocation beyond active-account revocation requires a formal persistence/security revision.
 
-## 24. Implementation order after this gate
+## 24. P8 Security Foundation implementation order
 
-After this document and the `system.accounts` mapping revision are validated:
+`InitialV01` is immutable historical baseline and must not be rewritten. The approved P8 Security Foundation proceeds forward:
 
-1. P3.5 hard gate is complete.
-2. Generate `InitialV01` in the dedicated migrations project.
-3. Static-review generated migration against the 55-relation baseline plus this auth-specific account correction.
-4. Verify no pending EF model changes.
-5. Only then activate Docker Desktop / PostgreSQL 18 for P5 apply and provider-specific acceptance.
+1. update the 56-relation EF model and metadata hard gates
+2. implement Account Management, persistent capability resolution, cookie/CSRF runtime, and Development Test Admin boundaries
+3. generate a new forward migration in the dedicated migrations project; do not edit `InitialV01`
+4. static-review the generated migration so it adds only the approved security relation/index/FKs required by this revision
+5. run architecture/API/integration hard gates
+6. apply the forward migration to PostgreSQL 18 development only after those gates pass
+7. exercise Development Test Admin login and real Supplier/Customer PostgreSQL operations through the same-origin PWA/API runtime
+8. validate the exact candidate SHA on the YowThi self-hosted runner before main promotion
 
-Actual OIDC provider wiring may proceed before Business API production use, but it does not require delaying the formal initial schema once this relational identity shape is included.
-
-Later P6 ERP Control capability names remain additive technical authorization contracts and do not reopen the P3.5 relation-count decision unless persisted authorization administration is introduced.
+OIDC provider-specific deployed wiring remains provider-neutral and can follow without changing the persisted Account/Capability model.
 
 ## 25. Explicit non-decisions
 
@@ -452,16 +448,19 @@ Those require real use cases and separate security/architecture decisions.
 
 ## 26. Acceptance gate
 
-P3.5 is complete when:
-- this architecture is committed
-- `system.accounts` EF mapping contains nullable paired issuer/subject columns
-- paired/nonblank CHECK constraints are present
-- partial unique external identity index is present
-- relation count remains 55
-- existing full-model hard gates remain green
-- self-hosted restore/build/test succeeds
+The P8 Security Foundation revision is complete when:
+- `system.accounts` retains nullable paired issuer/subject columns and their existing structural checks/index
+- `system.account_capability_grants` is the only new relation required by this revision
+- relation count is exactly 56 across the same 14 schemas
+- Account Management is guarded by `security.account.manage`
+- all API capability policies resolve through persisted active grants
+- Development Test Admin is a real persistent account with all explicit capabilities and cannot be downgraded through ordinary Account Management
+- passwordless Development login is absent outside Development and enabling it outside Development fails startup
+- unsafe authenticated API writes require antiforgery validation
+- real same-origin PWA → API → PostgreSQL Supplier/Customer operations pass
+- full local hard gates and exact-SHA self-hosted restore/build/test succeed
 
-After that, `InitialV01` is no longer blocked by AuthN/AuthZ architecture and the project may enter P4.
+`InitialV01` remains unchanged; the security revision is delivered by a new forward migration.
 
 ## 27. V8 lifecycle capability confirmations — 2026-09-04
 
@@ -479,15 +478,15 @@ Confirmed operations:
 - `procurement.batch.lifecycle` → V8-C9 Procurement Batch Reopen
 
 Confirmed security consequences:
-- capability grants remain deployment-configured by persistent Account UUID
-- no `roles`, `permissions`, `account_roles`, or other new authorization relations are introduced
+- capability grants are explicit persisted `system.account_capability_grants` rows keyed by persistent Account UUID
+- no `roles`, `account_roles`, or wildcard authorization mechanism is introduced
 - no YowThi business-role hierarchy is inferred
 - ordinary lifecycle capabilities do not grant Hard Delete
 - `procurement.batch.lifecycle` is separate from `procurement.confirm`
 - `data-protection.hard-delete` remains the separate highest-authority physical-delete capability
 - future target-specific lifecycle/correction capabilities may follow the same technical pattern without being treated as Business Rules
 
-V8-C4, V8-C5, and V8-C9 therefore require no AuthN/AuthZ persistence revision and no EF migration.
+V8-C4, V8-C5, and V8-C9 themselves required no AuthN/AuthZ persistence revision. The later P8 Security Foundation is a separate formally approved technical security revision and introduces the forward capability-grant migration.
 
 ## 28. V8-C6 Finance correction capability confirmation - 2026-09-04
 
@@ -502,7 +501,7 @@ Confirmed operation:
 
 Confirmed security consequences:
 - correction permission is distinct from `finance.pay`
-- capability grants remain deployment-configured by persistent Account UUID
-- no Role Master, permission tables, account-role persistence, or business-role hierarchy is introduced
+- capability grants are explicit persisted rows keyed by persistent Account UUID and capability name
+- no Role Master, account-role persistence, wildcard super-user role, or business-role hierarchy is introduced
 - `finance.correct` does not imply `data-protection.hard-delete`
-- no AuthN/AuthZ persistence revision or EF migration is required
+- V8-C6 itself required no AuthN/AuthZ persistence revision; the later P8 Security Foundation independently introduces persisted capability grants and its forward EF migration

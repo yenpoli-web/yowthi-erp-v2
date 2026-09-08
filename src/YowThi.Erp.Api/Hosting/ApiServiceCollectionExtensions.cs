@@ -1,18 +1,44 @@
+using System.Net;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.HttpOverrides;
+using YowThi.Erp.Api.Authorization;
 using YowThi.Erp.Api.Errors;
 using YowThi.Erp.Api.Idempotency;
 using YowThi.Erp.Api.Localization;
+using YowThi.Erp.Application.Common.Identity;
+using YowThi.Erp.Application.Security;
 
 namespace YowThi.Erp.Api.Hosting;
 
 public static class ApiServiceCollectionExtensions
 {
     private const string MaxRequestBodySizeKey = "Api:RequestLimits:MaxRequestBodySizeBytes";
+    private const string DevelopmentTestAdminEnabledKey = "Security:DevelopmentTestAdmin:Enabled";
 
     public static WebApplicationBuilder AddYowThiApi(this WebApplicationBuilder builder)
     {
         ArgumentNullException.ThrowIfNull(builder);
+
+        var developmentTestAdminConfigured = builder.Configuration.GetValue<bool>(DevelopmentTestAdminEnabledKey);
+        if (developmentTestAdminConfigured && !builder.Environment.IsDevelopment())
+        {
+            throw new InvalidOperationException(
+                $"{DevelopmentTestAdminEnabledKey} may only be enabled in the Development environment.");
+        }
+
+        builder.Services.AddSingleton(new SecurityRuntimeOptions(
+            builder.Environment.IsDevelopment() && developmentTestAdminConfigured));
+
+        builder.Services.Configure<ForwardedHeadersOptions>(options =>
+        {
+            options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+            options.ForwardLimit = 1;
+            options.KnownProxies.Add(IPAddress.Loopback);
+            options.KnownProxies.Add(IPAddress.IPv6Loopback);
+        });
 
         builder.Services.AddProblemDetails(options =>
         {
@@ -36,7 +62,63 @@ public static class ApiServiceCollectionExtensions
 
         builder.Services.AddOpenApi("v1");
         builder.Services.AddValidation();
-        builder.Services.AddAuthorization();
+        builder.Services.AddHttpContextAccessor();
+        builder.Services.AddScoped<IActorContext, HttpActorContext>();
+
+        builder.Services
+            .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+            .AddCookie(options =>
+            {
+                options.Cookie.Name = ".YowThi.Erp.Session";
+                options.Cookie.HttpOnly = true;
+                options.Cookie.SecurePolicy = builder.Environment.IsDevelopment() ? CookieSecurePolicy.SameAsRequest : CookieSecurePolicy.Always;
+                options.Cookie.SameSite = SameSiteMode.Strict;
+                options.ExpireTimeSpan = TimeSpan.FromHours(8);
+                options.SlidingExpiration = true;
+                options.Events.OnRedirectToLogin = context =>
+                {
+                    if (context.Request.Path.StartsWithSegments("/api/v1"))
+                    {
+                        context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                        return Task.CompletedTask;
+                    }
+
+                    context.Response.Redirect(context.RedirectUri);
+                    return Task.CompletedTask;
+                };
+                options.Events.OnRedirectToAccessDenied = context =>
+                {
+                    if (context.Request.Path.StartsWithSegments("/api/v1"))
+                    {
+                        context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                        return Task.CompletedTask;
+                    }
+
+                    context.Response.Redirect(context.RedirectUri);
+                    return Task.CompletedTask;
+                };
+            });
+
+        builder.Services.AddAuthorization(options =>
+        {
+            foreach (var capability in SecurityCapabilities.All)
+            {
+                options.AddPolicy(
+                    capability,
+                    policy => policy
+                        .RequireAuthenticatedUser()
+                        .RequireClaim(SecurityClaimTypes.Capability, capability));
+            }
+        });
+
+        builder.Services.AddAntiforgery(options =>
+        {
+            options.HeaderName = "X-CSRF-TOKEN";
+            options.Cookie.Name = ".YowThi.Erp.Antiforgery";
+            options.Cookie.HttpOnly = true;
+            options.Cookie.SecurePolicy = builder.Environment.IsDevelopment() ? CookieSecurePolicy.SameAsRequest : CookieSecurePolicy.Always;
+            options.Cookie.SameSite = SameSiteMode.Strict;
+        });
 
         builder.Services.AddRateLimiter(options =>
         {

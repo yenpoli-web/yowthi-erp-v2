@@ -1,6 +1,6 @@
 # Current Design Checkpoint — YowThi ERP V2
 
-Checkpoint status: **v0.1 implementation baseline through P6 / V8 COMPLETE and P7 COMPLETE. The P7 system skeleton S0–S12, Nature Green presentation, Desktop / Tablet / Mobile adaptive UX, and current-route zh-TW / th-TH presentation acceptance are COMPLETE. Remaining lifecycle / Hard Delete / Batch-control candidates remain explicitly deferred or future target-specific scope.**
+Checkpoint status: **v0.1 implementation baseline through P6 / V8 COMPLETE and P7 COMPLETE. P8-S1 Supplier Master is formally on main. P8-S2 Customer Master plus iOS viewport stabilization is locally validated but not yet promoted. P8 Security Foundation is locally validated: persisted Account-to-Capability authorization, Development-only passwordless Test Admin, real API runtime composition, the forward 56th-relation migration, and same-origin PWA → API → PostgreSQL Supplier/Customer runtime acceptance are PASS. Exact-SHA self-hosted validation and formal promotion remain pending.**
 
 Purpose: recover the current architecture and implementation state if conversational context is lost.
 
@@ -101,12 +101,19 @@ Persistence invariants:
 - no Npgsql `xmin` substitution for row version
 - migration architecture never reverse-defines the domain model
 
-`InitialV01`:
+`InitialV01` remains immutable:
 - migration: `20260828033151_InitialV01`
 - development PostgreSQL: `127.0.0.1:55432/yowthi_dev`
 - PostgreSQL 18.6
-- P5: 1 applied / 0 pending
-- migration-state fingerprint: `9645A93DBC1642819210DFA99904A81776AF0CBE0116458945409A9611889E6E`
+- original P5 state: 1 applied / 0 pending
+- original migration-state fingerprint: `9645A93DBC1642819210DFA99904A81776AF0CBE0116458945409A9611889E6E`
+
+P8 Security Foundation relational revision:
+- approved model count: **56 relations / 14 schemas**
+- added relation: `system.account_capability_grants`
+- forward migration: `20260908002500_P8SecurityFoundation`
+- `InitialV01` is not modified or regenerated
+- development PostgreSQL acceptance confirms the forward migration in `system.__ef_migrations_history` and the 56-relation schema, including `system.account_capability_grants`
 
 ## 4. Phase status
 
@@ -149,24 +156,30 @@ P6    Business / ERP Control vertical slices             COMPLETE
       remaining candidate ERP Control scope               DEFERRED / FUTURE
 P7    React UI system skeleton S0-S12                  COMPLETE
       Nature Green presentation / adaptive UX / i18n    COMPLETE
-P8    CI / production hardening                          FUTURE
+P8    Master-management / security runtime foundation     ACTIVE
+      S1 Supplier Master                                  COMPLETE / MAIN
+      S2 Customer Master + iOS viewport stabilization     LOCAL VALIDATED / NOT PROMOTED
+      Security Foundation                                 LOCAL VALIDATED / SELF-HOSTED PENDING
 ```
 
 P6/V8 is COMPLETE because remaining candidate control scope is now explicitly deferred or future target-specific scope; unresolved Business Facts remain governed by the Gap Register.
 
 ## 5. Current formal Git baseline
 
-Formal implementation baseline immediately before this checkpoint-document commit:
+Current formal Git baseline:
 - `main = origin/main`
-- SHA: `cae5a5c0bf2f1cec7bf0ffa96dde7cbafbbe4ced`
-- commit: `feat(web): complete nature green management presentation`
+- SHA: `ca58feb98dc0faa9233ef9f2ca9991607abeef81`
+- commit: `feat(party): implement supplier master management`
+- P8-S1 Supplier Master exact-SHA self-hosted validation: SUCCESS
 - promotion: ff-only
 - push: non-force
-- remote fetch/read-back: clean
+- remote fetch/read-back: synchronized
 - Formal r20 primary channel; Bootstrap r2 remains independent recovery/read-back channel
 
-Current docs checkpoint branch:
-- `p7-presentation-closure-checkpoint-validation`
+Current active validation branch:
+- `p8-security-foundation-validation`
+- branch base/HEAD before Security Foundation commit: `bea088968b28a59ac48763a8a48df672a26523f9`
+- this branch includes the locally validated P8-S2 Customer Master and iOS viewport stabilization that are not yet on main
 
 C18 implementation validation:
 - branch: `p6-v8-farmer-hard-delete-validation`
@@ -828,7 +841,7 @@ Current examples include:
 - `party.employee.lifecycle`
 - `data-protection.hard-delete`
 
-Capability grants remain deployment-configured by persistent Account UUID.
+P8 Security Foundation revises capability assignment to persistent `system.account_capability_grants` rows keyed by persistent Account UUID. Capability names remain explicit operation/security identifiers; no wildcard role or inferred business-role hierarchy is introduced. A Development Test Admin receives every currently registered explicit capability only in the Development environment and is protected from ordinary account-management downgrade/disable operations.
 
 `data-protection.hard-delete` remains highest authority and must not be reused for ordinary lifecycle/data correction.
 
@@ -852,9 +865,13 @@ Implemented operational routes now include:
 - `/finance`
 - `/inventory`
 - `/party`
+- `/party/customers`
 - `/infrastructure`
 - `/product`
 - `/data-protection`
+
+Active P8 Security Foundation candidate route:
+- `/security/accounts`
 
 P7 is formally complete for the current v0.1 route set at `main@cae5a5c0bf2f1cec7bf0ffa96dde7cbafbbe4ced`.
 
@@ -989,5 +1006,15 @@ main@cae5a5c0bf2f1cec7bf0ffa96dde7cbafbbe4ced
 -> Nature Green presentation + Desktop/Tablet/Mobile adaptive UX COMPLETE for current v0.1 route set
 -> current static zh-TW/th-TH presentation acceptance COMPLETE; browser visual acceptance 40/40 PASS
 -> P7 COMPLETE
+-> P8-S1 Supplier Master COMPLETE / main@ca58feb98dc0faa9233ef9f2ca9991607abeef81
+-> P8-S2 Customer Master + iOS viewport stabilization locally validated at bea088968b28a59ac48763a8a48df672a26523f9; NOT YET PROMOTED
+-> active branch p8-security-foundation-validation
+-> approved Security relational revision: 56 relations / 14 schemas
+-> system.account_capability_grants persisted authorization relation
+-> Development-only passwordless Test Admin with all explicit capabilities; no wildcard authorization bypass
+-> forward migration 20260908002500_P8SecurityFoundation applied/accepted in development PostgreSQL; InitialV01 remains immutable
+-> local Release build: 0 warnings / 0 errors; full .NET hard gates: 358/358 PASS, 0 skipped
+-> same-origin PWA 4173 -> API 5180 -> PostgreSQL runtime acceptance PASS for Development Test Admin, Account Management, Supplier/Customer reads, and authenticated CSRF-protected writes
+-> next hard gate: exact candidate SHA self-hosted restore/build/test before formal main promotion
 ```
 

@@ -6,6 +6,7 @@ import { RouterProvider } from 'react-router';
 import { LocaleProvider } from './app/i18n/locale';
 import { queryClient } from './app/queryClient';
 import { router } from './app/router';
+import { AuthGate } from './app/security/AuthGate';
 import './styles.css';
 import './app/layouts/presentationShell.css';
 import './app/layouts/operationPage.css';
@@ -22,7 +23,9 @@ createRoot(rootElement).render(
   <StrictMode>
     <LocaleProvider>
       <QueryClientProvider client={queryClient}>
-        <RouterProvider router={router} />
+        <AuthGate>
+          <RouterProvider router={router} />
+        </AuthGate>
       </QueryClientProvider>
     </LocaleProvider>
   </StrictMode>,

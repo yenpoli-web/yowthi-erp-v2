@@ -11,7 +11,7 @@ Business facts and business rules continue to come from Business Discovery, Comm
 
 For relational implementation details only, when an earlier Part 1–6 schema note conflicts with this consolidation, this document is the later consolidation baseline. In particular it formalizes several persistence-level corrections discovered only after cross-module review.
 
-Planned relation count: **55 relations**.
+Planned relation count: **56 relations** after the approved P8 Security Foundation revision.
 
 ## 2. Global PostgreSQL conventions
 
@@ -94,14 +94,36 @@ Do not introduce a generic trigger framework solely to force these aggregate inv
 ## 6. System schema
 
 ### `system.accounts`
-Minimal persistent actor identity anchor only:
+Persistent ERP actor/account anchor:
 - `id uuid` PK
 - `display_name text`
 - `active boolean`
+- `identity_issuer text NULL`
+- `identity_subject text NULL`
 - `row_version bigint`
 - `created_at timestamptz`
 
-No credential, role, permission, MFA, session, external identity, or Employee linkage is defined here.
+`identity_issuer` and `identity_subject` are structurally paired: both null or both present and nonblank. When present, `(identity_issuer, identity_subject)` is unique and identifies the external login identity bound to the ERP account.
+
+No password, password hash, MFA secret, durable session, generic role, or Employee linkage is stored in `system.accounts`.
+
+### `system.account_capability_grants`
+Persistent explicit authorization grants:
+- `id uuid` PK
+- `account_id uuid` FK -> `system.accounts(id)`
+- `capability_name text NOT NULL`
+- `active boolean NOT NULL`
+- `row_version bigint`
+- `created_at timestamptz NOT NULL`
+- `created_by_account_id uuid` FK -> `system.accounts(id)`
+
+Structural rules:
+- unique `(account_id, capability_name)`
+- capability name must be nonblank
+- both Account FKs use Restrict / No Action semantics
+- authorization uses explicit capability identifiers such as `finance.pay`, `party.customer.lifecycle`, and `data-protection.hard-delete`; no wildcard grant or generic administrator role is introduced
+
+Capability grants are technical ERP authorization state, not YowThi Business Rules.
 
 ### `system.command_executions`
 Persistent idempotency:
@@ -643,8 +665,9 @@ Suggested investigation indexes include:
 
 ## 21. Relation catalogue
 
-### `system` — 3
+### `system` — 4
 - accounts
+- account_capability_grants
 - command_executions
 - outbox_messages
 
@@ -726,7 +749,7 @@ Suggested investigation indexes include:
 - audit_event_subjects
 - correction_links
 
-Total: **55 relations**.
+Total: **56 relations**.
 
 ## 22. Formal consolidation corrections
 
@@ -803,7 +826,7 @@ In particular, no permanent DB rule for nonnegative Finance Outstanding is intro
 With this consolidation confirmed:
 - PostgreSQL Schema Parts 1–6 remain the domain-by-domain design history.
 - This document is the integrated relational baseline for subsequent DDL/EF mapping work.
-- Planned v0.1 relation set is 55 relations.
+- Planned v0.1 relation set is 56 relations after the approved P8 Security Foundation authorization revision.
 - Core relational contradictions identified during cross-module review are resolved.
 
 Next architecture stage:

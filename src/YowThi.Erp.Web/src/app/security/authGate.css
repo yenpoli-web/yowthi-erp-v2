@@ -1,0 +1,46 @@
+.auth-gate {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: max(1rem, env(safe-area-inset-top)) 1rem max(1rem, env(safe-area-inset-bottom));
+  background: #f4f7f2;
+}
+
+.auth-card {
+  width: min(100%, 28rem);
+  display: grid;
+  gap: 0.9rem;
+  padding: 1.35rem;
+  border: 1px solid #d9e3d3;
+  border-radius: 1rem;
+  background: #fffef9;
+  box-shadow: 0 12px 32px rgba(16, 24, 40, 0.08);
+}
+
+.auth-card > strong {
+  color: #0b7b5f;
+  font-size: 0.95rem;
+}
+
+.auth-card h1,
+.auth-card p {
+  margin: 0;
+}
+
+.auth-card h1 {
+  font-size: 1.55rem;
+}
+
+.auth-card p {
+  color: #4b5f52;
+}
+
+.auth-development-login {
+  margin-top: 0;
+  width: 100%;
+  min-height: 3rem;
+}
+
+.auth-error {
+  color: #b42318 !important;
+}

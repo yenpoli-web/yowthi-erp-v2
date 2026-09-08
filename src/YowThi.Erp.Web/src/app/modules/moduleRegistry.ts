@@ -12,6 +12,7 @@ export type ModuleKey =
   | 'party'
   | 'infrastructure'
   | 'product'
+  | 'security'
   | 'data-protection';
 
 export type ModuleArea = 'operations' | 'controls';
@@ -102,6 +103,13 @@ export const systemModules: readonly SystemModuleDefinition[] = [
     area: 'controls',
     webState: 'operational',
     label: { 'zh-TW': '產品管理', 'th-TH': 'การตั้งค่าสินค้า' },
+  },
+  {
+    key: 'security',
+    route: '/security/accounts',
+    area: 'controls',
+    webState: 'operational',
+    label: { 'zh-TW': '帳號與權限', 'th-TH': 'บัญชีและสิทธิ์' },
   },
   {
     key: 'data-protection',

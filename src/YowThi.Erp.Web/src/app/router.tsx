@@ -15,6 +15,7 @@ import { ProcessingExecutionPage } from '../features/processing/ProcessingExecut
 import { ProcurementEntryPage } from '../features/procurement/ProcurementEntryPage';
 import { SalesConfirmationPage } from '../features/sales/SalesConfirmationPage';
 import { SalesPackagingWorkPage } from '../features/sales-handling/SalesPackagingWorkPage';
+import { SecurityAccountPage } from '../features/security/SecurityAccountPage';
 import { App } from './App';
 import { ModuleIndexPage, ModuleSkeletonPage } from './modules/ModulePages';
 import { skeletonModules } from './modules/moduleRegistry';
@@ -79,6 +80,10 @@ export const router = createBrowserRouter([
       {
         path: 'product',
         element: <SalesProductGroupLifecyclePage />,
+      },
+      {
+        path: 'security/accounts',
+        element: <SecurityAccountPage />,
       },
       {
         path: 'data-protection',

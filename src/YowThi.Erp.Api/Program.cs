@@ -1,3 +1,4 @@
+using YowThi.Erp.Api.Authorization;
 using YowThi.Erp.Api.DataProtection;
 using YowThi.Erp.Api.Finance;
 using YowThi.Erp.Api.Hosting;
@@ -11,15 +12,23 @@ using YowThi.Erp.Api.Procurement;
 using YowThi.Erp.Api.Product;
 using YowThi.Erp.Api.Sales;
 using YowThi.Erp.Api.SalesHandling;
+using YowThi.Erp.Api.Security;
+using YowThi.Erp.Infrastructure.Persistence.DependencyInjection;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddYowThiApi();
 
+var connectionString = builder.Configuration.GetConnectionString("Erp")
+    ?? throw new InvalidOperationException("ConnectionStrings:Erp is required.");
+builder.Services.AddErpPersistence(connectionString);
+
 var app = builder.Build();
 
 app.UseYowThiApiInfrastructure();
 app.MapYowThiTechnicalEndpoints();
+app.MapYowThiAuthenticationEndpoints();
+app.MapSecurityAccountEndpoints();
 app.MapPartyEndpoints();
 app.MapSupplierMasterEndpoints();
 app.MapCustomerMasterEndpoints();

@@ -26,13 +26,13 @@ public sealed class FullRelationalModelTests
     ];
 
     [Fact]
-    public void Full_model_contains_exactly_fifty_five_relations_across_fourteen_schemas()
+    public void Full_model_contains_exactly_fifty_six_relations_across_fourteen_schemas()
     {
         using var context = CreateContext();
         var model = GetDesignTimeModel(context);
         var entityTypes = model.GetEntityTypes().ToArray();
 
-        Assert.Equal(55, entityTypes.Length);
+        Assert.Equal(56, entityTypes.Length);
         Assert.All(entityTypes, entityType =>
         {
             Assert.False(string.IsNullOrWhiteSpace(entityType.GetSchema()));
@@ -46,6 +46,9 @@ public sealed class FullRelationalModelTests
             .ToArray();
 
         Assert.Equal(ExpectedSchemas, actualSchemas);
+        Assert.Contains(entityTypes, entityType =>
+            entityType.GetSchema() == "system"
+            && entityType.GetTableName() == "account_capability_grants");
     }
 
     [Fact]

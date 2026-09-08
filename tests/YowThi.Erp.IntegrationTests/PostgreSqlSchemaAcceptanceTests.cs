@@ -7,7 +7,11 @@ public sealed class PostgreSqlSchemaAcceptanceTests
     private const string ConnectionStringEnvironmentVariable = "YOWTHI_ERP_CONNECTION_STRING";
     private const string LocalDevelopmentConnectionString =
         "Host=127.0.0.1;Port=55432;Database=yowthi_dev;Username=yowthi_dev";
-    private const string ExpectedMigrationId = "20260828033151_InitialV01";
+    private static readonly string[] ExpectedMigrationIds =
+    [
+        "20260828033151_InitialV01",
+        "20260908002500_P8SecurityFoundation",
+    ];
 
     private static readonly string[] ExpectedSchemas =
     [
@@ -81,6 +85,7 @@ public sealed class PostgreSqlSchemaAcceptanceTests
         "sales.sales_details",
         "sales_handling.sales_packaging_items",
         "sales_handling.sales_packaging_work_records",
+        "system.account_capability_grants",
         "system.accounts",
         "system.command_executions",
         "system.outbox_messages",
@@ -150,7 +155,7 @@ public sealed class PostgreSqlSchemaAcceptanceTests
     }
 
     [Fact]
-    public async Task Migration_history_contains_only_InitialV01()
+    public async Task Migration_history_contains_the_expected_forward_chain()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         await using var connection = await OpenConnectionAsync(cancellationToken);
@@ -165,7 +170,7 @@ public sealed class PostgreSqlSchemaAcceptanceTests
             migrationIds.Add(reader.GetString(0));
         }
 
-        Assert.Equal([ExpectedMigrationId], migrationIds);
+        Assert.Equal(ExpectedMigrationIds, migrationIds);
     }
 
     private static async Task<NpgsqlConnection> OpenConnectionAsync(CancellationToken cancellationToken)

@@ -8,6 +8,7 @@ internal static class SystemMappingExtensions
     {
         ArgumentNullException.ThrowIfNull(modelBuilder);
         modelBuilder.ApplyConfiguration(new SystemAccountRecordConfiguration());
+        modelBuilder.ApplyConfiguration(new SystemAccountCapabilityGrantRecordConfiguration());
         modelBuilder.ApplyConfiguration(new CommandExecutionRecordConfiguration());
         modelBuilder.ApplyConfiguration(new OutboxMessageRecordConfiguration());
     }

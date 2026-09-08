@@ -1,0 +1,110 @@
+.security-account-list {
+  display: grid;
+}
+
+.security-account-list-item {
+  width: 100%;
+  min-height: 4rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.7rem 0.8rem;
+  border: 0;
+  border-bottom: 1px solid #e2e9df;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+}
+
+.security-account-list-item:hover,
+.security-account-list-item.is-selected {
+  background: #eef7f1;
+}
+
+.security-account-list-item > span:first-child {
+  min-width: 0;
+  display: grid;
+  gap: 0.12rem;
+}
+
+.security-account-list-item strong,
+.security-account-list-item small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.security-account-list-item small {
+  color: #6f7f74;
+}
+
+.security-protected-banner {
+  padding: 0.75rem 0.9rem;
+  border: 1px solid #d5e5d6;
+  border-radius: 0.7rem;
+  background: #f2f8f2;
+  color: #315b49;
+  font-size: 0.84rem;
+}
+
+.security-capability-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.security-capability-chips > span {
+  padding: 0.4rem 0.58rem;
+  border: 1px solid #cfe0d1;
+  border-radius: 999px;
+  background: #f4faf4;
+  color: #176242;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.security-capability-chips p {
+  margin: 0;
+  color: #6f7f74;
+}
+
+.security-capability-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.security-capability-grid label {
+  min-width: 0;
+  min-height: 2.8rem;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid #d9e3d3;
+  border-radius: 0.65rem;
+  background: #fffef9;
+  color: #35473c;
+  font-size: 0.8rem;
+  font-weight: 650;
+}
+
+.security-capability-grid label.is-selected {
+  border-color: #9fc6a7;
+  background: #eef7f1;
+}
+
+.security-capability-grid input {
+  width: 1.05rem;
+  min-width: 1.05rem;
+  height: 1.05rem;
+  min-height: 1.05rem;
+  padding: 0;
+}
+
+@media (max-width: 699px) {
+  .security-capability-grid {
+    grid-template-columns: 1fr;
+  }
+}

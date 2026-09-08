@@ -1,6 +1,7 @@
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import { mkdtemp, rm } from 'node:fs/promises';
+import { createServer } from 'node:http';
 import net from 'node:net';
 import os from 'node:os';
 import path from 'node:path';
@@ -28,6 +29,7 @@ const cases = [
   { name: 'desktop-party-customer', experience: 'desktop', width: 1440, height: 900, path: '/party/customers' },
   { name: 'desktop-infrastructure', experience: 'desktop', width: 1440, height: 900, path: '/infrastructure' },
   { name: 'desktop-product', experience: 'desktop', width: 1440, height: 900, path: '/product' },
+  { name: 'desktop-security', experience: 'desktop', width: 1440, height: 900, path: '/security/accounts' },
   { name: 'desktop-data-protection', experience: 'desktop', width: 1440, height: 900, path: '/data-protection' },
   { name: 'tablet-home', experience: 'tablet', width: 1024, height: 768, path: '/modules' },
   { name: 'tablet-procurement', experience: 'tablet', width: 1024, height: 768, path: '/procurement/entries/new' },
@@ -42,6 +44,7 @@ const cases = [
   { name: 'tablet-party-customer', experience: 'tablet', width: 1024, height: 768, path: '/party/customers' },
   { name: 'tablet-infrastructure', experience: 'tablet', width: 1024, height: 768, path: '/infrastructure' },
   { name: 'tablet-product', experience: 'tablet', width: 1024, height: 768, path: '/product' },
+  { name: 'tablet-security', experience: 'tablet', width: 1024, height: 768, path: '/security/accounts' },
   { name: 'tablet-data-protection', experience: 'tablet', width: 1024, height: 768, path: '/data-protection' },
   { name: 'mobile-home', experience: 'mobile', width: 390, height: 844, path: '/modules' },
   { name: 'mobile-procurement', experience: 'mobile', width: 390, height: 844, path: '/procurement/entries/new' },
@@ -56,6 +59,7 @@ const cases = [
   { name: 'mobile-party-customer', experience: 'mobile', width: 390, height: 844, path: '/party/customers' },
   { name: 'mobile-infrastructure', experience: 'mobile', width: 390, height: 844, path: '/infrastructure' },
   { name: 'mobile-product', experience: 'mobile', width: 390, height: 844, path: '/product' },
+  { name: 'mobile-security', experience: 'mobile', width: 390, height: 844, path: '/security/accounts' },
   { name: 'mobile-data-protection', experience: 'mobile', width: 390, height: 844, path: '/data-protection' },
   { name: 'mobile-narrow-home', experience: 'mobile', width: 360, height: 800, path: '/modules' },
 ];
@@ -161,13 +165,17 @@ async function main() {
 
   const previewPort = await reservePort();
   const cdpPort = await reservePort();
+  const authMockPort = await reservePort();
   const baseUrl = `http://127.0.0.1:${previewPort}`;
+  const authMockUrl = `http://127.0.0.1:${authMockPort}`;
   const chromeProfile = await mkdtemp(path.join(os.tmpdir(), 'yowthi-erp-visual-'));
   let previewProcess;
   let chromeProcess;
+  let authMockServer;
   let cdp;
 
   try {
+    authMockServer = await startAuthMockServer(authMockPort);
     previewProcess = spawn(process.execPath, [
       viteBin,
       'preview',
@@ -176,6 +184,7 @@ async function main() {
       '--strictPort',
     ], {
       cwd: webRoot,
+      env: { ...process.env, YOWTHI_ERP_API_PROXY_TARGET: authMockUrl },
       stdio: ['ignore', 'pipe', 'pipe'],
       windowsHide: true,
     });
@@ -223,7 +232,7 @@ async function main() {
     console.log('visual acceptance: PASS');
     console.log(`- cases: ${results.length}/${cases.length}`);
     console.log('- experiences: desktop / tablet / mobile');
-    console.log('- routes: home / procurement / outsourced supply / processing / sales / sales handling / labor / finance / inventory / party / infrastructure / product / data protection');
+    console.log('- routes: home / procurement / outsourced supply / processing / sales / sales handling / labor / finance / inventory / party / infrastructure / product / security / data protection');
     console.log('- viewport overflow: none');
     console.log('- zh-TW / th-TH static interface mixing: none');
     console.log('- mobile module menu bounds: accepted');
@@ -239,6 +248,7 @@ async function main() {
     cdp?.close();
     await terminateAndWait(chromeProcess);
     await terminateAndWait(previewProcess);
+    await closeServer(authMockServer);
     await rm(chromeProfile, { recursive: true, force: true, maxRetries: 8, retryDelay: 100 });
   }
 }
@@ -638,6 +648,47 @@ function assertPwaShellMetadata() {
   if (manifest.start_url !== '/modules') {
     throw new Error(`PWA acceptance: start_url is ${manifest.start_url ?? 'unset'}, expected /modules.`);
   }
+}
+
+async function startAuthMockServer(port) {
+  const server = createServer((request, response) => {
+    response.setHeader('Content-Type', 'application/json; charset=utf-8');
+
+    if (request.method === 'GET' && request.url?.startsWith('/auth/session')) {
+      response.statusCode = 200;
+      response.end(JSON.stringify({
+        authenticated: true,
+        accountId: '01900000-0000-7000-8000-000000000001',
+        displayName: 'Visual Acceptance Admin',
+        capabilities: ['security.account.manage'],
+        developmentLoginAvailable: false,
+      }));
+      return;
+    }
+
+    if (request.method === 'GET' && request.url?.startsWith('/api/v1/security/accounts')) {
+      response.statusCode = 200;
+      response.end(JSON.stringify({
+        items: [],
+        availableCapabilities: ['security.account.manage'],
+      }));
+      return;
+    }
+
+    response.statusCode = 404;
+    response.end(JSON.stringify({ status: 404 }));
+  });
+
+  await new Promise((resolve, reject) => {
+    server.once('error', reject);
+    server.listen(port, '127.0.0.1', resolve);
+  });
+  return server;
+}
+
+async function closeServer(server) {
+  if (!server?.listening) return;
+  await new Promise((resolve) => server.close(resolve));
 }
 
 async function reservePort() {

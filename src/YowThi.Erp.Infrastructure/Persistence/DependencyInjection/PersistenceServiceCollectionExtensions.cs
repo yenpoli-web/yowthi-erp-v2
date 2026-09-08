@@ -14,6 +14,7 @@ using YowThi.Erp.Application.Procurement;
 using YowThi.Erp.Application.Processing;
 using YowThi.Erp.Application.Sales;
 using YowThi.Erp.Application.SalesHandling;
+using YowThi.Erp.Application.Security;
 using YowThi.Erp.Infrastructure.Persistence.Concurrency;
 using YowThi.Erp.Infrastructure.Persistence.DataProtection;
 using YowThi.Erp.Infrastructure.Persistence.Finance;
@@ -28,6 +29,7 @@ using YowThi.Erp.Infrastructure.Persistence.Procurement;
 using YowThi.Erp.Infrastructure.Persistence.Processing;
 using YowThi.Erp.Infrastructure.Persistence.Sales;
 using YowThi.Erp.Infrastructure.Persistence.SalesHandling;
+using YowThi.Erp.Infrastructure.Persistence.Security;
 using YowThi.Erp.Infrastructure.Persistence.Transactions;
 
 namespace YowThi.Erp.Infrastructure.Persistence.DependencyInjection;
@@ -91,6 +93,10 @@ public static class PersistenceServiceCollectionExtensions
         services.AddScoped<IHardDeleteCustomerExecutor, PostgreSqlHardDeleteCustomerExecutor>();
         services.AddScoped<IHardDeleteOutsourcedVendorExecutor, PostgreSqlHardDeleteOutsourcedVendorExecutor>();
         services.AddScoped<IHardDeleteFarmerExecutor, PostgreSqlHardDeleteFarmerExecutor>();
+        services.AddScoped<ISecurityAccountManagementExecutor, PostgreSqlSecurityAccountManagementExecutor>();
+        services.AddScoped<ISecurityAccountManagementReader, EfSecurityAccountManagementReader>();
+        services.AddScoped<ISecurityActorResolver, EfSecurityActorResolver>();
+        services.AddScoped<IDevelopmentTestAdminProvisioner, PostgreSqlDevelopmentTestAdminProvisioner>();
         services.AddSingleton<RowVersionSaveChangesInterceptor>();
 
         services.AddDbContext<ErpDbContext>((serviceProvider, options) =>
