@@ -1,6 +1,6 @@
 # Current Design Checkpoint — YowThi ERP V2
 
-Checkpoint status: **v0.1 implementation baseline through P6 / V8 COMPLETE and P7 COMPLETE. P8-S1 Supplier Master, P8-S2 Customer Master + iOS viewport stabilization, P8 Security Foundation, and P8-S3 Farmer Master are formally on main. Farmer Master Release build 0 warnings / 0 errors, 364/364 .NET tests, 49/49 browser visual acceptance, same-origin PWA → API → PostgreSQL runtime acceptance, and exact-SHA self-hosted validation are COMPLETE.**
+Checkpoint status: **v0.1 implementation baseline through P6 / V8 COMPLETE and P7 COMPLETE. P8-S1 Supplier Master, P8-S2 Customer Master + iOS viewport stabilization, P8 Security Foundation, and P8-S3 Farmer Master are formally on main. P8-S4 Outsourced Vendor Master is locally validated on `p8-s4-outsourced-vendor-master-validation`: Release build 0 warnings / 0 errors, 370/370 .NET tests PASS, 52/52 browser visual acceptance PASS, and same-origin PWA → API → PostgreSQL Outsourced Vendor list/create/readback/update/Hard Delete cleanup PASS. No relation/schema/migration change and no `OUT-003` behavior change. Exact-SHA self-hosted validation and formal promotion remain pending.**
 
 Purpose: recover the current architecture and implementation state if conversational context is lost.
 
@@ -161,6 +161,7 @@ P8    Master-management / security runtime foundation     ACTIVE
       S2 Customer Master + iOS viewport stabilization     COMPLETE / MAIN
       Security Foundation                                 COMPLETE / MAIN
       S3 Farmer Master                                     COMPLETE / MAIN
+      S4 Outsourced Vendor Master                          LOCAL VALIDATED / SELF-HOSTED PENDING
 ```
 
 P6/V8 is COMPLETE because remaining candidate control scope is now explicitly deferred or future target-specific scope; unresolved Business Facts remain governed by the Gap Register.
@@ -169,22 +170,22 @@ P6/V8 is COMPLETE because remaining candidate control scope is now explicitly de
 
 Current formal Git baseline:
 - `main = origin/main`
-- SHA: `e929a92fcf859a97078a9f55104955f020288cac`
-- commit: `feat(party): implement farmer master management`
-- exact-SHA validation branch: `p8-s3-farmer-master-validation`
-- exact-SHA self-hosted run: `34185619700` — SUCCESS
+- SHA: `7bd0cbccd4709a8a7b96b0b65973c6460fc8f30c`
+- commit: `docs: checkpoint p8 s3 farmer master`
+- exact-SHA validation branch: `p8-s3-farmer-master-closure-validation`
+- exact-SHA self-hosted run: `34186046600` — SUCCESS
 - job: `build-test` on runner `YowThi-ERP-V2`
 - required labels: `self-hosted`, `yowthi-erp-v2`
 - `eligibleForMainFastForward=true`
 - promotion: ff-only, ahead 1 / behind 0
 - push: non-force
-- remote fetch/read-back: `main = origin/main = e929a92fcf859a97078a9f55104955f020288cac`
+- remote fetch/read-back: `main = origin/main = 7bd0cbccd4709a8a7b96b0b65973c6460fc8f30c`
 - Formal r20 primary channel; Bootstrap r2 remains independent recovery/read-back channel
 
-Current closure validation branch:
-- `p8-s3-farmer-master-closure-validation`
-- base: formal main `e929a92fcf859a97078a9f55104955f020288cac`
-- purpose: record the completed P8-S3 Farmer Master formal baseline before the next P8 master-management slice
+Current active validation branch:
+- `p8-s4-outsourced-vendor-master-validation`
+- base: formal main `7bd0cbccd4709a8a7b96b0b65973c6460fc8f30c`
+- purpose: implement target-specific Outsourced Vendor Master management without changing `OUT-003` or Outsourced Supply Batch Business Fact behavior
 
 C18 implementation validation:
 - branch: `p6-v8-farmer-hard-delete-validation`
@@ -871,6 +872,7 @@ Implemented operational routes now include:
 - `/inventory`
 - `/party`
 - `/party/customers`
+- `/party/outsourced-vendors`
 - `/party/farmers`
 - `/infrastructure`
 - `/product`
@@ -881,7 +883,7 @@ Implemented P8 Security Foundation route:
 
 P7 is formally complete for the current v0.1 route set at `main@cae5a5c0bf2f1cec7bf0ffa96dde7cbafbbe4ced`.
 
-The accepted presentation baseline is Nature Green across Desktop / Tablet / Mobile. P7 browser visual acceptance historically covered Home plus 12 operational modules with 40 / 40 PASS. The current P8 baseline extends the registry to 13 operational/localized modules and browser visual acceptance to 49 / 49 PASS, including `/security/accounts` and `/party/farmers` on Desktop / Tablet / Mobile, with no horizontal viewport overflow and no current static zh-TW / th-TH interface-language mixing. The presentation/visual hard gates remain part of the self-hosted validation workflow. See `docs/30-p7-presentation-closure-checkpoint-v0.1.md` for the P7 presentation baseline.
+The accepted presentation baseline is Nature Green across Desktop / Tablet / Mobile. P7 browser visual acceptance historically covered Home plus 12 operational modules with 40 / 40 PASS. The current P8 baseline extends the registry to 13 operational/localized modules and browser visual acceptance to 52 / 52 PASS, including `/security/accounts`, `/party/farmers`, and `/party/outsourced-vendors` on Desktop / Tablet / Mobile, with no horizontal viewport overflow and no current static zh-TW / th-TH interface-language mixing. The presentation/visual hard gates remain part of the self-hosted validation workflow. See `docs/30-p7-presentation-closure-checkpoint-v0.1.md` for the P7 presentation baseline.
 
 ## 24. P6 / V8 closure state
 
@@ -1029,7 +1031,11 @@ main@cae5a5c0bf2f1cec7bf0ffa96dde7cbafbbe4ced
 -> P8-S3 Farmer Master COMPLETE / main@e929a92fcf859a97078a9f55104955f020288cac
 -> exact P8-S3 self-hosted run 34185619700 SUCCESS; build-test on YowThi-ERP-V2; eligibleForMainFastForward=true
 -> Farmer runtime list/create/readback/update/Hard Delete cleanup PASS; no P8-S3 acceptance Farmer retained
--> main = origin/main = e929a92fcf859a97078a9f55104955f020288cac
--> next: continue P8 target-specific master-management slices without inventing new Business Rules
+-> P8-S3 closure checkpoint COMPLETE / main@7bd0cbccd4709a8a7b96b0b65973c6460fc8f30c / self-hosted run 34186046600 SUCCESS
+-> P8-S4 Outsourced Vendor Master LOCAL VALIDATED on p8-s4-outsourced-vendor-master-validation
+-> local Release build 0 warnings / 0 errors; .NET 370/370 PASS; browser visual acceptance 52/52 PASS
+-> same-origin PWA 4173 -> API 5180 -> PostgreSQL Outsourced Vendor list/create/readback/update/Hard Delete cleanup PASS; no acceptance Vendor retained
+-> no relation/schema/migration change; OUT-003 and Outsourced Supply Batch Business Fact behavior remain unchanged
+-> next hard gate: exact candidate SHA self-hosted restore/build/test before formal main promotion
 ```
 
