@@ -1,6 +1,6 @@
 # Current Design Checkpoint — YowThi ERP V2
 
-Checkpoint status: **v0.1 implementation baseline through P6 / V8 COMPLETE and P7 COMPLETE. P8-S1 Supplier Master, P8-S2 Customer Master + iOS viewport stabilization, P8 Security Foundation, P8-S3 Farmer Master, P8-S4 Outsourced Vendor Master, P8-S5 Employee Master, and P8-S6 Sales Packaging Item Master are formally on main. P8-S6 Release build 0 warnings / 0 errors, 382/382 .NET tests PASS, 58/58 browser visual acceptance PASS, same-origin PWA → API → PostgreSQL Packaging Item list/create/readback/update/soft-delete/restore acceptance PASS with cleanup complete, and exact-SHA self-hosted validation run `34195069733` are COMPLETE. Development Test Admin login through 4173 → 5180 is restored and verified. No relation/schema/migration change, no Packaging Item Hard Delete target was introduced, and HANDLING-001 / HANDLING-002 plus existing sales-packaging wage behavior remain unchanged.**
+Checkpoint status: **v0.1 implementation baseline through P6 / V8 COMPLETE and P7 COMPLETE. P8-S1 Supplier Master, P8-S2 Customer Master + iOS viewport stabilization, P8 Security Foundation, P8-S3 Farmer Master, P8-S4 Outsourced Vendor Master, P8-S5 Employee Master, and P8-S6 Sales Packaging Item Master are formally on main. P8-S7 Sales Product Group Master is locally validated on `p8-s7-sales-product-group-master-validation`: isolated Release build 0 warnings / 0 errors while canonical 5180 remained online, 388/388 .NET tests PASS, 61/61 browser visual acceptance PASS, and Development Test Admin → isolated API 5184 → PostgreSQL Product Group list/create/readback/update/soft-delete/restore acceptance PASS with cleanup complete. No relation/schema/migration change, no Product Group Hard Delete target was introduced, and existing Sales Product typed-FK/lifecycle behavior remains unchanged. Exact-SHA self-hosted validation and formal promotion remain pending.**
 
 Purpose: recover the current architecture and implementation state if conversational context is lost.
 
@@ -164,6 +164,7 @@ P8    Master-management / security runtime foundation     ACTIVE
       S4 Outsourced Vendor Master                          COMPLETE / MAIN
       S5 Employee Master                                   COMPLETE / MAIN
       S6 Sales Packaging Item Master                       COMPLETE / MAIN
+      S7 Sales Product Group Master                         LOCAL VALIDATED / SELF-HOSTED PENDING
 ```
 
 P6/V8 is COMPLETE because remaining candidate control scope is now explicitly deferred or future target-specific scope; unresolved Business Facts remain governed by the Gap Register.
@@ -172,22 +173,22 @@ P6/V8 is COMPLETE because remaining candidate control scope is now explicitly de
 
 Current formal Git baseline:
 - `main = origin/main`
-- SHA: `e71e5fa092fe1d54a244e91eb4e1743bedd1bda5`
-- commit: `feat(sales-handling): implement packaging item master management`
-- exact-SHA validation branch: `p8-s6-sales-packaging-item-master-validation`
-- exact-SHA self-hosted run: `34195069733` — SUCCESS
+- SHA: `89f1061828aae2cdddf4ce5f1f0bf8e325517c82`
+- commit: `docs: checkpoint p8 s6 sales packaging item master`
+- exact-SHA validation branch: `p8-s6-sales-packaging-item-master-closure-validation`
+- exact-SHA self-hosted run: `34195968445` — SUCCESS
 - job: `build-test` on runner `YowThi-ERP-V2`
 - required labels: `self-hosted`, `yowthi-erp-v2`
 - `eligibleForMainFastForward=true`
 - promotion: ff-only, ahead 1 / behind 0
 - push: non-force
-- remote fetch/read-back: `main = origin/main = e71e5fa092fe1d54a244e91eb4e1743bedd1bda5`
+- remote fetch/read-back: `main = origin/main = 89f1061828aae2cdddf4ce5f1f0bf8e325517c82`
 - Formal r20 primary channel; Bootstrap r2 remains independent recovery/read-back channel
 
-Current closure validation branch:
-- `p8-s6-sales-packaging-item-master-closure-validation`
-- base: formal main `e71e5fa092fe1d54a244e91eb4e1743bedd1bda5`
-- purpose: record the completed P8-S6 Sales Packaging Item Master formal baseline before the next P8 master-management slice
+Current active validation branch:
+- `p8-s7-sales-product-group-master-validation`
+- base: formal main `89f1061828aae2cdddf4ce5f1f0bf8e325517c82`
+- purpose: implement target-specific Sales Product Group Master management while preserving the existing Sales Product typed FK and product-group lifecycle/current-use behavior
 
 C18 implementation validation:
 - branch: `p6-v8-farmer-hard-delete-validation`
@@ -880,6 +881,7 @@ Implemented operational routes now include:
 - `/party/employees`
 - `/infrastructure`
 - `/product`
+- `/product/lifecycle`
 - `/data-protection`
 
 Implemented P8 Security Foundation route:
@@ -887,7 +889,7 @@ Implemented P8 Security Foundation route:
 
 P7 is formally complete for the current v0.1 route set at `main@cae5a5c0bf2f1cec7bf0ffa96dde7cbafbbe4ced`.
 
-The accepted presentation baseline is Nature Green across Desktop / Tablet / Mobile. P7 browser visual acceptance historically covered Home plus 12 operational modules with 40 / 40 PASS. The current P8 baseline extends the registry to 13 operational/localized modules and browser visual acceptance to 58 / 58 PASS, including `/security/accounts`, `/party/farmers`, `/party/outsourced-vendors`, `/party/employees`, and `/sales-handling/packaging-items` on Desktop / Tablet / Mobile, with no horizontal viewport overflow and no current static zh-TW / th-TH interface-language mixing. The presentation/visual hard gates remain part of the self-hosted validation workflow. See `docs/30-p7-presentation-closure-checkpoint-v0.1.md` for the P7 presentation baseline.
+The accepted presentation baseline is Nature Green across Desktop / Tablet / Mobile. P7 browser visual acceptance historically covered Home plus 12 operational modules with 40 / 40 PASS. The current P8 baseline extends the registry to 13 operational/localized modules and browser visual acceptance to 61 / 61 PASS, including `/security/accounts`, `/party/farmers`, `/party/outsourced-vendors`, `/party/employees`, `/sales-handling/packaging-items`, the `/product` Sales Product Group Master, and preserved `/product/lifecycle` on Desktop / Tablet / Mobile, with no horizontal viewport overflow and no current static zh-TW / th-TH interface-language mixing. The presentation/visual hard gates remain part of the self-hosted validation workflow. See `docs/30-p7-presentation-closure-checkpoint-v0.1.md` for the P7 presentation baseline.
 
 ## 24. P6 / V8 closure state
 
@@ -1057,6 +1059,12 @@ main@cae5a5c0bf2f1cec7bf0ffa96dde7cbafbbe4ced
 -> no relation/schema/migration change; no Packaging Item Hard Delete target introduced; HANDLING-001 / HANDLING-002 and existing Sales Packaging Work wage behavior remain unchanged
 -> exact P8-S6 self-hosted run 34195069733 SUCCESS; build-test on YowThi-ERP-V2; eligibleForMainFastForward=true
 -> ff-only main promotion + non-force push + fetch/read-back COMPLETE
--> P8-S6 closure checkpoint validation active on p8-s6-sales-packaging-item-master-closure-validation
+-> P8-S6 closure checkpoint COMPLETE / main@89f1061828aae2cdddf4ce5f1f0bf8e325517c82 / self-hosted run 34195968445 SUCCESS
+-> P8-S7 Sales Product Group Master LOCAL VALIDATED on p8-s7-sales-product-group-master-validation
+-> isolated Release build 0 warnings / 0 errors with canonical API 5180 kept online; .NET 388/388 PASS; browser visual acceptance 61/61 PASS
+-> Development Test Admin -> isolated API 5184 -> PostgreSQL Product Group list/create/readback/update/soft-delete/restore acceptance PASS; acceptance Product Group + CommandExecution/Audit cleanup PASS
+-> canonical PWA 4173 -> API 5180 login runtime remained online during S7 build/test/runtime acceptance
+-> no relation/schema/migration change; no Product Group Hard Delete target introduced; existing Sales Product typed-FK/lifecycle behavior remains unchanged
+-> next hard gate: exact candidate SHA self-hosted restore/build/test before formal main promotion
 ```
 

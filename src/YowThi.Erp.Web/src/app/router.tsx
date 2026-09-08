@@ -14,6 +14,7 @@ import { FarmerMasterPage } from '../features/party/FarmerMasterPage';
 import { OutsourcedVendorMasterPage } from '../features/party/OutsourcedVendorMasterPage';
 import { SupplierMasterPage } from '../features/party/SupplierMasterPage';
 import { SalesProductGroupLifecyclePage } from '../features/product/SalesProductGroupLifecyclePage';
+import { SalesProductGroupMasterPage } from '../features/product/SalesProductGroupMasterPage';
 import { ProcessingExecutionPage } from '../features/processing/ProcessingExecutionPage';
 import { ProcurementEntryPage } from '../features/procurement/ProcurementEntryPage';
 import { SalesConfirmationPage } from '../features/sales/SalesConfirmationPage';
@@ -99,6 +100,10 @@ export const router = createBrowserRouter([
       },
       {
         path: 'product',
+        element: <SalesProductGroupMasterPage />,
+      },
+      {
+        path: 'product/lifecycle',
         element: <SalesProductGroupLifecyclePage />,
       },
       {
