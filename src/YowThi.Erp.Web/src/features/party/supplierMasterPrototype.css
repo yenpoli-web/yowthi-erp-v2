@@ -284,6 +284,26 @@
   gap: 0.65rem;
 }
 
+.supplier-master-record-list .supplier-list-heading,
+.supplier-master-record-list .supplier-list-item {
+  grid-template-columns: minmax(6.5rem, 0.65fr) minmax(0, 1.7fr);
+}
+
+.supplier-master-record-list .supplier-list-heading > :nth-child(2) {
+  display: block;
+}
+
+.supplier-list-code {
+  min-width: 0;
+  overflow: hidden;
+  color: #456458;
+  font-size: 0.82rem;
+  font-weight: 760;
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .supplier-list-heading {
   padding: 0.55rem 1rem;
   border-bottom: 1px solid #e6eee9;

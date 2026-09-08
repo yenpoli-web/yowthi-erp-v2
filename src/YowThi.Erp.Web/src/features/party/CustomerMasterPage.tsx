@@ -26,7 +26,7 @@ type SubmissionIdentity = { fingerprint: string; idempotencyKey: string };
 const copy = {
   'zh-TW': {
     eyebrow: '夥伴管理', title: '客戶', newCustomer: '新增客戶', search: '搜尋編號、名稱或電話',
-    supplierTab: '供應商', customerTab: '客戶', all: '全部', active: '使用中', inactive: '停用', deleted: '已刪除', customer: '客戶', phone: '電話', status: '狀態', records: '筆資料',
+    supplierTab: '供應商', customerTab: '客戶', all: '全部', active: '使用中', inactive: '停用', deleted: '已刪除', customer: '客戶', listName: '名稱', phone: '電話', status: '狀態', records: '筆資料',
     edit: '編輯', deactivate: '停用', activate: '啟用', softDelete: '刪除', restore: '恢復', basicInfo: '基本資料', contactInfo: '聯絡資料',
     code: '編號', nameZhTw: '中文名稱', nameThTh: '泰文名稱', activeState: '啟用狀態', nameRequired: '中文名稱與泰文名稱至少填寫一項。', save: '儲存', saving: '儲存中…', cancel: '取消', createTitle: '新增客戶', editTitle: '編輯客戶',
     deleteTitle: '刪除客戶', deleteMessage: '這會將資料設為軟刪除；之後可從「已刪除」恢復，並會出現在資料保護的永久刪除清單。', confirmDelete: '確認刪除',
@@ -35,7 +35,7 @@ const copy = {
   },
   'th-TH': {
     eyebrow: 'จัดการคู่ค้า', title: 'ลูกค้า', newCustomer: 'เพิ่มลูกค้า', search: 'ค้นหารหัส ชื่อ หรือโทรศัพท์',
-    supplierTab: 'ผู้จำหน่าย', customerTab: 'ลูกค้า', all: 'ทั้งหมด', active: 'ใช้งาน', inactive: 'ไม่ใช้งาน', deleted: 'ลบแล้ว', customer: 'ลูกค้า', phone: 'โทรศัพท์', status: 'สถานะ', records: 'รายการ',
+    supplierTab: 'ผู้จำหน่าย', customerTab: 'ลูกค้า', all: 'ทั้งหมด', active: 'ใช้งาน', inactive: 'ไม่ใช้งาน', deleted: 'ลบแล้ว', customer: 'ลูกค้า', listName: 'ชื่อ', phone: 'โทรศัพท์', status: 'สถานะ', records: 'รายการ',
     edit: 'แก้ไข', deactivate: 'ปิดใช้งาน', activate: 'เปิดใช้งาน', softDelete: 'ลบ', restore: 'กู้คืน', basicInfo: 'ข้อมูลพื้นฐาน', contactInfo: 'ข้อมูลติดต่อ',
     code: 'รหัส', nameZhTw: 'ชื่อภาษาจีน', nameThTh: 'ชื่อภาษาไทย', activeState: 'สถานะการใช้งาน', nameRequired: 'ต้องระบุชื่อภาษาจีนหรือชื่อภาษาไทยอย่างน้อยหนึ่งรายการ', save: 'บันทึก', saving: 'กำลังบันทึก…', cancel: 'ยกเลิก', createTitle: 'เพิ่มลูกค้า', editTitle: 'แก้ไขลูกค้า',
     deleteTitle: 'ลบลูกค้า', deleteMessage: 'รายการจะถูกลบแบบเก็บประวัติ สามารถกู้คืนได้ และจะแสดงในพื้นที่คุ้มครองสำหรับการลบถาวร', confirmDelete: 'ยืนยันการลบ',
@@ -183,11 +183,11 @@ export function CustomerMasterPage() {
       </div>
 
       <div className="supplier-master-grid">
-        <aside className="supplier-list-panel" aria-label={labels.customer}>
+        <aside className="supplier-list-panel supplier-master-record-list" aria-label={labels.customer}>
           <div className="supplier-list-meta"><strong>{labels.customer}</strong><span>{items.length} {labels.records}</span></div>
-          <div className="supplier-list-heading" aria-hidden="true"><span>{labels.customer}</span><span>{labels.phone}</span><span>{labels.status}</span></div>
+          <div className="supplier-list-heading" aria-hidden="true"><span>{labels.code}</span><span>{labels.listName}</span></div>
           <div className="supplier-list-body">
-            {items.map((item) => <div key={item.id} role="button" tabIndex={0} className={`supplier-list-item${selected?.id === item.id ? ' is-selected' : ''}`} onClick={() => selectCustomer(item)} onKeyDown={(event) => handleListKey(event, item)}><span className="supplier-list-name"><strong>{displayName(item)}</strong>{secondaryName(item) && <small>{secondaryName(item)}</small>}</span><span className="supplier-list-phone">{item.phone || labels.notProvided}</span><StatusPill item={item} labels={labels} /></div>)}
+            {items.map((item) => <div key={item.id} role="button" tabIndex={0} className={`supplier-list-item${selected?.id === item.id ? ' is-selected' : ''}`} onClick={() => selectCustomer(item)} onKeyDown={(event) => handleListKey(event, item)}><span className="supplier-list-code">{item.code || labels.notProvided}</span><span className="supplier-list-name"><strong>{displayName(item)}</strong></span></div>)}
             {!customersQuery.isPending && items.length === 0 && <p className="supplier-list-empty">{labels.noResult}</p>}
           </div>
         </aside>

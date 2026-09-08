@@ -29,7 +29,7 @@ type SubmissionIdentity = { fingerprint: string; idempotencyKey: string };
 const copy = {
   'zh-TW': {
     eyebrow: '夥伴管理', title: '員工', newEmployee: '新增員工', search: '搜尋編號、名稱、電話或銀行', supplierTab: '員工', customerTab: '客戶',
-    all: '全部', active: '使用中', inactive: '停用', deleted: '已刪除', employee: '員工', phone: '電話', status: '狀態', records: '筆資料',
+    all: '全部', active: '使用中', inactive: '停用', deleted: '已刪除', employee: '員工', listName: '姓名', phone: '電話', status: '狀態', records: '筆資料',
     edit: '編輯', deactivate: '停用', activate: '啟用', softDelete: '刪除', restore: '恢復', basicInfo: '基本資料',
     code: '編號', nameZhTw: '中文名稱', nameThTh: '泰文名稱', contactInfo: '聯絡資料', address: '地址', paymentInfo: '銀行資料', bankName: '銀行名稱', bankAccount: '銀行帳號',
     activeState: '啟用狀態', nameRequired: '中文名稱與泰文名稱至少填寫一項。', save: '儲存', saving: '儲存中…', cancel: '取消', createTitle: '新增員工', editTitle: '編輯員工',
@@ -39,7 +39,7 @@ const copy = {
   },
   'th-TH': {
     eyebrow: 'จัดการคู่ค้า', title: 'พนักงาน', newEmployee: 'เพิ่มพนักงาน', search: 'ค้นหารหัส ชื่อ โทรศัพท์ หรือธนาคาร', supplierTab: 'พนักงาน', customerTab: 'ลูกค้า',
-    all: 'ทั้งหมด', active: 'ใช้งาน', inactive: 'ไม่ใช้งาน', deleted: 'ลบแล้ว', employee: 'พนักงาน', phone: 'โทรศัพท์', status: 'สถานะ', records: 'รายการ',
+    all: 'ทั้งหมด', active: 'ใช้งาน', inactive: 'ไม่ใช้งาน', deleted: 'ลบแล้ว', employee: 'พนักงาน', listName: 'ชื่อ', phone: 'โทรศัพท์', status: 'สถานะ', records: 'รายการ',
     edit: 'แก้ไข', deactivate: 'ปิดใช้งาน', activate: 'เปิดใช้งาน', softDelete: 'ลบ', restore: 'กู้คืน', basicInfo: 'ข้อมูลพื้นฐาน',
     code: 'รหัส', nameZhTw: 'ชื่อภาษาจีน', nameThTh: 'ชื่อภาษาไทย', contactInfo: 'ข้อมูลติดต่อ', address: 'ที่อยู่', paymentInfo: 'ข้อมูลธนาคาร', bankName: 'ชื่อธนาคาร', bankAccount: 'เลขบัญชีธนาคาร',
     activeState: 'สถานะการใช้งาน', nameRequired: 'ต้องระบุชื่อภาษาจีนหรือชื่อภาษาไทยอย่างน้อยหนึ่งรายการ', save: 'บันทึก', saving: 'กำลังบันทึก…', cancel: 'ยกเลิก', createTitle: 'เพิ่มพนักงาน', editTitle: 'แก้ไขพนักงาน',
@@ -193,11 +193,11 @@ export function EmployeeMasterPage() {
       </div>
 
       <div className="supplier-master-grid">
-        <aside className="supplier-list-panel" aria-label={labels.employee}>
+        <aside className="supplier-list-panel supplier-master-record-list" aria-label={labels.employee}>
           <div className="supplier-list-meta"><strong>{labels.employee}</strong><span>{items.length} {labels.records}</span></div>
-          <div className="supplier-list-heading" aria-hidden="true"><span>{labels.employee}</span><span>{labels.phone}</span><span>{labels.status}</span></div>
+          <div className="supplier-list-heading" aria-hidden="true"><span>{labels.code}</span><span>{labels.listName}</span></div>
           <div className="supplier-list-body">
-            {items.map((item) => <div key={item.id} role="button" tabIndex={0} className={`supplier-list-item${selected?.id === item.id ? ' is-selected' : ''}`} onClick={() => selectEmployee(item)} onKeyDown={(event) => handleListKey(event, item)}><span className="supplier-list-name"><strong>{displayName(item)}</strong>{secondaryName(item) && <small>{secondaryName(item)}</small>}</span><span className="supplier-list-phone">{item.phone || labels.notProvided}</span><StatusPill item={item} labels={labels} /></div>)}
+            {items.map((item) => <div key={item.id} role="button" tabIndex={0} className={`supplier-list-item${selected?.id === item.id ? ' is-selected' : ''}`} onClick={() => selectEmployee(item)} onKeyDown={(event) => handleListKey(event, item)}><span className="supplier-list-code">{item.code || labels.notProvided}</span><span className="supplier-list-name"><strong>{displayName(item)}</strong></span></div>)}
             {!employeesQuery.isPending && items.length === 0 && <p className="supplier-list-empty">{labels.noResult}</p>}
           </div>
         </aside>
