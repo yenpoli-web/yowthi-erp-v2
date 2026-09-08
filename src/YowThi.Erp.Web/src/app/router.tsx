@@ -9,6 +9,7 @@ import { InfrastructureLifecyclePage } from '../features/infrastructure/Infrastr
 import { LaborDailyWagePage } from '../features/labor/LaborDailyWagePage';
 import { PartyLifecyclePage } from '../features/party/PartyLifecyclePage';
 import { CustomerMasterPage } from '../features/party/CustomerMasterPage';
+import { EmployeeMasterPage } from '../features/party/EmployeeMasterPage';
 import { FarmerMasterPage } from '../features/party/FarmerMasterPage';
 import { OutsourcedVendorMasterPage } from '../features/party/OutsourcedVendorMasterPage';
 import { SupplierMasterPage } from '../features/party/SupplierMasterPage';
@@ -78,6 +79,10 @@ export const router = createBrowserRouter([
       {
         path: 'party/farmers',
         element: <FarmerMasterPage />,
+      },
+      {
+        path: 'party/employees',
+        element: <EmployeeMasterPage />,
       },
       {
         path: 'party/lifecycle',

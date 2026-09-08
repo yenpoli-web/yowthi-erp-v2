@@ -13,7 +13,7 @@ const targets: readonly { kind: PartyLifecycleKind; route: string }[] = [
   { kind: 'customers', route: '/party/customers' },
   { kind: 'outsourced-vendors', route: '/party/outsourced-vendors' },
   { kind: 'farmers', route: '/party/farmers' },
-  { kind: 'employees', route: '/party/lifecycle?kind=employees' },
+  { kind: 'employees', route: '/party/employees' },
 ];
 
 export function PartyMasterNavigation({ activeKind }: PartyMasterNavigationProps) {

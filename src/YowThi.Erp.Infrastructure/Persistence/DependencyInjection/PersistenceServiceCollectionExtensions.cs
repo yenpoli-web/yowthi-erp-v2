@@ -86,6 +86,8 @@ public static class PersistenceServiceCollectionExtensions
         services.AddScoped<IFarmerMasterReader, EfFarmerMasterReader>();
         services.AddScoped<IOutsourcedVendorMasterExecutor, PostgreSqlOutsourcedVendorMasterExecutor>();
         services.AddScoped<IOutsourcedVendorMasterReader, EfOutsourcedVendorMasterReader>();
+        services.AddScoped<IEmployeeMasterExecutor, PostgreSqlEmployeeMasterExecutor>();
+        services.AddScoped<IEmployeeMasterReader, EfEmployeeMasterReader>();
         services.AddScoped<ISupplierLifecycleExecutor, PostgreSqlSupplierLifecycleExecutor>();
         services.AddScoped<IFarmerLifecycleExecutor, PostgreSqlFarmerLifecycleExecutor>();
         services.AddScoped<IEmployeeLifecycleExecutor, PostgreSqlEmployeeLifecycleExecutor>();

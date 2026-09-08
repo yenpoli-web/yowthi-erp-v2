@@ -34,6 +34,7 @@ app.MapSupplierMasterEndpoints();
 app.MapCustomerMasterEndpoints();
 app.MapFarmerMasterEndpoints();
 app.MapOutsourcedVendorMasterEndpoints();
+app.MapEmployeeMasterEndpoints();
 app.MapPartyLifecycleOptionEndpoints();
 app.MapFarmerLifecycleEndpoints();
 app.MapEmployeeLifecycleEndpoints();
