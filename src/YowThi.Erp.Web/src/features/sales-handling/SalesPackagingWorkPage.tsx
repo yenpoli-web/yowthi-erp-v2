@@ -1,5 +1,6 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { type FormEvent, useDeferredValue, useMemo, useRef, useState } from 'react';
+import { Link } from 'react-router';
 
 import { useOperationalLocale } from '../../app/i18n/locale';
 import {
@@ -22,6 +23,7 @@ const copy = {
   'zh-TW': {
     eyebrow: 'P7 · 銷售包裝作業',
     title: '登錄銷售包裝工作',
+    manageItems: '包裝項目管理',
     intro: '此畫面直接使用正式 RecordSalesPackagingWork command。依 HANDLING-001，DRAFT 與 CONFIRMED Sale 都可以登錄；依 HANDLING-002，目前不假設同日、同人、同 Sale、同項目只能有一筆。',
     sale: '銷售單',
     saleSearch: '搜尋客戶名稱',
@@ -56,6 +58,7 @@ const copy = {
   'th-TH': {
     eyebrow: 'P7 · งานบรรจุขาย',
     title: 'บันทึกงานบรรจุสำหรับการขาย',
+    manageItems: 'จัดการรายการงานบรรจุ',
     intro: 'หน้านี้ใช้ RecordSalesPackagingWork จริง ตาม HANDLING-001 สามารถบันทึกได้ทั้ง Sale สถานะ DRAFT และ CONFIRMED และตาม HANDLING-002 ยังไม่กำหนดว่าหนึ่งวัน/พนักงาน/Sale/รายการต้องมีได้เพียงหนึ่งรายการ',
     sale: 'การขาย',
     saleSearch: 'ค้นหาชื่อลูกค้า',
@@ -217,6 +220,7 @@ export function SalesPackagingWorkPage() {
           <p className="eyebrow">{labels.eyebrow}</p>
           <h1 id="sales-packaging-work-title">{labels.title}</h1>
         </div>
+        <Link className="primary-action" to="/sales-handling/packaging-items">{labels.manageItems}</Link>
       </header>
 
       <div className="procurement-grid">

@@ -50,6 +50,7 @@ app.MapSalesEndpoints();
 app.MapSalesConfirmationOptionEndpoints();
 app.MapSalesHandlingEndpoints();
 app.MapSalesHandlingWorkOptionEndpoints();
+app.MapSalesPackagingItemMasterEndpoints();
 app.MapSalesPackagingItemLifecycleEndpoints();
 app.MapSalesProductGroupLifecycleEndpoints();
 app.MapSalesProductGroupLifecycleOptionEndpoints();
