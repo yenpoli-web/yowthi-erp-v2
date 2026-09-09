@@ -2,6 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using YowThi.Erp.Application.DataProtection;
 using YowThi.Erp.Domain.Party;
 using YowThi.Erp.Domain.Processing;
+using YowThi.Erp.Domain.Procurement;
+using YowThi.Erp.Domain.Sales;
 
 namespace YowThi.Erp.Infrastructure.Persistence.DataProtection;
 
@@ -54,6 +56,58 @@ internal sealed class EfHardDeleteOptionsReader(ErpDbContext dbContext) : IHardD
                 item.Id,
                 query.Locale == "th-TH" ? item.NameThTh ?? item.NameZhTw : item.NameZhTw ?? item.NameThTh,
                 item.Active,
+                item.RowVersion,
+                item.DeletedAt)),
+            query,
+            cancellationToken);
+
+    public ValueTask<HardDeleteOptionPage<HardDeleteOption>> GetProcurementBatchesAsync(
+        HardDeleteOptionsQuery query,
+        CancellationToken cancellationToken) =>
+        GetPageAsync(
+            dbContext.Set<ProcurementBatch>().AsNoTracking().Select(item => new Projection(
+                item.Id,
+                item.Id.ToString(),
+                true,
+                item.RowVersion,
+                item.DeletedAt)),
+            query,
+            cancellationToken);
+
+    public ValueTask<HardDeleteOptionPage<HardDeleteOption>> GetProcurementEntriesAsync(
+        HardDeleteOptionsQuery query,
+        CancellationToken cancellationToken) =>
+        GetPageAsync(
+            dbContext.Set<ProcurementEntry>().AsNoTracking().Select(item => new Projection(
+                item.Id,
+                item.Id.ToString(),
+                true,
+                item.RowVersion,
+                item.DeletedAt)),
+            query,
+            cancellationToken);
+
+    public ValueTask<HardDeleteOptionPage<HardDeleteOption>> GetSalesAsync(
+        HardDeleteOptionsQuery query,
+        CancellationToken cancellationToken) =>
+        GetPageAsync(
+            dbContext.Set<Sale>().AsNoTracking().Select(item => new Projection(
+                item.Id,
+                item.Id.ToString(),
+                true,
+                item.RowVersion,
+                item.DeletedAt)),
+            query,
+            cancellationToken);
+
+    public ValueTask<HardDeleteOptionPage<HardDeleteOption>> GetSalesDetailsAsync(
+        HardDeleteOptionsQuery query,
+        CancellationToken cancellationToken) =>
+        GetPageAsync(
+            dbContext.Set<SalesDetail>().AsNoTracking().Select(item => new Projection(
+                item.Id,
+                item.Id.ToString(),
+                true,
                 item.RowVersion,
                 item.DeletedAt)),
             query,

@@ -141,18 +141,22 @@ internal sealed class EfProcurementWorkspaceReader(ErpDbContext dbContext) : IPr
             : await dbContext.Set<Supplier>()
                 .AsNoTracking()
                 .Where(item => supplierIds.Contains(item.Id))
-                .Select(item => new NameProjection(item.Id, item.NameZhTw, item.NameThTh))
+                .Select(item => new NameProjection(item.Id, item.Code, item.NameZhTw, item.NameThTh))
                 .ToArrayAsync(cancellationToken);
         var farmers = farmerIds.Length == 0
             ? []
             : await dbContext.Set<Farmer>()
                 .AsNoTracking()
                 .Where(item => farmerIds.Contains(item.Id))
-                .Select(item => new NameProjection(item.Id, item.NameZhTw, item.NameThTh))
+                .Select(item => new NameProjection(item.Id, item.Code, item.NameZhTw, item.NameThTh))
                 .ToArrayAsync(cancellationToken);
 
-        var supplierNames = suppliers.ToDictionary(item => item.Id, item => DisplayName(item.NameZhTw, item.NameThTh, validatedLocale));
-        var farmerNames = farmers.ToDictionary(item => item.Id, item => DisplayName(item.NameZhTw, item.NameThTh, validatedLocale));
+        var supplierSources = suppliers.ToDictionary(item => item.Id, item => new SourceProjection(
+            item.Code,
+            DisplayName(item.NameZhTw, item.NameThTh, validatedLocale)));
+        var farmerSources = farmers.ToDictionary(item => item.Id, item => new SourceProjection(
+            item.Code,
+            DisplayName(item.NameZhTw, item.NameThTh, validatedLocale)));
 
         var entryIds = entryRows.Select(entry => entry.Id).ToArray();
         var nullableEntryIds = entryIds.Select(static id => (Guid?)id).ToArray();
@@ -176,7 +180,7 @@ internal sealed class EfProcurementWorkspaceReader(ErpDbContext dbContext) : IPr
 
         var receiptByEntry = receiptRows.ToDictionary(item => item.ProcurementEntryId.GetValueOrDefault());
         var entries = entryRows
-            .Select(entry => ToEntryItem(entry, validatedLocale, supplierNames, farmerNames, receiptByEntry))
+            .Select(entry => ToEntryItem(entry, validatedLocale, supplierSources, farmerSources, receiptByEntry))
             .ToArray();
 
         return new ProcurementBatchWorkspace(
@@ -211,16 +215,16 @@ internal sealed class EfProcurementWorkspaceReader(ErpDbContext dbContext) : IPr
     private static ProcurementBatchEntryItem ToEntryItem(
         EntryProjection entry,
         string locale,
-        IReadOnlyDictionary<Guid, string> supplierNames,
-        IReadOnlyDictionary<Guid, string> farmerNames,
+        IReadOnlyDictionary<Guid, SourceProjection> supplierSources,
+        IReadOnlyDictionary<Guid, SourceProjection> farmerSources,
         IReadOnlyDictionary<Guid, ReceiptProjection> receiptByEntry)
     {
-        var (sourceId, sourceDisplayName) = entry.SourceType switch
+        var (sourceId, source) = entry.SourceType switch
         {
             ProcurementSourceType.SUPPLIER when entry.SupplierId is Guid supplierId
-                && supplierNames.TryGetValue(supplierId, out var supplierName) => (supplierId, supplierName),
+                && supplierSources.TryGetValue(supplierId, out var supplier) => (supplierId, supplier),
             ProcurementSourceType.FARMER when entry.FarmerId is Guid farmerId
-                && farmerNames.TryGetValue(farmerId, out var farmerName) => (farmerId, farmerName),
+                && farmerSources.TryGetValue(farmerId, out var farmer) => (farmerId, farmer),
             _ => throw new InvalidOperationException($"Procurement Entry {entry.Id} has an invalid or missing source reference."),
         };
 
@@ -229,7 +233,8 @@ internal sealed class EfProcurementWorkspaceReader(ErpDbContext dbContext) : IPr
             entry.Id,
             entry.SourceType.ToString(),
             sourceId,
-            sourceDisplayName,
+            source.Code,
+            source.DisplayName,
             entry.NetQuantity,
             entry.UnitCodeSnapshot,
             entry.UnitPrice,
@@ -281,7 +286,8 @@ internal sealed class EfProcurementWorkspaceReader(ErpDbContext dbContext) : IPr
     };
 
     private sealed record ValidatedQuery(string Locale, string? Search, int Offset, int Limit);
-    private sealed record NameProjection(Guid Id, string? NameZhTw, string? NameThTh);
+    private sealed record NameProjection(Guid Id, string? Code, string? NameZhTw, string? NameThTh);
+    private sealed record SourceProjection(string? Code, string DisplayName);
     private sealed record BatchProjection(
         Guid Id,
         DateOnly ProcurementDate,

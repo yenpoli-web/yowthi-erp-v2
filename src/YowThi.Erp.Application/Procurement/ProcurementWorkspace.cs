@@ -26,6 +26,7 @@ public sealed record ProcurementBatchEntryItem(
     Guid Id,
     string SourceType,
     Guid SourceId,
+    string? SourceCode,
     string SourceDisplayName,
     decimal NetQuantity,
     string UnitCodeSnapshot,

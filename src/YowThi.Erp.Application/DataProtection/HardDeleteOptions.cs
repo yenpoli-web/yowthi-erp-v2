@@ -36,6 +36,22 @@ public interface IHardDeleteOptionsReader
         HardDeleteOptionsQuery query,
         CancellationToken cancellationToken);
 
+    ValueTask<HardDeleteOptionPage<HardDeleteOption>> GetProcurementBatchesAsync(
+        HardDeleteOptionsQuery query,
+        CancellationToken cancellationToken);
+
+    ValueTask<HardDeleteOptionPage<HardDeleteOption>> GetProcurementEntriesAsync(
+        HardDeleteOptionsQuery query,
+        CancellationToken cancellationToken);
+
+    ValueTask<HardDeleteOptionPage<HardDeleteOption>> GetSalesAsync(
+        HardDeleteOptionsQuery query,
+        CancellationToken cancellationToken);
+
+    ValueTask<HardDeleteOptionPage<HardDeleteOption>> GetSalesDetailsAsync(
+        HardDeleteOptionsQuery query,
+        CancellationToken cancellationToken);
+
     ValueTask<HardDeleteOptionPage<HardDeleteOption>> GetProcessingExecutionsAsync(
         HardDeleteOptionsQuery query,
         CancellationToken cancellationToken);

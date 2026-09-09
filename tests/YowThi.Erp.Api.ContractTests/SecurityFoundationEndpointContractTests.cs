@@ -177,9 +177,10 @@ public sealed class SecurityFoundationEndpointContractTests
     public void Security_capability_registry_is_explicit_and_contains_account_management()
     {
         Assert.Equal("security.account.manage", SecurityCapabilities.SecurityAccountManage);
-        Assert.Equal(29, SecurityCapabilities.All.Count);
+        Assert.Equal(30, SecurityCapabilities.All.Count);
         Assert.Contains(SecurityCapabilities.ProcurementTransactionLifecycle, SecurityCapabilities.All);
         Assert.Contains(SecurityCapabilities.ProcessingTransactionLifecycle, SecurityCapabilities.All);
+        Assert.Contains(SecurityCapabilities.SalesTransactionLifecycle, SecurityCapabilities.All);
         Assert.Contains(SecurityCapabilities.ProcurementProductManage, SecurityCapabilities.All);
         Assert.Contains(SecurityCapabilities.SalesProductManage, SecurityCapabilities.All);
         Assert.Contains(SecurityCapabilities.InfrastructureWarehouseManage, SecurityCapabilities.All);

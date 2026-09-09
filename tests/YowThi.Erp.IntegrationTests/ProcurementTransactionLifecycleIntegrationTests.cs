@@ -17,11 +17,11 @@ public sealed class ProcurementTransactionLifecycleIntegrationTests
         "Host=127.0.0.1;Port=55432;Database=yowthi_dev;Username=yowthi_dev";
 
     [Fact]
-    public async Task Batch_and_entry_lifecycle_and_entry_hard_delete_preserve_siblings_and_reverse_projections()
+    public async Task Batch_and_entry_lifecycle_hard_delete_preserves_siblings_then_closes_remaining_batch_projections()
     {
         var ct = TestContext.Current.CancellationToken;
         var scenario = await SeedScenarioAsync(ct);
-        var commandIds = Enumerable.Range(1, 8).Select(_ => Guid.CreateVersion7()).ToArray();
+        var commandIds = Enumerable.Range(1, 10).Select(_ => Guid.CreateVersion7()).ToArray();
         ConfirmProcurementEntryResult first = default!;
         ConfirmProcurementEntryResult second = default!;
 
@@ -169,6 +169,56 @@ public sealed class ProcurementTransactionLifecycleIntegrationTests
             Assert.Equal(1L, await ScalarAsync<long>(
                 "SELECT count(*) FROM audit.audit_events WHERE command_id = @id AND event_kind = 'HARD_DELETE';",
                 ct, ("id", commandIds[7])));
+
+            var staleBatchDelete = await ExecuteAsync(
+                (services, token) => services.GetRequiredService<IHardDeleteProcurementBatchExecutor>().ExecuteAsync(
+                    new HardDeleteProcurementBatchExecution(
+                        CommandId.From(commandIds[8]), Hash(9), ActorAccountId.From(scenario.ActorAccountId),
+                        new HardDeleteProcurementBatchCommand(first.ProcurementBatchId, 2)), token), ct);
+            Assert.True(staleBatchDelete.IsFailure);
+            Assert.Equal(ApplicationErrorKind.Conflict, staleBatchDelete.Error.Kind);
+            Assert.Equal(ProcurementTransactionLifecycleErrorCodes.StaleRowVersion, staleBatchDelete.Error.Code);
+            Assert.Equal(0L, await ScalarAsync<long>(
+                "SELECT count(*) FROM system.command_executions WHERE command_id = @id;",
+                ct, ("id", commandIds[8])));
+
+            var batchHardExecution = new HardDeleteProcurementBatchExecution(
+                CommandId.From(commandIds[9]), Hash(10), ActorAccountId.From(scenario.ActorAccountId),
+                new HardDeleteProcurementBatchCommand(first.ProcurementBatchId, 3));
+            var batchHardDelete = await ExecuteAsync(
+                (services, token) => services.GetRequiredService<IHardDeleteProcurementBatchExecutor>().ExecuteAsync(batchHardExecution, token), ct);
+            Assert.True(batchHardDelete.IsSuccess);
+            Assert.Equal(first.ProcurementBatchId, batchHardDelete.Value.ProcurementBatchId);
+
+            var batchHardReplay = await ExecuteAsync(
+                (services, token) => services.GetRequiredService<IHardDeleteProcurementBatchExecutor>().ExecuteAsync(batchHardExecution, token), ct);
+            Assert.True(batchHardReplay.IsSuccess);
+            Assert.Equal(batchHardDelete.Value, batchHardReplay.Value);
+
+            Assert.Equal(0L, await ScalarAsync<long>(
+                "SELECT count(*) FROM procurement.procurement_batches WHERE id = @id;",
+                ct, ("id", first.ProcurementBatchId)));
+            Assert.Equal(0L, await ScalarAsync<long>(
+                "SELECT count(*) FROM procurement.procurement_entries WHERE id = @id;",
+                ct, ("id", second.ProcurementEntryId)));
+            Assert.Equal(0L, await ScalarAsync<long>(
+                "SELECT count(*) FROM inventory.inventory_operations WHERE id = @id;",
+                ct, ("id", second.InventoryOperationId)));
+            Assert.Equal(0L, await ScalarAsync<long>(
+                "SELECT count(*) FROM inventory.inventory_positions WHERE procurement_batch_id = @id;",
+                ct, ("id", first.ProcurementBatchId)));
+            Assert.Equal(0L, await ScalarAsync<long>(
+                "SELECT count(*) FROM finance.payable_obligation_items WHERE payable_id = @id;",
+                ct, ("id", first.PayableId)));
+            Assert.Equal(0L, await ScalarAsync<long>(
+                "SELECT count(*) FROM finance.payables WHERE id = @id;",
+                ct, ("id", first.PayableId)));
+            Assert.Equal(0L, await ScalarAsync<long>(
+                "SELECT count(*) FROM system.outbox_messages WHERE command_id = @id;",
+                ct, ("id", commandIds[1])));
+            Assert.Equal(1L, await ScalarAsync<long>(
+                "SELECT count(*) FROM audit.audit_events WHERE command_id = @id AND event_kind = 'HARD_DELETE';",
+                ct, ("id", commandIds[9])));
         }
         finally
         {

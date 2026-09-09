@@ -23,6 +23,7 @@ export interface ProcurementBatchEntry {
   id: string;
   sourceType: string;
   sourceId: string;
+  sourceCode: string | null;
   sourceDisplayName: string;
   netQuantity: number;
   unitCodeSnapshot: string;

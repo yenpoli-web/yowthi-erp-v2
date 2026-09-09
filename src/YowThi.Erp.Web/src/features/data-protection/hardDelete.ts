@@ -14,6 +14,8 @@ export interface HardDeleteResult {
   customerId?: string;
   outsourcedVendorId?: string;
   farmerId?: string;
+  procurementBatchId?: string;
+  procurementEntryId?: string;
 }
 
 interface CommandOptions {
@@ -27,6 +29,10 @@ const hardDeleteRoutes: Record<HardDeleteTargetKind, (id: string) => string> = {
   customers: (id) => `/api/v1/data-protection/customers/${id}/hard-delete`,
   'outsourced-vendors': (id) => `/api/v1/data-protection/outsourced-vendors/${id}/hard-delete`,
   farmers: (id) => `/api/v1/data-protection/farmers/${id}/hard-delete`,
+  'procurement-batches': (id) => `/api/v1/procurement/batches/${id}/hard-delete`,
+  'procurement-entries': (id) => `/api/v1/procurement/entries/${id}/hard-delete`,
+  sales: (id) => `/api/v1/sales/${id}/hard-delete`,
+  'sales-details': (id) => `/api/v1/sales/details/${id}/hard-delete`,
   'processing-executions': (id) => `/api/v1/data-protection/processing-executions/${id}/hard-delete`,
   'processing-execution-inputs': (id) => `/api/v1/data-protection/processing-execution-inputs/${id}/hard-delete`,
   'processing-execution-outputs': (id) => `/api/v1/data-protection/processing-execution-outputs/${id}/hard-delete`,

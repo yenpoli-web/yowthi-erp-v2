@@ -15,6 +15,10 @@ public static class HardDeleteOptionEndpoints
     public const string CustomersOperationId = "DataProtection_ListHardDeleteCustomers";
     public const string OutsourcedVendorsOperationId = "DataProtection_ListHardDeleteOutsourcedVendors";
     public const string FarmersOperationId = "DataProtection_ListHardDeleteFarmers";
+    public const string ProcurementBatchesOperationId = "DataProtection_ListHardDeleteProcurementBatches";
+    public const string ProcurementEntriesOperationId = "DataProtection_ListHardDeleteProcurementEntries";
+    public const string SalesOperationId = "DataProtection_ListHardDeleteSales";
+    public const string SalesDetailsOperationId = "DataProtection_ListHardDeleteSalesDetails";
     public const string ProcessingExecutionsOperationId = "DataProtection_ListHardDeleteProcessingExecutions";
     public const string ProcessingExecutionInputsOperationId = "DataProtection_ListHardDeleteProcessingExecutionInputs";
     public const string ProcessingExecutionOutputsOperationId = "DataProtection_ListHardDeleteProcessingExecutionOutputs";
@@ -35,6 +39,14 @@ public static class HardDeleteOptionEndpoints
             (reader, query, ct) => reader.GetOutsourcedVendorsAsync(query, ct));
         Map(group, "/farmers", FarmersOperationId,
             (reader, query, ct) => reader.GetFarmersAsync(query, ct));
+        Map(group, "/procurement-batches", ProcurementBatchesOperationId,
+            (reader, query, ct) => reader.GetProcurementBatchesAsync(query, ct));
+        Map(group, "/procurement-entries", ProcurementEntriesOperationId,
+            (reader, query, ct) => reader.GetProcurementEntriesAsync(query, ct));
+        Map(group, "/sales", SalesOperationId,
+            (reader, query, ct) => reader.GetSalesAsync(query, ct));
+        Map(group, "/sales-details", SalesDetailsOperationId,
+            (reader, query, ct) => reader.GetSalesDetailsAsync(query, ct));
         Map(group, "/processing-executions", ProcessingExecutionsOperationId,
             (reader, query, ct) => reader.GetProcessingExecutionsAsync(query, ct));
         Map(group, "/processing-execution-inputs", ProcessingExecutionInputsOperationId,

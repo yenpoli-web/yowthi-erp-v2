@@ -22,12 +22,15 @@ public sealed class ProcurementTransactionLifecycleEndpointContractTests
 
         var batchSoftDelete = AssertRoute(endpoints, "/api/v1/procurement/batches/{procurementBatchId:guid}/soft-delete");
         var batchRestore = AssertRoute(endpoints, "/api/v1/procurement/batches/{procurementBatchId:guid}/restore");
+        var batchHardDelete = AssertRoute(endpoints, "/api/v1/procurement/batches/{procurementBatchId:guid}/hard-delete");
         var entrySoftDelete = AssertRoute(endpoints, "/api/v1/procurement/entries/{procurementEntryId:guid}/soft-delete");
         var entryRestore = AssertRoute(endpoints, "/api/v1/procurement/entries/{procurementEntryId:guid}/restore");
         var entryHardDelete = AssertRoute(endpoints, "/api/v1/procurement/entries/{procurementEntryId:guid}/hard-delete");
 
         AssertLifecycleWrite(batchSoftDelete, requiresReauthentication: true);
         AssertLifecycleWrite(batchRestore, requiresReauthentication: false);
+        AssertLifecycleWrite(batchHardDelete, requiresReauthentication: true);
+        AssertPolicy(batchHardDelete, CapabilityPolicies.DataProtectionHardDelete);
         AssertLifecycleWrite(entrySoftDelete, requiresReauthentication: true);
         AssertLifecycleWrite(entryRestore, requiresReauthentication: false);
         AssertLifecycleWrite(entryHardDelete, requiresReauthentication: true);

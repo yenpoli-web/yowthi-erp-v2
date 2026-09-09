@@ -51,6 +51,7 @@ public static class PersistenceServiceCollectionExtensions
         services.AddScoped<IReopenProcurementBatchExecutor, PostgreSqlReopenProcurementBatchExecutor>();
         services.AddScoped<IProcurementTransactionLifecycleExecutor, PostgreSqlProcurementTransactionLifecycleExecutor>();
         services.AddScoped<IHardDeleteProcurementEntryExecutor, PostgreSqlHardDeleteProcurementEntryExecutor>();
+        services.AddScoped<IHardDeleteProcurementBatchExecutor, PostgreSqlHardDeleteProcurementBatchExecutor>();
         services.AddScoped<IProcurementEntryOptionsReader, EfProcurementEntryOptionsReader>();
         services.AddScoped<IProcurementWorkspaceReader, EfProcurementWorkspaceReader>();
         services.AddScoped<IConfirmOutsourcedSupplyDetailExecutor, PostgreSqlConfirmOutsourcedSupplyDetailExecutor>();
@@ -61,7 +62,10 @@ public static class PersistenceServiceCollectionExtensions
         services.AddScoped<IHardDeleteProcessingTransactionExecutor, PostgreSqlHardDeleteProcessingTransactionExecutor>();
         services.AddScoped<IProcessingExecutionOptionsReader, EfProcessingExecutionOptionsReader>();
         services.AddScoped<IConfirmSalesExecutor, PostgreSqlConfirmSalesExecutor>();
+        services.AddScoped<ISalesTransactionLifecycleExecutor, PostgreSqlSalesTransactionLifecycleExecutor>();
+        services.AddScoped<IHardDeleteSalesTransactionExecutor, PostgreSqlHardDeleteSalesTransactionExecutor>();
         services.AddScoped<ISalesConfirmationOptionsReader, EfSalesConfirmationOptionsReader>();
+        services.AddScoped<ISalesWorkspaceReader, EfSalesWorkspaceReader>();
         services.AddScoped<ICorrectSalesAllocationExecutor, PostgreSqlCorrectSalesAllocationExecutor>();
         services.AddScoped<IRecordSalesPackagingWorkExecutor, PostgreSqlRecordSalesPackagingWorkExecutor>();
         services.AddScoped<ISalesHandlingWorkOptionsReader, EfSalesHandlingWorkOptionsReader>();

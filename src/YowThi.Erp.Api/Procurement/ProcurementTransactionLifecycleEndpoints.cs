@@ -41,6 +41,18 @@ public static class ProcurementTransactionLifecycleEndpoints
             .ProducesProblem(StatusCodes.Status409Conflict)
             .ProducesProblem(StatusCodes.Status422UnprocessableEntity);
 
+        group.MapPost("/batches/{procurementBatchId:guid}/hard-delete", HardDeleteBatchAsync)
+            .WithName("Procurement_HardDeleteBatch")
+            .RequireAuthorization(CapabilityPolicies.ProcurementTransactionLifecycle)
+            .RequireAuthorization(CapabilityPolicies.DataProtectionHardDelete)
+            .RequireIdempotencyKey()
+            .RequireRecentDeletionReauthentication()
+            .Produces<HardDeleteProcurementBatchResult>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict)
+            .ProducesProblem(StatusCodes.Status422UnprocessableEntity);
+
         group.MapPost("/entries/{procurementEntryId:guid}/soft-delete", SoftDeleteEntryAsync)
             .WithName("Procurement_SoftDeleteEntry")
             .RequireAuthorization(CapabilityPolicies.ProcurementTransactionLifecycle)
@@ -110,6 +122,27 @@ public static class ProcurementTransactionLifecycleEndpoints
             actorContext.ActorAccountId,
             command);
         return ToResult(httpContext, await executor.RestoreBatchAsync(execution, cancellationToken), "Procurement Batch restore failed.");
+    }
+
+    private static async Task<IResult> HardDeleteBatchAsync(
+        Guid procurementBatchId,
+        ProcurementTransactionLifecycleRequest request,
+        HttpContext httpContext,
+        [FromServices] IActorContext actorContext,
+        [FromServices] ICommandRequestHasher requestHasher,
+        [FromServices] IHardDeleteProcurementBatchExecutor executor,
+        CancellationToken cancellationToken)
+    {
+        var command = new HardDeleteProcurementBatchCommand(procurementBatchId, request.ExpectedRowVersion);
+        var execution = new HardDeleteProcurementBatchExecution(
+            httpContext.GetRequiredCommandId(),
+            Hash(requestHasher, "HardDeleteProcurementBatch", command),
+            actorContext.ActorAccountId,
+            command);
+        var result = await executor.ExecuteAsync(execution, cancellationToken);
+        return result.IsSuccess
+            ? TypedResults.Ok(result.Value)
+            : Failure(httpContext, result.Error, "Procurement Batch hard delete failed.");
     }
 
     private static async Task<IResult> SoftDeleteEntryAsync(

@@ -10,6 +10,7 @@ public static class SecurityCapabilities
     public const string OutsourcedConfirm = "outsourced.confirm";
     public const string SalesConfirm = "sales.confirm";
     public const string SalesCorrectAllocation = "sales.correct-allocation";
+    public const string SalesTransactionLifecycle = "sales.transaction.lifecycle";
     public const string SalesHandlingWorkRecord = "sales-handling.work-record.record";
     public const string SalesPackagingItemLifecycle = "sales-handling.packaging-item.lifecycle";
     public const string ProcurementProductManage = "product.procurement-product.manage";
@@ -42,6 +43,7 @@ public static class SecurityCapabilities
         OutsourcedConfirm,
         SalesConfirm,
         SalesCorrectAllocation,
+        SalesTransactionLifecycle,
         SalesHandlingWorkRecord,
         SalesPackagingItemLifecycle,
         ProcurementProductManage,

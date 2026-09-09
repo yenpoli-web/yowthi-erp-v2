@@ -143,6 +143,10 @@ const dataProtectionTargets = [
   'processing-executions',
   'processing-execution-inputs',
   'processing-execution-outputs',
+  'procurement-batches',
+  'procurement-entries',
+  'sales',
+  'sales-details',
 ];
 const hardDeleteOptions = read('src/features/data-protection/hardDeleteOptions.ts');
 for (const target of dataProtectionTargets) {
@@ -211,7 +215,7 @@ console.log(`- recovery debt: ${manualPageLocaleControls}/2 page locale controls
 console.log('- placeholder hints: 0');
 console.log('- raw JSX domain enums: 0');
 console.log('- module registry: 13 operational / 13 localized');
-console.log('- Data Protection correspondence: 7/7 target-specific Hard Delete controls');
+console.log('- Data Protection correspondence: 11/11 target-specific Hard Delete controls');
 console.log('- Data Protection deletion re-authentication: enforced');
 console.log('- Nature Green tablet/mobile shell markers: present');
 console.log('- mobile primary navigation: localized home + 3 core operations');

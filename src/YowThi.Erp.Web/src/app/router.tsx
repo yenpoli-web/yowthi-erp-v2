@@ -22,7 +22,7 @@ import { SalesProductGroupMasterPage } from '../features/product/SalesProductGro
 import { ProcessingExecutionPage } from '../features/processing/ProcessingExecutionPage';
 import { ProcurementEntryPage } from '../features/procurement/ProcurementEntryPage';
 import { ProcurementWorkspacePage } from '../features/procurement/ProcurementWorkspacePage';
-import { SalesConfirmationPage } from '../features/sales/SalesConfirmationPage';
+import { SalesWorkspacePage } from '../features/sales/SalesWorkspacePage';
 import { SalesPackagingWorkPage } from '../features/sales-handling/SalesPackagingWorkPage';
 import { SalesPackagingItemMasterPage } from '../features/sales-handling/SalesPackagingItemMasterPage';
 import { SecurityAccountPage } from '../features/security/SecurityAccountPage';
@@ -40,7 +40,7 @@ export const router = createBrowserRouter([
       { path: 'procurement/entries/new', element: <ProcurementEntryPage /> },
       { path: 'outsourced/supply-details/new', element: <OutsourcedSupplyDetailPage /> },
       { path: 'processing/executions/new', element: <ProcessingExecutionPage /> },
-      { path: 'sales', element: <SalesConfirmationPage /> },
+      { path: 'sales', element: <SalesWorkspacePage /> },
       { path: 'sales-handling', element: <SalesPackagingWorkPage /> },
       { path: 'sales-handling/packaging-items', element: <SalesPackagingItemMasterPage /> },
       { path: 'labor', element: <LaborDailyWagePage /> },
