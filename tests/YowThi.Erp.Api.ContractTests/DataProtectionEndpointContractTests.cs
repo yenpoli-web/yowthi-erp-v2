@@ -42,6 +42,7 @@ public sealed class DataProtectionEndpointContractTests
             endpoint.Metadata.GetOrderedMetadata<IAuthorizeData>(),
             metadata => metadata.Policy == CapabilityPolicies.DataProtectionHardDelete);
         Assert.NotNull(endpoint.Metadata.GetMetadata<RequiresIdempotencyKeyMetadata>());
+        Assert.NotNull(endpoint.Metadata.GetMetadata<RequiresDeletionReauthenticationMetadata>());
 
         var statuses = endpoint.Metadata
             .GetOrderedMetadata<IProducesResponseTypeMetadata>()
@@ -146,6 +147,10 @@ public sealed class DataProtectionEndpointContractTests
         {
             RequestServices = app.Services,
         };
+        context.User = new System.Security.Claims.ClaimsPrincipal(
+            new System.Security.Claims.ClaimsIdentity(
+                [DeletionReauthenticationClaims.CreateClaim(DateTimeOffset.UtcNow)],
+                "contract-test"));
         context.Features.Set<IHttpRequestBodyDetectionFeature>(new RequestBodyDetectionFeature());
         context.Request.Method = HttpMethods.Post;
         context.Request.Path = endpoint.RoutePattern.RawText!

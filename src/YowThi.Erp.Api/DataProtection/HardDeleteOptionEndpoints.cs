@@ -15,6 +15,9 @@ public static class HardDeleteOptionEndpoints
     public const string CustomersOperationId = "DataProtection_ListHardDeleteCustomers";
     public const string OutsourcedVendorsOperationId = "DataProtection_ListHardDeleteOutsourcedVendors";
     public const string FarmersOperationId = "DataProtection_ListHardDeleteFarmers";
+    public const string ProcessingExecutionsOperationId = "DataProtection_ListHardDeleteProcessingExecutions";
+    public const string ProcessingExecutionInputsOperationId = "DataProtection_ListHardDeleteProcessingExecutionInputs";
+    public const string ProcessingExecutionOutputsOperationId = "DataProtection_ListHardDeleteProcessingExecutionOutputs";
 
     private const int DefaultLimit = 50;
     private const int MaxLimit = 100;
@@ -32,6 +35,12 @@ public static class HardDeleteOptionEndpoints
             (reader, query, ct) => reader.GetOutsourcedVendorsAsync(query, ct));
         Map(group, "/farmers", FarmersOperationId,
             (reader, query, ct) => reader.GetFarmersAsync(query, ct));
+        Map(group, "/processing-executions", ProcessingExecutionsOperationId,
+            (reader, query, ct) => reader.GetProcessingExecutionsAsync(query, ct));
+        Map(group, "/processing-execution-inputs", ProcessingExecutionInputsOperationId,
+            (reader, query, ct) => reader.GetProcessingExecutionInputsAsync(query, ct));
+        Map(group, "/processing-execution-outputs", ProcessingExecutionOutputsOperationId,
+            (reader, query, ct) => reader.GetProcessingExecutionOutputsAsync(query, ct));
 
         return endpoints;
     }

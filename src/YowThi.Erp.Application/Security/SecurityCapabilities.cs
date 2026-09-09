@@ -4,7 +4,9 @@ public static class SecurityCapabilities
 {
     public const string ProcurementConfirm = "procurement.confirm";
     public const string ProcurementBatchLifecycle = "procurement.batch.lifecycle";
+    public const string ProcurementTransactionLifecycle = "procurement.transaction.lifecycle";
     public const string ProcessingConfirm = "processing.confirm";
+    public const string ProcessingTransactionLifecycle = "processing.transaction.lifecycle";
     public const string OutsourcedConfirm = "outsourced.confirm";
     public const string SalesConfirm = "sales.confirm";
     public const string SalesCorrectAllocation = "sales.correct-allocation";
@@ -34,7 +36,9 @@ public static class SecurityCapabilities
     [
         ProcurementConfirm,
         ProcurementBatchLifecycle,
+        ProcurementTransactionLifecycle,
         ProcessingConfirm,
+        ProcessingTransactionLifecycle,
         OutsourcedConfirm,
         SalesConfirm,
         SalesCorrectAllocation,

@@ -135,8 +135,17 @@ if (zhLabels !== 13 || thLabels < 13) {
   fail(`All 13 modules must carry zh-TW and th-TH labels; found zh-TW=${zhLabels}, th-TH=${thLabels}.`);
 }
 
+const dataProtectionTargets = [
+  'suppliers',
+  'customers',
+  'outsourced-vendors',
+  'farmers',
+  'processing-executions',
+  'processing-execution-inputs',
+  'processing-execution-outputs',
+];
 const hardDeleteOptions = read('src/features/data-protection/hardDeleteOptions.ts');
-for (const target of ['suppliers', 'customers', 'outsourced-vendors', 'farmers']) {
+for (const target of dataProtectionTargets) {
   if (!hardDeleteOptions.includes(`'${target}'`)) {
     fail(`Canonical Data Protection target list is missing ${target}.`);
   }
@@ -148,8 +157,18 @@ if (!dataProtectionPage.includes('hardDeleteTargetKinds.map')) {
 if (!dataProtectionPage.includes('listHardDeleteOptions')) {
   fail('Data Protection main page must read through the target-specific Hard Delete options API.');
 }
+if (!dataProtectionPage.includes('prepareDeletionReauthentication')) {
+  fail('Data Protection Hard Delete must perform deletion re-authentication before the command is sent.');
+}
 if (dataProtectionPage.includes('listSuppliers') || dataProtectionPage.includes('listCustomers')) {
   fail('Data Protection main page must not regress to Supplier/Customer-only master queries.');
+}
+const authSession = read('src/app/security/authSession.ts');
+if (!authSession.includes('/auth/development-deletion-reauthenticate')) {
+  fail('Development Test Admin deletion re-authentication endpoint wiring is missing.');
+}
+if (!authSession.includes("headers.set('X-CSRF-TOKEN'")) {
+  fail('Development deletion re-authentication must send the CSRF request token.');
 }
 const routerSource = read('src/app/router.tsx');
 if (!routerSource.includes(`path: 'data-protection/hard-delete', element: <Navigate to=\"/data-protection\" replace />`)) {
@@ -192,7 +211,8 @@ console.log(`- recovery debt: ${manualPageLocaleControls}/2 page locale controls
 console.log('- placeholder hints: 0');
 console.log('- raw JSX domain enums: 0');
 console.log('- module registry: 13 operational / 13 localized');
-console.log('- Data Protection correspondence: 4/4 target-specific Hard Delete controls');
+console.log('- Data Protection correspondence: 7/7 target-specific Hard Delete controls');
+console.log('- Data Protection deletion re-authentication: enforced');
 console.log('- Nature Green tablet/mobile shell markers: present');
 console.log('- mobile primary navigation: localized home + 3 core operations');
 console.log('- deterministic desktop/tablet/mobile override: present');

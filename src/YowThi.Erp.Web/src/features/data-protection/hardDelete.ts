@@ -9,6 +9,7 @@ export interface HardDeleteRequest {
 }
 
 export interface HardDeleteResult {
+  id?: string;
   supplierId?: string;
   customerId?: string;
   outsourcedVendorId?: string;
@@ -26,6 +27,9 @@ const hardDeleteRoutes: Record<HardDeleteTargetKind, (id: string) => string> = {
   customers: (id) => `/api/v1/data-protection/customers/${id}/hard-delete`,
   'outsourced-vendors': (id) => `/api/v1/data-protection/outsourced-vendors/${id}/hard-delete`,
   farmers: (id) => `/api/v1/data-protection/farmers/${id}/hard-delete`,
+  'processing-executions': (id) => `/api/v1/data-protection/processing-executions/${id}/hard-delete`,
+  'processing-execution-inputs': (id) => `/api/v1/data-protection/processing-execution-inputs/${id}/hard-delete`,
+  'processing-execution-outputs': (id) => `/api/v1/data-protection/processing-execution-outputs/${id}/hard-delete`,
 };
 
 export function hardDeleteTarget(

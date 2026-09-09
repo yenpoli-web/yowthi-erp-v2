@@ -6,6 +6,9 @@ export const hardDeleteTargetKinds = [
   'customers',
   'outsourced-vendors',
   'farmers',
+  'processing-executions',
+  'processing-execution-inputs',
+  'processing-execution-outputs',
 ] as const;
 
 export type HardDeleteTargetKind = (typeof hardDeleteTargetKinds)[number];

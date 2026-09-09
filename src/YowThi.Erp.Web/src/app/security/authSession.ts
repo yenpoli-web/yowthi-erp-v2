@@ -35,7 +35,38 @@ export async function developmentLogin(): Promise<AuthenticationSession> {
   return (await response.json()) as AuthenticationSession;
 }
 
+export async function developmentDeletionReauthenticate(): Promise<void> {
+  const response = await fetch('/auth/development-deletion-reauthenticate', {
+    method: 'POST',
+    credentials: 'include',
+    headers: createCsrfHeaders(),
+  });
+
+  if (!response.ok && response.status !== 204) {
+    throw new Error(`Development deletion re-authentication failed with HTTP ${response.status}.`);
+  }
+}
+
+export async function prepareDeletionReauthentication(): Promise<void> {
+  const session = await getAuthenticationSession();
+  if (session.developmentLoginAvailable) {
+    await developmentDeletionReauthenticate();
+  }
+}
+
 export async function logout(): Promise<void> {
+  const response = await fetch('/auth/logout', {
+    method: 'POST',
+    credentials: 'include',
+    headers: createCsrfHeaders(),
+  });
+
+  if (!response.ok && response.status !== 204) {
+    throw new Error(`Logout failed with HTTP ${response.status}.`);
+  }
+}
+
+function createCsrfHeaders(): Headers {
   const csrfToken = document.cookie
     .split(';')
     .map((item) => item.trim())
@@ -43,15 +74,7 @@ export async function logout(): Promise<void> {
     ?.slice('XSRF-TOKEN='.length);
 
   const headers = new Headers();
+  headers.set('Accept', 'application/json');
   if (csrfToken) headers.set('X-CSRF-TOKEN', decodeURIComponent(csrfToken));
-
-  const response = await fetch('/auth/logout', {
-    method: 'POST',
-    credentials: 'include',
-    headers,
-  });
-
-  if (!response.ok && response.status !== 204) {
-    throw new Error(`Logout failed with HTTP ${response.status}.`);
-  }
+  return headers;
 }

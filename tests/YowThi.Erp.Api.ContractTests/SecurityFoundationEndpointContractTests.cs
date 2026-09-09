@@ -59,6 +59,40 @@ public sealed class SecurityFoundationEndpointContractTests
     }
 
     [Fact]
+    public async Task Development_deletion_reauthentication_is_mapped_only_when_test_admin_is_enabled_and_requires_authentication()
+    {
+        await using var disabled = CreateApp(Environments.Development, developmentTestAdminEnabled: false);
+        disabled.MapYowThiAuthenticationEndpoints();
+        Assert.DoesNotContain(
+            GetRouteEndpoints(disabled),
+            endpoint => endpoint.RoutePattern.RawText == "/auth/development-deletion-reauthenticate");
+
+        await using var enabled = CreateApp(Environments.Development, developmentTestAdminEnabled: true);
+        enabled.MapYowThiAuthenticationEndpoints();
+        var endpoint = Assert.Single(
+            GetRouteEndpoints(enabled),
+            candidate => candidate.RoutePattern.RawText == "/auth/development-deletion-reauthenticate");
+
+        Assert.Contains(HttpMethods.Post, endpoint.Metadata.GetMetadata<IHttpMethodMetadata>()?.HttpMethods ?? []);
+        Assert.NotEmpty(endpoint.Metadata.GetOrderedMetadata<IAuthorizeData>());
+        Assert.Null(endpoint.Metadata.GetMetadata<IAllowAnonymous>());
+    }
+
+    [Fact]
+    public async Task Deletion_reauthentication_filter_marks_destructive_endpoint_contract()
+    {
+        await using var app = CreateApp(Environments.Development);
+        app.MapPost("/test-delete", static () => Results.NoContent())
+            .RequireRecentDeletionReauthentication();
+
+        var endpoint = Assert.Single(
+            GetRouteEndpoints(app),
+            candidate => candidate.RoutePattern.RawText == "/test-delete");
+
+        Assert.NotNull(endpoint.Metadata.GetMetadata<RequiresDeletionReauthenticationMetadata>());
+    }
+
+    [Fact]
     public async Task Authentication_session_is_anonymous_but_logout_requires_authentication()
     {
         await using var app = CreateApp(Environments.Development, developmentTestAdminEnabled: true);
@@ -87,6 +121,27 @@ public sealed class SecurityFoundationEndpointContractTests
         {
             ["Api:Localization:DefaultLocale"] = "zh-TW",
             ["Security:DevelopmentTestAdmin:Enabled"] = "true",
+        });
+
+        Assert.Throws<InvalidOperationException>(() => builder.AddYowThiApi());
+    }
+
+    [Fact]
+    public async Task Deletion_reauthentication_freshness_defaults_to_two_minutes_and_rejects_unsafe_configuration()
+    {
+        await using var app = CreateApp(Environments.Development);
+        var runtimeOptions = app.Services.GetRequiredService<SecurityRuntimeOptions>();
+        Assert.Equal(TimeSpan.FromMinutes(2), runtimeOptions.DeletionReauthenticationMaxAge);
+
+        var builder = WebApplication.CreateBuilder(new WebApplicationOptions
+        {
+            ApplicationName = typeof(Program).Assembly.GetName().Name,
+            EnvironmentName = Environments.Development,
+        });
+        builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["Api:Localization:DefaultLocale"] = "zh-TW",
+            ["Security:DeletionReauthentication:MaxAgeSeconds"] = "10",
         });
 
         Assert.Throws<InvalidOperationException>(() => builder.AddYowThiApi());
@@ -122,7 +177,9 @@ public sealed class SecurityFoundationEndpointContractTests
     public void Security_capability_registry_is_explicit_and_contains_account_management()
     {
         Assert.Equal("security.account.manage", SecurityCapabilities.SecurityAccountManage);
-        Assert.Equal(27, SecurityCapabilities.All.Count);
+        Assert.Equal(29, SecurityCapabilities.All.Count);
+        Assert.Contains(SecurityCapabilities.ProcurementTransactionLifecycle, SecurityCapabilities.All);
+        Assert.Contains(SecurityCapabilities.ProcessingTransactionLifecycle, SecurityCapabilities.All);
         Assert.Contains(SecurityCapabilities.ProcurementProductManage, SecurityCapabilities.All);
         Assert.Contains(SecurityCapabilities.SalesProductManage, SecurityCapabilities.All);
         Assert.Contains(SecurityCapabilities.InfrastructureWarehouseManage, SecurityCapabilities.All);

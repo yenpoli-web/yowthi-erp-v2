@@ -1,8 +1,9 @@
+using YowThi.Erp.Domain.Common;
 using YowThi.Erp.Domain.ProcessingConfiguration;
 
 namespace YowThi.Erp.Domain.Processing;
 
-public sealed class ProcessingExecutionOutput
+public sealed class ProcessingExecutionOutput : IHasRowVersion
 {
     public Guid Id { get; private set; }
     public Guid ProcessingExecutionId { get; private set; }
@@ -16,6 +17,9 @@ public sealed class ProcessingExecutionOutput
     public decimal? CompletedQuantity { get; private set; }
     public decimal? PackagingWeightSnapshot { get; private set; }
     public decimal? SourceConsumptionQuantity { get; private set; }
+    public long RowVersion { get; private set; }
+    public DateTimeOffset? DeletedAt { get; private set; }
+    public Guid? DeletedByAccountId { get; private set; }
 
     public static ProcessingExecutionOutput CreateProcessMaterial(
         Guid id,

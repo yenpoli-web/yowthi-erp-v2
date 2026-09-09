@@ -17,6 +17,8 @@ public static class ApiServiceCollectionExtensions
 {
     private const string MaxRequestBodySizeKey = "Api:RequestLimits:MaxRequestBodySizeBytes";
     private const string DevelopmentTestAdminEnabledKey = "Security:DevelopmentTestAdmin:Enabled";
+    private const string DeletionReauthenticationMaxAgeSecondsKey = "Security:DeletionReauthentication:MaxAgeSeconds";
+    private const int DefaultDeletionReauthenticationMaxAgeSeconds = 120;
 
     public static WebApplicationBuilder AddYowThiApi(this WebApplicationBuilder builder)
     {
@@ -29,8 +31,18 @@ public static class ApiServiceCollectionExtensions
                 $"{DevelopmentTestAdminEnabledKey} may only be enabled in the Development environment.");
         }
 
+        var deletionReauthenticationMaxAgeSeconds = builder.Configuration.GetValue<int?>(DeletionReauthenticationMaxAgeSecondsKey)
+            ?? DefaultDeletionReauthenticationMaxAgeSeconds;
+        if (deletionReauthenticationMaxAgeSeconds is < 30 or > 900)
+        {
+            throw new InvalidOperationException(
+                $"{DeletionReauthenticationMaxAgeSecondsKey} must be between 30 and 900 seconds when configured.");
+        }
+
         builder.Services.AddSingleton(new SecurityRuntimeOptions(
-            builder.Environment.IsDevelopment() && developmentTestAdminConfigured));
+            builder.Environment.IsDevelopment() && developmentTestAdminConfigured,
+            TimeSpan.FromSeconds(deletionReauthenticationMaxAgeSeconds)));
+        builder.Services.AddSingleton(TimeProvider.System);
 
         builder.Services.Configure<ForwardedHeadersOptions>(options =>
         {
@@ -151,6 +163,7 @@ public static class ApiServiceCollectionExtensions
 
         builder.Services.AddSingleton<IApiLocaleResolver, ApiLocaleResolver>();
         builder.Services.AddTransient<IdempotencyKeyEndpointFilter>();
+        builder.Services.AddTransient<DeletionReauthenticationEndpointFilter>();
 
         var configuredBodyLimit = builder.Configuration.GetValue<long?>(MaxRequestBodySizeKey);
         if (configuredBodyLimit is <= 0)

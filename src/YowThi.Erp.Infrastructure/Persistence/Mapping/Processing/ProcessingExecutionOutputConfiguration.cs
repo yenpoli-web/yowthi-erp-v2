@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using YowThi.Erp.Domain.Processing;
 using YowThi.Erp.Domain.ProcessingConfiguration;
+using YowThi.Erp.Infrastructure.Persistence.System;
 
 namespace YowThi.Erp.Infrastructure.Persistence.Mapping.Processing;
 
@@ -22,6 +23,8 @@ internal sealed class ProcessingExecutionOutputConfiguration : IEntityTypeConfig
             tableBuilder.HasCheckConstraint("ck_processing_execution_outputs_source_consumption", "source_consumption_quantity IS NULL OR (source_consumption_quantity NOT IN ('NaN'::numeric, 'Infinity'::numeric, '-Infinity'::numeric) AND source_consumption_quantity >= 0)");
             tableBuilder.HasCheckConstraint("ck_processing_execution_outputs_shape", "(output_kind_snapshot = 'PROCESS_MATERIAL' AND observed_scale_reading IS NOT NULL AND derived_net_quantity IS NOT NULL AND completed_quantity IS NULL AND packaging_weight_snapshot IS NULL AND source_consumption_quantity IS NULL AND (((actual_container_count IS NULL AND tare_weight_snapshot IS NULL) AND derived_net_quantity = observed_scale_reading) OR (actual_container_count IS NOT NULL AND tare_weight_snapshot IS NOT NULL AND derived_net_quantity = observed_scale_reading - (actual_container_count * tare_weight_snapshot)))) OR (output_kind_snapshot = 'SALES_PRODUCT' AND observed_scale_reading IS NULL AND actual_container_count IS NULL AND tare_weight_snapshot IS NULL AND derived_net_quantity IS NULL AND completed_quantity IS NOT NULL AND packaging_weight_snapshot IS NOT NULL AND source_consumption_quantity IS NOT NULL)");
             tableBuilder.HasCheckConstraint("ck_processing_execution_outputs_final_packaging_formula", "output_kind_snapshot <> 'SALES_PRODUCT' OR source_consumption_quantity = completed_quantity * packaging_weight_snapshot");
+            tableBuilder.HasCheckConstraint("ck_processing_execution_outputs_row_version", "row_version >= 1");
+            tableBuilder.HasCheckConstraint("ck_processing_execution_outputs_deleted_pair", "(deleted_at IS NULL AND deleted_by_account_id IS NULL) OR (deleted_at IS NOT NULL AND deleted_by_account_id IS NOT NULL)");
         });
 
         builder.HasKey(x => x.Id).HasName("pk_processing_execution_outputs");
@@ -37,12 +40,17 @@ internal sealed class ProcessingExecutionOutputConfiguration : IEntityTypeConfig
         builder.Property(x => x.CompletedQuantity).HasColumnName("completed_quantity").HasColumnType("numeric");
         builder.Property(x => x.PackagingWeightSnapshot).HasColumnName("packaging_weight_snapshot").HasColumnType("numeric");
         builder.Property(x => x.SourceConsumptionQuantity).HasColumnName("source_consumption_quantity").HasColumnType("numeric");
+        builder.Property(x => x.RowVersion).HasColumnName("row_version").HasDefaultValue(1L).IsConcurrencyToken();
+        builder.Property(x => x.DeletedAt).HasColumnName("deleted_at").HasColumnType("timestamp with time zone");
+        builder.Property(x => x.DeletedByAccountId).HasColumnName("deleted_by_account_id");
 
         builder.HasOne<ProcessingExecution>().WithMany().HasForeignKey(x => x.ProcessingExecutionId).OnDelete(DeleteBehavior.Restrict).HasConstraintName("fk_processing_execution_outputs_execution");
         builder.HasOne<ProcessingModuleOutput>().WithMany().HasForeignKey(x => x.ProcessingModuleOutputId).OnDelete(DeleteBehavior.Restrict).HasConstraintName("fk_processing_execution_outputs_module_output");
+        builder.HasOne<SystemAccountRecord>().WithMany().HasForeignKey(x => x.DeletedByAccountId).OnDelete(DeleteBehavior.Restrict).HasConstraintName("fk_processing_execution_outputs_deleted_by_account");
 
         builder.HasIndex(x => new { x.ProcessingExecutionId, x.ProcessingModuleOutputId }).IsUnique().HasDatabaseName("ux_processing_execution_outputs_execution_definition");
         builder.HasIndex(x => x.ProcessingExecutionId).IsUnique().HasFilter("output_kind_snapshot = 'SALES_PRODUCT'").HasDatabaseName("ux_processing_execution_outputs_one_sales_product_per_execution");
         builder.HasIndex(x => x.ProcessingModuleOutputId).HasDatabaseName("ix_processing_execution_outputs_module_output_id");
+        builder.HasIndex(x => x.DeletedByAccountId).HasDatabaseName("ix_processing_execution_outputs_deleted_by_account_id");
     }
 }

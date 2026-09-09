@@ -88,6 +88,7 @@ internal sealed class EfLaborDailyWageOptionsReader(ErpDbContext dbContext) : IL
             where execution.WorkDate == workDate
                 && execution.EmployeeId == employeeId
                 && execution.DeletedAt == null
+                && output.DeletedAt == null
                 && !dbContext.Set<ProcessingWageComponentSource>()
                     .Any(source => source.ProcessingExecutionOutputId == output.Id)
             select new

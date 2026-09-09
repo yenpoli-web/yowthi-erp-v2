@@ -132,10 +132,17 @@ public sealed class M3RelationalModelTests
         var input = GetTable(model, "processing", "processing_execution_inputs");
 
         Assert.Equal(new[] { "ProcessingExecutionId" }, PropertyNames(input.FindPrimaryKey()!.Properties));
-        var executionForeignKey = Assert.Single(input.GetForeignKeys());
-        Assert.Equal("processing_executions", executionForeignKey.PrincipalEntityType.GetTableName());
+        var executionForeignKey = Assert.Single(
+            input.GetForeignKeys(),
+            foreignKey => foreignKey.PrincipalEntityType.GetTableName() == "processing_executions");
         Assert.True(executionForeignKey.IsUnique);
         Assert.Equal(DeleteBehavior.Restrict, executionForeignKey.DeleteBehavior);
+
+        var deletedByForeignKey = Assert.Single(
+            input.GetForeignKeys(),
+            foreignKey => foreignKey.PrincipalEntityType.GetTableName() == "accounts");
+        Assert.Equal(new[] { "DeletedByAccountId" }, PropertyNames(deletedByForeignKey.Properties));
+        Assert.Equal(DeleteBehavior.Restrict, deletedByForeignKey.DeleteBehavior);
 
         var checks = CheckNames(input);
         Assert.Contains("ck_processing_execution_inputs_consumption_basis", checks);
@@ -143,7 +150,15 @@ public sealed class M3RelationalModelTests
         Assert.Contains("ck_processing_execution_inputs_scale_reading", checks);
         Assert.Contains("ck_processing_execution_inputs_derived_net_quantity", checks);
         Assert.Contains("ck_processing_execution_inputs_shape", checks);
-        Assert.Null(input.FindProperty("RowVersion"));
+        Assert.Contains("ck_processing_execution_inputs_row_version", checks);
+        Assert.Contains("ck_processing_execution_inputs_deleted_pair", checks);
+        var inputRowVersion = input.FindProperty("RowVersion");
+        Assert.NotNull(inputRowVersion);
+        Assert.True(inputRowVersion!.IsConcurrencyToken);
+        Assert.Equal(1L, inputRowVersion.GetDefaultValue());
+        Assert.Contains(
+            input.GetIndexes(),
+            index => PropertyNames(index.Properties).SequenceEqual(new[] { "DeletedByAccountId" }));
     }
 
     [Fact]
@@ -169,14 +184,29 @@ public sealed class M3RelationalModelTests
         Assert.Contains("ck_processing_execution_outputs_completed_quantity", checks);
         Assert.Contains("ck_processing_execution_outputs_shape", checks);
         Assert.Contains("ck_processing_execution_outputs_final_packaging_formula", checks);
+        Assert.Contains("ck_processing_execution_outputs_row_version", checks);
+        Assert.Contains("ck_processing_execution_outputs_deleted_pair", checks);
 
         var definitionForeignKey = Assert.Single(
             output.GetForeignKeys(),
             foreignKey => foreignKey.PrincipalEntityType.GetTableName() == "processing_module_outputs");
         Assert.Equal(new[] { "ProcessingModuleOutputId" }, PropertyNames(definitionForeignKey.Properties));
         Assert.Equal(DeleteBehavior.Restrict, definitionForeignKey.DeleteBehavior);
+
+        var deletedByForeignKey = Assert.Single(
+            output.GetForeignKeys(),
+            foreignKey => foreignKey.PrincipalEntityType.GetTableName() == "accounts");
+        Assert.Equal(new[] { "DeletedByAccountId" }, PropertyNames(deletedByForeignKey.Properties));
+        Assert.Equal(DeleteBehavior.Restrict, deletedByForeignKey.DeleteBehavior);
+
         Assert.Equal(ValueGenerated.Never, output.FindProperty("Id")!.ValueGenerated);
-        Assert.Null(output.FindProperty("RowVersion"));
+        var outputRowVersion = output.FindProperty("RowVersion");
+        Assert.NotNull(outputRowVersion);
+        Assert.True(outputRowVersion!.IsConcurrencyToken);
+        Assert.Equal(1L, outputRowVersion.GetDefaultValue());
+        Assert.Contains(
+            output.GetIndexes(),
+            index => PropertyNames(index.Properties).SequenceEqual(new[] { "DeletedByAccountId" }));
     }
 
     [Fact]

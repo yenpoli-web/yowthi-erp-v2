@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using YowThi.Erp.Application.DataProtection;
 using YowThi.Erp.Domain.Party;
+using YowThi.Erp.Domain.Processing;
 
 namespace YowThi.Erp.Infrastructure.Persistence.DataProtection;
 
@@ -53,6 +54,45 @@ internal sealed class EfHardDeleteOptionsReader(ErpDbContext dbContext) : IHardD
                 item.Id,
                 query.Locale == "th-TH" ? item.NameThTh ?? item.NameZhTw : item.NameZhTw ?? item.NameThTh,
                 item.Active,
+                item.RowVersion,
+                item.DeletedAt)),
+            query,
+            cancellationToken);
+
+    public ValueTask<HardDeleteOptionPage<HardDeleteOption>> GetProcessingExecutionsAsync(
+        HardDeleteOptionsQuery query,
+        CancellationToken cancellationToken) =>
+        GetPageAsync(
+            dbContext.Set<ProcessingExecution>().AsNoTracking().Select(item => new Projection(
+                item.Id,
+                item.Id.ToString(),
+                true,
+                item.RowVersion,
+                item.DeletedAt)),
+            query,
+            cancellationToken);
+
+    public ValueTask<HardDeleteOptionPage<HardDeleteOption>> GetProcessingExecutionInputsAsync(
+        HardDeleteOptionsQuery query,
+        CancellationToken cancellationToken) =>
+        GetPageAsync(
+            dbContext.Set<ProcessingExecutionInput>().AsNoTracking().Select(item => new Projection(
+                item.ProcessingExecutionId,
+                item.ProcessingExecutionId.ToString(),
+                true,
+                item.RowVersion,
+                item.DeletedAt)),
+            query,
+            cancellationToken);
+
+    public ValueTask<HardDeleteOptionPage<HardDeleteOption>> GetProcessingExecutionOutputsAsync(
+        HardDeleteOptionsQuery query,
+        CancellationToken cancellationToken) =>
+        GetPageAsync(
+            dbContext.Set<ProcessingExecutionOutput>().AsNoTracking().Select(item => new Projection(
+                item.Id,
+                item.Id.ToString(),
+                true,
                 item.RowVersion,
                 item.DeletedAt)),
             query,

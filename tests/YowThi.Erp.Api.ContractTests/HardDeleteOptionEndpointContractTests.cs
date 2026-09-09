@@ -26,6 +26,9 @@ public sealed class HardDeleteOptionEndpointContractTests
             ["/api/v1/data-protection/hard-delete-options/customers"] = HardDeleteOptionEndpoints.CustomersOperationId,
             ["/api/v1/data-protection/hard-delete-options/outsourced-vendors"] = HardDeleteOptionEndpoints.OutsourcedVendorsOperationId,
             ["/api/v1/data-protection/hard-delete-options/farmers"] = HardDeleteOptionEndpoints.FarmersOperationId,
+            ["/api/v1/data-protection/hard-delete-options/processing-executions"] = HardDeleteOptionEndpoints.ProcessingExecutionsOperationId,
+            ["/api/v1/data-protection/hard-delete-options/processing-execution-inputs"] = HardDeleteOptionEndpoints.ProcessingExecutionInputsOperationId,
+            ["/api/v1/data-protection/hard-delete-options/processing-execution-outputs"] = HardDeleteOptionEndpoints.ProcessingExecutionOutputsOperationId,
         };
 
         foreach (var pair in expected)

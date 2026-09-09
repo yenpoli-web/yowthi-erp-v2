@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useRef, useState } from 'react';
 
 import { useOperationalLocale, type OperationalLocale } from '../../app/i18n/locale';
+import { prepareDeletionReauthentication } from '../../app/security/authSession';
 import { ApiProblemError, hardDeleteTarget } from './hardDelete';
 import { hardDeleteCopy } from './hardDeleteCopy';
 import {
@@ -19,6 +20,9 @@ const masterQueryKeys: Record<HardDeleteTargetKind, string> = {
   customers: 'customer-master',
   'outsourced-vendors': 'outsourced-vendor-master',
   farmers: 'farmer-master',
+  'processing-executions': 'processing-execution',
+  'processing-execution-inputs': 'processing-execution-input',
+  'processing-execution-outputs': 'processing-execution-output',
 };
 
 const presentationCopy = {
@@ -59,12 +63,15 @@ export function DataProtectionPage() {
   const targetLabel = labels[targetKind];
 
   const mutation = useMutation({
-    mutationFn: (input: { item: HardDeleteOption; idempotencyKey: string }) => hardDeleteTarget(
-      targetKind,
-      input.item.id,
-      { expectedRowVersion: input.item.rowVersion },
-      { idempotencyKey: input.idempotencyKey, locale },
-    ),
+    mutationFn: async (input: { item: HardDeleteOption; idempotencyKey: string }) => {
+      await prepareDeletionReauthentication();
+      return hardDeleteTarget(
+        targetKind,
+        input.item.id,
+        { expectedRowVersion: input.item.rowVersion },
+        { idempotencyKey: input.idempotencyKey, locale },
+      );
+    },
     onSuccess: async () => {
       const masterKey = masterQueryKeys[targetKind];
       setSelectedId('');
@@ -82,10 +89,11 @@ export function DataProtectionPage() {
     const error = mutation.error ?? optionsQuery.error;
     if (!error) return null;
     if (!(error instanceof ApiProblemError)) return optionsQuery.error ? labels.queryFailed : labels.unexpected;
+    if (error.code === 'security.deletion-reauth-required') return labels.reauthRequired;
     if (error.code === 'concurrency.stale-row-version') return labels.stale;
     if (error.code === 'idempotency.key-reused') return labels.idempotency;
     if (error.code === 'data-protection.hard-delete-invalid') return labels.invalid;
-    if (error.code.endsWith('-dependency-blocked')) return labels.dependencyBlocked;
+    if (error.code.endsWith('-dependency-blocked') || error.code.endsWith('-closure-invalid') || error.code.endsWith('-closure-ambiguous')) return labels.dependencyBlocked;
     if (error.code.endsWith('-not-found')) return labels.notFound;
     return `${error.code}${error.problem.traceId ? ` · ${error.problem.traceId}` : ''}`;
   }, [labels, mutation.error, optionsQuery.error]);
@@ -111,7 +119,7 @@ export function DataProtectionPage() {
     <section className="protection-prototype" aria-labelledby="protection-title">
       <header className="protection-prototype-header">
         <div>
-          <p className="eyebrow">{labels.eyebrow.replace('P7 · ', '')}</p>
+          <p className="eyebrow">{labels.eyebrow}</p>
           <h1 id="protection-title">{labels.title}</h1>
         </div>
         <nav className="protection-target-switcher" aria-label={labels.title}>

@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using YowThi.Erp.Domain.Processing;
+using YowThi.Erp.Infrastructure.Persistence.System;
 
 namespace YowThi.Erp.Infrastructure.Persistence.Mapping.Processing;
 
@@ -17,6 +18,8 @@ internal sealed class ProcessingExecutionInputConfiguration : IEntityTypeConfigu
             tableBuilder.HasCheckConstraint("ck_processing_execution_inputs_tare_snapshot", "tare_weight_snapshot IS NULL OR (tare_weight_snapshot NOT IN ('NaN'::numeric, 'Infinity'::numeric, '-Infinity'::numeric) AND tare_weight_snapshot >= 0)");
             tableBuilder.HasCheckConstraint("ck_processing_execution_inputs_derived_net_quantity", "derived_net_quantity IS NULL OR (derived_net_quantity NOT IN ('NaN'::numeric, 'Infinity'::numeric, '-Infinity'::numeric) AND derived_net_quantity >= 0 AND derived_net_quantity = round(derived_net_quantity, 1))");
             tableBuilder.HasCheckConstraint("ck_processing_execution_inputs_shape", "(consumption_basis = 'SCALE_NET' AND observed_scale_reading IS NOT NULL AND derived_net_quantity IS NOT NULL AND consumed_quantity = derived_net_quantity AND (((actual_container_count IS NULL AND tare_weight_snapshot IS NULL) AND derived_net_quantity = observed_scale_reading) OR (actual_container_count IS NOT NULL AND tare_weight_snapshot IS NOT NULL AND derived_net_quantity = observed_scale_reading - (actual_container_count * tare_weight_snapshot)))) OR (consumption_basis IN ('OUTPUT_QUANTITY', 'PACKAGING_WEIGHT') AND observed_scale_reading IS NULL AND actual_container_count IS NULL AND tare_weight_snapshot IS NULL AND derived_net_quantity IS NULL)");
+            tableBuilder.HasCheckConstraint("ck_processing_execution_inputs_row_version", "row_version >= 1");
+            tableBuilder.HasCheckConstraint("ck_processing_execution_inputs_deleted_pair", "(deleted_at IS NULL AND deleted_by_account_id IS NULL) OR (deleted_at IS NOT NULL AND deleted_by_account_id IS NOT NULL)");
         });
 
         builder.HasKey(x => x.ProcessingExecutionId).HasName("pk_processing_execution_inputs");
@@ -27,7 +30,13 @@ internal sealed class ProcessingExecutionInputConfiguration : IEntityTypeConfigu
         builder.Property(x => x.ActualContainerCount).HasColumnName("actual_container_count");
         builder.Property(x => x.TareWeightSnapshot).HasColumnName("tare_weight_snapshot").HasColumnType("numeric");
         builder.Property(x => x.DerivedNetQuantity).HasColumnName("derived_net_quantity").HasColumnType("numeric");
+        builder.Property(x => x.RowVersion).HasColumnName("row_version").HasDefaultValue(1L).IsConcurrencyToken();
+        builder.Property(x => x.DeletedAt).HasColumnName("deleted_at").HasColumnType("timestamp with time zone");
+        builder.Property(x => x.DeletedByAccountId).HasColumnName("deleted_by_account_id");
 
         builder.HasOne<ProcessingExecution>().WithOne().HasForeignKey<ProcessingExecutionInput>(x => x.ProcessingExecutionId).OnDelete(DeleteBehavior.Restrict).HasConstraintName("fk_processing_execution_inputs_execution");
+        builder.HasOne<SystemAccountRecord>().WithMany().HasForeignKey(x => x.DeletedByAccountId).OnDelete(DeleteBehavior.Restrict).HasConstraintName("fk_processing_execution_inputs_deleted_by_account");
+
+        builder.HasIndex(x => x.DeletedByAccountId).HasDatabaseName("ix_processing_execution_inputs_deleted_by_account_id");
     }
 }

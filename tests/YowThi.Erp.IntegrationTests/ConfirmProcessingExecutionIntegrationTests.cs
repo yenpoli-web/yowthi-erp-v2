@@ -522,6 +522,242 @@ public sealed class ConfirmProcessingExecutionIntegrationTests
         }
     }
 
+    [Fact]
+    public async Task Processing_transaction_lifecycle_closure_rebuilds_inventory_labor_finance_and_preserves_audit()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var scenario = await SeedScenarioAsync(cancellationToken);
+        var commandIds = Enumerable.Range(0, 13).Select(_ => Guid.CreateVersion7()).ToArray();
+
+        try
+        {
+            await InsertProcurementProductPositionAsync(
+                scenario,
+                scenario.PrimaryLocationId,
+                100m,
+                ProcessingSourceKind.SUPPLIER,
+                scenario.SupplierId,
+                cancellationToken);
+
+            var firstCommand = new ConfirmProcessingExecutionCommand(
+                scenario.WorkDate,
+                scenario.EmployeeId,
+                scenario.ProcurementBatchId,
+                scenario.SourceTrackedModuleId,
+                new ProcessingSourceSelection(ProcessingSourceKind.SUPPLIER, scenario.SupplierId),
+                new ProcessingScaleMeasurement(10m, null),
+                null,
+                new[] { new ProcessingOutputMeasurement(scenario.SourceTrackedOutputId, 8.5m, null, null, null) });
+            var first = await ExecuteAsync(Execution(commandIds[0], scenario.ActorAccountId, Hash(20), firstCommand), cancellationToken);
+            Assert.True(first.IsSuccess);
+
+            var secondCommand = new ConfirmProcessingExecutionCommand(
+                scenario.WorkDate,
+                scenario.EmployeeId,
+                scenario.ProcurementBatchId,
+                scenario.SourceTrackedModuleId,
+                new ProcessingSourceSelection(ProcessingSourceKind.SUPPLIER, scenario.SupplierId),
+                new ProcessingScaleMeasurement(5m, null),
+                null,
+                new[] { new ProcessingOutputMeasurement(scenario.SourceTrackedOutputId, 4m, null, null, null) });
+            var second = await ExecuteAsync(Execution(commandIds[1], scenario.ActorAccountId, Hash(21), secondCommand), cancellationToken);
+            Assert.True(second.IsSuccess);
+
+            var firstOutputId = await ScalarAsync<Guid>(
+                "SELECT id FROM processing.processing_execution_outputs WHERE processing_execution_id = @id;",
+                cancellationToken,
+                ("id", first.Value.ProcessingExecutionId));
+            var secondOutputId = await ScalarAsync<Guid>(
+                "SELECT id FROM processing.processing_execution_outputs WHERE processing_execution_id = @id;",
+                cancellationToken,
+                ("id", second.Value.ProcessingExecutionId));
+
+            Assert.Equal(85m, await ReadPositionBalanceAsync(
+                scenario, "PROCUREMENT_PRODUCT", scenario.ProcurementProductId, scenario.PrimaryLocationId,
+                "SUPPLIER", scenario.SupplierId, cancellationToken));
+            Assert.Equal(12.5m, await ReadPositionBalanceAsync(
+                scenario, "PROCESS_MATERIAL", scenario.MaterialAId, scenario.PrimaryLocationId,
+                null, null, cancellationToken));
+
+            var executionSoft = await ExecuteWithServicesAsync(
+                (services, token) => services.GetRequiredService<IProcessingTransactionLifecycleExecutor>().SoftDeleteExecutionAsync(
+                    new SoftDeleteProcessingExecutionExecution(
+                        CommandId.From(commandIds[2]), Hash(22), ActorAccountId.From(scenario.ActorAccountId),
+                        new SoftDeleteProcessingExecutionCommand(first.Value.ProcessingExecutionId, 1)), token),
+                cancellationToken);
+            Assert.True(executionSoft.IsSuccess);
+            Assert.Equal(2, executionSoft.Value.RowVersion);
+
+            var executionRestore = await ExecuteWithServicesAsync(
+                (services, token) => services.GetRequiredService<IProcessingTransactionLifecycleExecutor>().RestoreExecutionAsync(
+                    new RestoreProcessingExecutionExecution(
+                        CommandId.From(commandIds[3]), Hash(23), ActorAccountId.From(scenario.ActorAccountId),
+                        new RestoreProcessingExecutionCommand(first.Value.ProcessingExecutionId, 2)), token),
+                cancellationToken);
+            Assert.True(executionRestore.IsSuccess);
+            Assert.Equal(3, executionRestore.Value.RowVersion);
+
+            var inputSoft = await ExecuteWithServicesAsync(
+                (services, token) => services.GetRequiredService<IProcessingTransactionLifecycleExecutor>().SoftDeleteInputAsync(
+                    new SoftDeleteProcessingExecutionInputExecution(
+                        CommandId.From(commandIds[4]), Hash(24), ActorAccountId.From(scenario.ActorAccountId),
+                        new SoftDeleteProcessingExecutionInputCommand(first.Value.ProcessingExecutionId, 1)), token),
+                cancellationToken);
+            Assert.True(inputSoft.IsSuccess);
+            Assert.Equal(2, inputSoft.Value.RowVersion);
+
+            var inputRestore = await ExecuteWithServicesAsync(
+                (services, token) => services.GetRequiredService<IProcessingTransactionLifecycleExecutor>().RestoreInputAsync(
+                    new RestoreProcessingExecutionInputExecution(
+                        CommandId.From(commandIds[5]), Hash(25), ActorAccountId.From(scenario.ActorAccountId),
+                        new RestoreProcessingExecutionInputCommand(first.Value.ProcessingExecutionId, 2)), token),
+                cancellationToken);
+            Assert.True(inputRestore.IsSuccess);
+            Assert.Equal(3, inputRestore.Value.RowVersion);
+
+            var outputSoft = await ExecuteWithServicesAsync(
+                (services, token) => services.GetRequiredService<IProcessingTransactionLifecycleExecutor>().SoftDeleteOutputAsync(
+                    new SoftDeleteProcessingExecutionOutputExecution(
+                        CommandId.From(commandIds[6]), Hash(26), ActorAccountId.From(scenario.ActorAccountId),
+                        new SoftDeleteProcessingExecutionOutputCommand(firstOutputId, 1)), token),
+                cancellationToken);
+            Assert.True(outputSoft.IsSuccess);
+            Assert.Equal(2, outputSoft.Value.RowVersion);
+
+            var outputRestore = await ExecuteWithServicesAsync(
+                (services, token) => services.GetRequiredService<IProcessingTransactionLifecycleExecutor>().RestoreOutputAsync(
+                    new RestoreProcessingExecutionOutputExecution(
+                        CommandId.From(commandIds[7]), Hash(27), ActorAccountId.From(scenario.ActorAccountId),
+                        new RestoreProcessingExecutionOutputCommand(firstOutputId, 2)), token),
+                cancellationToken);
+            Assert.True(outputRestore.IsSuccess);
+            Assert.Equal(3, outputRestore.Value.RowVersion);
+
+            var wage = await ExecuteWithServicesAsync(
+                (services, token) => services.GetRequiredService<IConfirmEmployeeDailyWageExecutor>().ExecuteAsync(
+                    new ConfirmEmployeeDailyWageExecution(
+                        CommandId.From(commandIds[8]), Hash(28), ActorAccountId.From(scenario.ActorAccountId),
+                        new ConfirmEmployeeDailyWageCommand(
+                            scenario.WorkDate,
+                            scenario.EmployeeId,
+                            Array.Empty<ProcessingWageRateOverride>())), token),
+                cancellationToken);
+            Assert.True(wage.IsSuccess);
+            Assert.Equal(15L, wage.Value.ProcessingWageTotalThb);
+            Assert.Equal(15L, wage.Value.TotalWageThb);
+            Assert.Equal(15L, await ScalarAsync<long>(
+                "SELECT outstanding_thb FROM finance.payable_outstanding_positions WHERE payable_id = @id;",
+                cancellationToken, ("id", wage.Value.PayableId)));
+
+            var hardOutput = await ExecuteWithServicesAsync(
+                (services, token) => services.GetRequiredService<IHardDeleteProcessingTransactionExecutor>().HardDeleteOutputAsync(
+                    new HardDeleteProcessingExecutionOutputExecution(
+                        CommandId.From(commandIds[9]), Hash(29), ActorAccountId.From(scenario.ActorAccountId),
+                        new HardDeleteProcessingExecutionOutputCommand(firstOutputId, 3)), token),
+                cancellationToken);
+            Assert.True(hardOutput.IsSuccess);
+            Assert.Equal(0L, await ScalarAsync<long>(
+                "SELECT count(*) FROM processing.processing_execution_outputs WHERE id = @id;",
+                cancellationToken, ("id", firstOutputId)));
+            Assert.Equal(4m, await ReadPositionBalanceAsync(
+                scenario, "PROCESS_MATERIAL", scenario.MaterialAId, scenario.PrimaryLocationId,
+                null, null, cancellationToken));
+            Assert.Equal(4m, await ScalarAsync<decimal>(
+                "SELECT aggregated_quantity FROM labor.processing_wage_components WHERE employee_daily_wage_id = @id;",
+                cancellationToken, ("id", wage.Value.EmployeeDailyWageId)));
+            Assert.Equal(5L, await ScalarAsync<long>(
+                "SELECT processing_wage_total_thb FROM labor.employee_daily_wages WHERE id = @id;",
+                cancellationToken, ("id", wage.Value.EmployeeDailyWageId)));
+            Assert.Equal(5L, await ScalarAsync<long>(
+                "SELECT amount_thb FROM finance.payable_obligation_items WHERE payable_id = @id;",
+                cancellationToken, ("id", wage.Value.PayableId)));
+            Assert.Equal(5L, await ScalarAsync<long>(
+                "SELECT outstanding_thb FROM finance.payable_outstanding_positions WHERE payable_id = @id;",
+                cancellationToken, ("id", wage.Value.PayableId)));
+
+            var hardInput = await ExecuteWithServicesAsync(
+                (services, token) => services.GetRequiredService<IHardDeleteProcessingTransactionExecutor>().HardDeleteInputAsync(
+                    new HardDeleteProcessingExecutionInputExecution(
+                        CommandId.From(commandIds[10]), Hash(30), ActorAccountId.From(scenario.ActorAccountId),
+                        new HardDeleteProcessingExecutionInputCommand(first.Value.ProcessingExecutionId, 3)), token),
+                cancellationToken);
+            Assert.True(hardInput.IsSuccess);
+            Assert.Equal(95m, await ReadPositionBalanceAsync(
+                scenario, "PROCUREMENT_PRODUCT", scenario.ProcurementProductId, scenario.PrimaryLocationId,
+                "SUPPLIER", scenario.SupplierId, cancellationToken));
+
+            var hardFirstExecution = await ExecuteWithServicesAsync(
+                (services, token) => services.GetRequiredService<IHardDeleteProcessingTransactionExecutor>().HardDeleteExecutionAsync(
+                    new HardDeleteProcessingExecutionExecution(
+                        CommandId.From(commandIds[11]), Hash(31), ActorAccountId.From(scenario.ActorAccountId),
+                        new HardDeleteProcessingExecutionCommand(first.Value.ProcessingExecutionId, 3)), token),
+                cancellationToken);
+            Assert.True(hardFirstExecution.IsSuccess);
+            Assert.Equal(0L, await ScalarAsync<long>(
+                "SELECT count(*) FROM inventory.inventory_operations WHERE id = @id;",
+                cancellationToken, ("id", first.Value.InventoryOperationId)));
+
+            var secondHardExecution = new HardDeleteProcessingExecutionExecution(
+                CommandId.From(commandIds[12]), Hash(32), ActorAccountId.From(scenario.ActorAccountId),
+                new HardDeleteProcessingExecutionCommand(second.Value.ProcessingExecutionId, 1));
+            var hardSecondExecution = await ExecuteWithServicesAsync(
+                (services, token) => services.GetRequiredService<IHardDeleteProcessingTransactionExecutor>().HardDeleteExecutionAsync(
+                    secondHardExecution, token),
+                cancellationToken);
+            Assert.True(hardSecondExecution.IsSuccess);
+
+            var hardSecondReplay = await ExecuteWithServicesAsync(
+                (services, token) => services.GetRequiredService<IHardDeleteProcessingTransactionExecutor>().HardDeleteExecutionAsync(
+                    secondHardExecution, token),
+                cancellationToken);
+            Assert.True(hardSecondReplay.IsSuccess);
+            Assert.Equal(hardSecondExecution.Value, hardSecondReplay.Value);
+
+            Assert.Equal(100m, await ReadPositionBalanceAsync(
+                scenario, "PROCUREMENT_PRODUCT", scenario.ProcurementProductId, scenario.PrimaryLocationId,
+                "SUPPLIER", scenario.SupplierId, cancellationToken));
+            Assert.Equal(0m, await ReadPositionBalanceAsync(
+                scenario, "PROCESS_MATERIAL", scenario.MaterialAId, scenario.PrimaryLocationId,
+                null, null, cancellationToken));
+            Assert.Equal(0L, await ScalarAsync<long>(
+                "SELECT processing_wage_total_thb FROM labor.employee_daily_wages WHERE id = @id;",
+                cancellationToken, ("id", wage.Value.EmployeeDailyWageId)));
+            Assert.Equal(0L, await ScalarAsync<long>(
+                "SELECT amount_thb FROM finance.payable_obligation_items WHERE payable_id = @id;",
+                cancellationToken, ("id", wage.Value.PayableId)));
+            Assert.Equal(0L, await ScalarAsync<long>(
+                "SELECT outstanding_thb FROM finance.payable_outstanding_positions WHERE payable_id = @id;",
+                cancellationToken, ("id", wage.Value.PayableId)));
+            Assert.Equal(0L, await ScalarAsync<long>(
+                "SELECT count(*) FROM processing.processing_execution_outputs WHERE id = @id;",
+                cancellationToken, ("id", secondOutputId)));
+            Assert.Equal(0L, await ScalarAsync<long>(
+                "SELECT count(*) FROM inventory.inventory_operations WHERE id = @id;",
+                cancellationToken, ("id", second.Value.InventoryOperationId)));
+            Assert.Equal(0L, await ScalarAsync<long>(
+                "SELECT count(*) FROM system.outbox_messages WHERE command_id = ANY(@ids) AND message_type = 'processing.execution.confirmed';",
+                cancellationToken, ("ids", new[] { commandIds[0], commandIds[1] })));
+            Assert.Equal(4L, await ScalarAsync<long>(
+                "SELECT count(*) FROM audit.audit_events WHERE command_id = ANY(@ids) AND event_kind = 'HARD_DELETE';",
+                cancellationToken, ("ids", new[] { commandIds[9], commandIds[10], commandIds[11], commandIds[12] })));
+        }
+        finally
+        {
+            await CleanupScenarioAsync(scenario, commandIds, cancellationToken);
+        }
+    }
+
+    private static async ValueTask<TResult> ExecuteWithServicesAsync<TResult>(
+        Func<IServiceProvider, CancellationToken, ValueTask<TResult>> operation,
+        CancellationToken cancellationToken)
+    {
+        var services = new ServiceCollection();
+        services.AddErpPersistence(GetConnectionString());
+        await using var provider = services.BuildServiceProvider();
+        await using var scope = provider.CreateAsyncScope();
+        return await operation(scope.ServiceProvider, cancellationToken);
+    }
+
     private static ConfirmProcessingExecutionExecution Execution(
         Guid commandId,
         Guid actorAccountId,
@@ -819,6 +1055,38 @@ public sealed class ConfirmProcessingExecutionIntegrationTests
             DELETE FROM audit.audit_events WHERE command_id = ANY(@command_ids);
             DELETE FROM system.outbox_messages WHERE command_id = ANY(@command_ids);
             DELETE FROM system.command_executions WHERE command_id = ANY(@command_ids);
+
+            DELETE FROM finance.payable_outstanding_positions
+            WHERE payable_id IN (
+                SELECT payable.id
+                FROM finance.payables payable
+                JOIN labor.employee_daily_wages wage ON wage.id = payable.employee_daily_wage_id
+                WHERE wage.work_date = @work_date AND wage.employee_id = @employee_id);
+            DELETE FROM finance.payable_obligation_items
+            WHERE employee_daily_wage_id IN (
+                SELECT id FROM labor.employee_daily_wages
+                WHERE work_date = @work_date AND employee_id = @employee_id);
+            DELETE FROM finance.payables
+            WHERE employee_daily_wage_id IN (
+                SELECT id FROM labor.employee_daily_wages
+                WHERE work_date = @work_date AND employee_id = @employee_id);
+
+            DELETE FROM labor.processing_wage_component_sources
+            WHERE processing_wage_component_id IN (
+                SELECT id FROM labor.processing_wage_components
+                WHERE employee_daily_wage_id IN (
+                    SELECT id FROM labor.employee_daily_wages
+                    WHERE work_date = @work_date AND employee_id = @employee_id));
+            DELETE FROM labor.sales_packaging_wage_components
+            WHERE employee_daily_wage_id IN (
+                SELECT id FROM labor.employee_daily_wages
+                WHERE work_date = @work_date AND employee_id = @employee_id);
+            DELETE FROM labor.processing_wage_components
+            WHERE employee_daily_wage_id IN (
+                SELECT id FROM labor.employee_daily_wages
+                WHERE work_date = @work_date AND employee_id = @employee_id);
+            DELETE FROM labor.employee_daily_wages
+            WHERE work_date = @work_date AND employee_id = @employee_id;
 
             DELETE FROM inventory.inventory_movements WHERE procurement_batch_id = @batch_id;
             DELETE FROM inventory.inventory_operations

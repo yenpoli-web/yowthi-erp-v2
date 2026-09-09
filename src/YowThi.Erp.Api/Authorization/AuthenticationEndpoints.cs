@@ -32,6 +32,11 @@ public static class AuthenticationEndpoints
                 .AllowAnonymous()
                 .ExcludeFromDescription()
                 .WithName("Auth_DevelopmentLogin");
+
+            app.MapPost("/auth/development-deletion-reauthenticate", DevelopmentDeletionReauthenticateAsync)
+                .RequireAuthorization()
+                .ExcludeFromDescription()
+                .WithName("Auth_DevelopmentDeletionReauthenticate");
         }
 
         return app;
@@ -94,6 +99,85 @@ public static class AuthenticationEndpoints
 
         IssueCsrfRequestToken(context, antiforgery);
         return TypedResults.Ok(CreateSessionResponse(authorizedPrincipal, true));
+    }
+
+    private static async Task<IResult> DevelopmentDeletionReauthenticateAsync(
+        HttpContext context,
+        IDevelopmentTestAdminProvisioner provisioner,
+        IAntiforgery antiforgery,
+        SecurityRuntimeOptions runtimeOptions,
+        TimeProvider timeProvider,
+        CancellationToken cancellationToken)
+    {
+        if (!runtimeOptions.DevelopmentTestAdminEnabled)
+        {
+            return TypedResults.NotFound();
+        }
+
+        try
+        {
+            await antiforgery.ValidateRequestAsync(context);
+        }
+        catch (AntiforgeryValidationException)
+        {
+            return ApiProblemResults.Create(
+                context,
+                StatusCodes.Status400BadRequest,
+                ApiErrorCodes.RequestAntiforgeryFailed,
+                "Request antiforgery validation failed.");
+        }
+
+        if (!Guid.TryParse(context.User.FindFirstValue(SecurityClaimTypes.AccountId), out var currentAccountId))
+        {
+            return TypedResults.Unauthorized();
+        }
+
+        var actor = await provisioner.EnsureAsync(cancellationToken);
+        if (actor.AccountId != currentAccountId)
+        {
+            return ApiProblemResults.Create(
+                context,
+                StatusCodes.Status403Forbidden,
+                ApiErrorCodes.DeletionReauthenticationRequired,
+                "Automatic deletion re-authentication is available only for the Development Test Admin.");
+        }
+
+        var reauthenticatedAt = timeProvider.GetUtcNow();
+        var cookieClaims = new[]
+        {
+            new Claim(SecurityClaimTypes.AccountId, actor.AccountId.ToString()),
+            new Claim(ClaimTypes.NameIdentifier, actor.AccountId.ToString()),
+            new Claim(ClaimTypes.Name, actor.DisplayName),
+            DeletionReauthenticationClaims.CreateClaim(reauthenticatedAt),
+        };
+        var cookiePrincipal = new ClaimsPrincipal(
+            new ClaimsIdentity(
+                cookieClaims,
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                ClaimTypes.Name,
+                ClaimTypes.Role));
+
+        await context.SignInAsync(
+            CookieAuthenticationDefaults.AuthenticationScheme,
+            cookiePrincipal,
+            new AuthenticationProperties
+            {
+                IsPersistent = false,
+                AllowRefresh = true,
+            });
+
+        var authorizedClaims = new List<Claim>(cookieClaims);
+        authorizedClaims.AddRange(actor.Capabilities.Select(capability =>
+            new Claim(SecurityClaimTypes.Capability, capability)));
+        context.User = new ClaimsPrincipal(
+            new ClaimsIdentity(
+                authorizedClaims,
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                ClaimTypes.Name,
+                ClaimTypes.Role));
+
+        IssueCsrfRequestToken(context, antiforgery);
+        return TypedResults.NoContent();
     }
 
     private static async Task<IResult> LogoutAsync(

@@ -62,6 +62,8 @@ Later implementation supplements:
 - `docs/28-p6-v8-closure-checkpoint-v0.1.md` — formal P6 / V8 closure + deferred/future target-specific scope boundary
 - `docs/29-p7-system-skeleton-closure-checkpoint-v0.1.md` — P7 S0–S12 system-skeleton closure + 12/12 operational web modules + presentation redesign boundary
 - `docs/30-p7-presentation-closure-checkpoint-v0.1.md` — historical P7 Nature Green presentation closure + Desktop/Tablet/Mobile + current-route zh-TW/th-TH acceptance
+- `docs/32-transaction-deletion-control-v0.1.md` — 2026-09-09 confirmed Procurement / Processing / Sales master+detail Soft Delete / Restore / Hard Delete + deletion re-authentication decision
+- `docs/33-system-wide-deletion-control-v0.1.md` — 2026-09-09 confirmed system-wide operational-module Soft Delete / Restore / Hard Delete baseline; Soft/Hard Delete require fresh credential re-authentication and Hard Delete requires `data-protection.hard-delete`
 - `docs/31-operational-document-ui-architecture-recovery-v0.1.md` — ACTIVE recovery baseline for module workspaces, Header/Detail separation, searchable selectors, locale ownership, hint-free UI, and operational completeness gates
 - for their target-specific scopes, these later supplements resolve older omissions without superseding the broader Command/REST architecture
 
@@ -319,7 +321,7 @@ Requirements:
 - replay before target lookup
 - no silent cascade
 
-Additional Hard Delete targets are DEFERRED / future target-specific scope. They do not need a Business Rule merely to be considered, but they require a real operational need and target-specific dependency closure before implementation.
+Procurement, Processing, and Sales transaction master/detail deletion is confirmed in `docs/32-transaction-deletion-control-v0.1.md`. After that lifecycle closes, `docs/33-system-wide-deletion-control-v0.1.md` confirms the same Soft Delete / Restore / Hard Delete requirement for all remaining UI-operable business, master-data, and transaction modules. Target-specific dependency closure remains mandatory technical implementation work, but lack of an already-implemented closure is no longer a Business Rule reason to omit deletion support from an operational module.
 
 No generic `/data-protection/entities/{type}/{id}` endpoint.
 

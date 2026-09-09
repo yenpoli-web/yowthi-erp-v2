@@ -1,7 +1,7 @@
 # AuthN/AuthZ Implementation Architecture v0.1 — YowThi ERP V2
 
 Status: **DECISION / v0.1**
-Revision basis: P3.5 AuthN/AuthZ Candidate Architecture, formally confirmed on 2026-08-28; revised by the approved P8 Security Foundation on 2026-09-08 for persisted account capability administration and Development Test Admin login.
+Revision basis: P3.5 AuthN/AuthZ Candidate Architecture, formally confirmed on 2026-08-28; revised by the approved P8 Security Foundation on 2026-09-08 for persisted account capability administration and Development Test Admin login; revised on 2026-09-09 by the confirmed Transaction Deletion Control for deletion re-authentication.
 
 ## 1. Purpose and precedence
 
@@ -32,6 +32,8 @@ The v0.1 authentication/authorization design must:
 - keep actor identity server-controlled
 - resolve the authenticated principal to persistent `system.accounts`
 - avoid ERP-owned password storage
+- require recent re-authentication before destructive transaction deletion without introducing a second ERP-owned password database
+- provide Development-only automatic deletion re-authentication for the persistent Development Test Admin without exposing a plaintext test credential in the browser
 - avoid browser access/refresh-token storage
 - use operation/capability authorization rather than inventing business roles
 - allow an account to be disabled centrally and rejected on subsequent requests
@@ -505,3 +507,34 @@ Confirmed security consequences:
 - no Role Master, account-role persistence, wildcard super-user role, or business-role hierarchy is introduced
 - `finance.correct` does not imply `data-protection.hard-delete`
 - V8-C6 itself required no AuthN/AuthZ persistence revision; the later P8 Security Foundation independently introduces persisted capability grants and its forward EF migration
+
+## 29. Transaction deletion re-authentication — 2026-09-09
+
+`docs/32-transaction-deletion-control-v0.1.md` confirms that Procurement, Processing, and Sales master/detail deletion is a deliberate ERP maintenance operation and requires a recent authentication confirmation before Soft Delete or Hard Delete.
+
+Security consequences:
+- deployed accounts continue to authenticate through the configured external OIDC provider; ERP does not store a duplicate login password
+- deployed deletion confirmation must use a fresh/recent interactive IdP authentication event and then carry only a short-lived deletion re-authentication assertion in the protected ERP session
+- the exact freshness window is a technical security setting, not a Business Rule
+- the Development Test Admin remains passwordless for normal Development login
+- when the current persistent account is the Development Test Admin, a Development-only authenticated endpoint may automatically issue the short-lived deletion re-authentication assertion
+- the Development automatic path is not mapped outside Development and cannot be enabled there
+- no plaintext Development test password may be embedded in React source, generated bundles, localStorage, sessionStorage, request logs, or repository configuration
+- deletion commands still require their explicit capability authorization in addition to recent re-authentication
+- Restore is not considered a destructive delete action and does not require deletion re-authentication in this revision
+
+The deletion re-authentication assertion must survive normal per-request persistent Account/capability re-resolution only while still fresh. It must not become a wildcard authorization claim or an unbounded session bypass.
+
+## 30. System-wide deletion authentication baseline — 2026-09-09
+
+`docs/33-system-wide-deletion-control-v0.1.md` extends the deletion security boundary from Procurement / Processing / Sales to all remaining UI-operable business, master-data, and transaction modules after the current transaction lifecycle work closes.
+
+Confirmed security consequences:
+- Soft Delete always requires fresh re-authentication by the current user before execution
+- for deployed accounts, password/credential entry occurs in the configured identity-provider re-authentication flow rather than in an ERP-owned password database
+- Hard Delete always requires the explicit highest deletion capability `data-protection.hard-delete` in addition to target/module lifecycle authorization where applicable
+- Hard Delete also always requires fresh re-authentication
+- Restore remains non-destructive and does not require deletion re-authentication unless later explicitly changed
+- Development Test Admin continues to use the Development-only automatic re-authentication path without exposing a reusable plaintext test credential
+- ordinary create/update/confirm/lifecycle capabilities never imply Hard Delete authority
+- retained Audit and CommandExecution evidence are not converted into ordinary user-deletable operational records simply because business modules receive deletion support

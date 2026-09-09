@@ -1,6 +1,8 @@
+using YowThi.Erp.Domain.Common;
+
 namespace YowThi.Erp.Domain.Processing;
 
-public sealed class ProcessingExecutionInput
+public sealed class ProcessingExecutionInput : IHasRowVersion
 {
     public Guid ProcessingExecutionId { get; private set; }
     public ProcessingConsumptionBasis ConsumptionBasis { get; private set; }
@@ -9,6 +11,9 @@ public sealed class ProcessingExecutionInput
     public int? ActualContainerCount { get; private set; }
     public decimal? TareWeightSnapshot { get; private set; }
     public decimal? DerivedNetQuantity { get; private set; }
+    public long RowVersion { get; private set; }
+    public DateTimeOffset? DeletedAt { get; private set; }
+    public Guid? DeletedByAccountId { get; private set; }
 
     public static ProcessingExecutionInput FromScale(
         Guid processingExecutionId,

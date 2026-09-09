@@ -275,6 +275,7 @@ internal sealed class PostgreSqlConfirmEmployeeDailyWageExecutor : IConfirmEmplo
             where processingExecution.WorkDate == workDate
                 && processingExecution.EmployeeId == employeeId
                 && processingExecution.DeletedAt == null
+                && output.DeletedAt == null
                 && !_dbContext.Set<ProcessingWageComponentSource>()
                     .Any(source => source.ProcessingExecutionOutputId == output.Id)
             orderby output.ProcessingModuleOutputId, output.Id
