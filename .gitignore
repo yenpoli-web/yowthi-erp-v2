@@ -7,6 +7,7 @@ _tool-safety-probe*.txt
 **/obj/
 artifacts/
 .artifacts/
+.build-*/
 TestResults/
 *.user
 *.suo

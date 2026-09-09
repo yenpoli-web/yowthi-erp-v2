@@ -36,7 +36,7 @@ export const systemModules: readonly SystemModuleDefinition[] = [
   },
   {
     key: 'outsourced',
-    route: '/outsourced/supply-details/new',
+    route: '/outsourced',
     area: 'operations',
     webState: 'operational',
     label: { 'zh-TW': '委外加工', 'th-TH': 'จัดหาภายนอก' },
@@ -126,10 +126,8 @@ export const skeletonModules = systemModules.filter(
 
 export function getSystemModule(moduleKey: ModuleKey): SystemModuleDefinition {
   const module = systemModules.find((candidate) => candidate.key === moduleKey);
-
   if (module === undefined) {
     throw new Error(`Unknown ERP module: ${moduleKey}`);
   }
-
   return module;
 }

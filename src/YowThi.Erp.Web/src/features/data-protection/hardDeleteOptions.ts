@@ -6,6 +6,8 @@ export const hardDeleteTargetKinds = [
   'customers',
   'outsourced-vendors',
   'farmers',
+  'outsourced-supply-batches',
+  'outsourced-supply-details',
   'procurement-batches',
   'procurement-entries',
   'sales',

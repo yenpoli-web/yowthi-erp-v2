@@ -8,6 +8,7 @@ public static class SecurityCapabilities
     public const string ProcessingConfirm = "processing.confirm";
     public const string ProcessingTransactionLifecycle = "processing.transaction.lifecycle";
     public const string OutsourcedConfirm = "outsourced.confirm";
+    public const string OutsourcedTransactionLifecycle = "outsourced.transaction.lifecycle";
     public const string SalesConfirm = "sales.confirm";
     public const string SalesCorrectAllocation = "sales.correct-allocation";
     public const string SalesTransactionLifecycle = "sales.transaction.lifecycle";
@@ -41,6 +42,7 @@ public static class SecurityCapabilities
         ProcessingConfirm,
         ProcessingTransactionLifecycle,
         OutsourcedConfirm,
+        OutsourcedTransactionLifecycle,
         SalesConfirm,
         SalesCorrectAllocation,
         SalesTransactionLifecycle,

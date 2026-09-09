@@ -26,6 +26,8 @@ public sealed class HardDeleteOptionEndpointContractTests
             ["/api/v1/data-protection/hard-delete-options/customers"] = HardDeleteOptionEndpoints.CustomersOperationId,
             ["/api/v1/data-protection/hard-delete-options/outsourced-vendors"] = HardDeleteOptionEndpoints.OutsourcedVendorsOperationId,
             ["/api/v1/data-protection/hard-delete-options/farmers"] = HardDeleteOptionEndpoints.FarmersOperationId,
+            ["/api/v1/data-protection/hard-delete-options/outsourced-supply-batches"] = HardDeleteOptionEndpoints.OutsourcedSupplyBatchesOperationId,
+            ["/api/v1/data-protection/hard-delete-options/outsourced-supply-details"] = HardDeleteOptionEndpoints.OutsourcedSupplyDetailsOperationId,
             ["/api/v1/data-protection/hard-delete-options/procurement-batches"] = HardDeleteOptionEndpoints.ProcurementBatchesOperationId,
             ["/api/v1/data-protection/hard-delete-options/procurement-entries"] = HardDeleteOptionEndpoints.ProcurementEntriesOperationId,
             ["/api/v1/data-protection/hard-delete-options/sales"] = HardDeleteOptionEndpoints.SalesOperationId,

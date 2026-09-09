@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using YowThi.Erp.Application.DataProtection;
+using YowThi.Erp.Domain.Outsourced;
 using YowThi.Erp.Domain.Party;
 using YowThi.Erp.Domain.Processing;
 using YowThi.Erp.Domain.Procurement;
@@ -13,12 +14,14 @@ internal sealed class EfHardDeleteOptionsReader(ErpDbContext dbContext) : IHardD
         HardDeleteOptionsQuery query,
         CancellationToken cancellationToken) =>
         GetPageAsync(
-            dbContext.Set<Supplier>().AsNoTracking().Select(item => new Projection(
-                item.Id,
-                query.Locale == "th-TH" ? item.NameThTh ?? item.NameZhTw : item.NameZhTw ?? item.NameThTh,
-                item.Active,
-                item.RowVersion,
-                item.DeletedAt)),
+            dbContext.Set<Supplier>().AsNoTracking().Select(item => new Projection
+            {
+                Id = item.Id,
+                DisplayName = query.Locale == "th-TH" ? item.NameThTh ?? item.NameZhTw : item.NameZhTw ?? item.NameThTh,
+                Active = item.Active,
+                RowVersion = item.RowVersion,
+                DeletedAt = item.DeletedAt,
+            }),
             query,
             cancellationToken);
 
@@ -26,12 +29,14 @@ internal sealed class EfHardDeleteOptionsReader(ErpDbContext dbContext) : IHardD
         HardDeleteOptionsQuery query,
         CancellationToken cancellationToken) =>
         GetPageAsync(
-            dbContext.Set<Customer>().AsNoTracking().Select(item => new Projection(
-                item.Id,
-                query.Locale == "th-TH" ? item.NameThTh ?? item.NameZhTw : item.NameZhTw ?? item.NameThTh,
-                item.Active,
-                item.RowVersion,
-                item.DeletedAt)),
+            dbContext.Set<Customer>().AsNoTracking().Select(item => new Projection
+            {
+                Id = item.Id,
+                DisplayName = query.Locale == "th-TH" ? item.NameThTh ?? item.NameZhTw : item.NameZhTw ?? item.NameThTh,
+                Active = item.Active,
+                RowVersion = item.RowVersion,
+                DeletedAt = item.DeletedAt,
+            }),
             query,
             cancellationToken);
 
@@ -39,12 +44,14 @@ internal sealed class EfHardDeleteOptionsReader(ErpDbContext dbContext) : IHardD
         HardDeleteOptionsQuery query,
         CancellationToken cancellationToken) =>
         GetPageAsync(
-            dbContext.Set<OutsourcedVendor>().AsNoTracking().Select(item => new Projection(
-                item.Id,
-                query.Locale == "th-TH" ? item.NameThTh ?? item.NameZhTw : item.NameZhTw ?? item.NameThTh,
-                item.Active,
-                item.RowVersion,
-                item.DeletedAt)),
+            dbContext.Set<OutsourcedVendor>().AsNoTracking().Select(item => new Projection
+            {
+                Id = item.Id,
+                DisplayName = query.Locale == "th-TH" ? item.NameThTh ?? item.NameZhTw : item.NameZhTw ?? item.NameThTh,
+                Active = item.Active,
+                RowVersion = item.RowVersion,
+                DeletedAt = item.DeletedAt,
+            }),
             query,
             cancellationToken);
 
@@ -52,12 +59,44 @@ internal sealed class EfHardDeleteOptionsReader(ErpDbContext dbContext) : IHardD
         HardDeleteOptionsQuery query,
         CancellationToken cancellationToken) =>
         GetPageAsync(
-            dbContext.Set<Farmer>().AsNoTracking().Select(item => new Projection(
-                item.Id,
-                query.Locale == "th-TH" ? item.NameThTh ?? item.NameZhTw : item.NameZhTw ?? item.NameThTh,
-                item.Active,
-                item.RowVersion,
-                item.DeletedAt)),
+            dbContext.Set<Farmer>().AsNoTracking().Select(item => new Projection
+            {
+                Id = item.Id,
+                DisplayName = query.Locale == "th-TH" ? item.NameThTh ?? item.NameZhTw : item.NameZhTw ?? item.NameThTh,
+                Active = item.Active,
+                RowVersion = item.RowVersion,
+                DeletedAt = item.DeletedAt,
+            }),
+            query,
+            cancellationToken);
+
+    public ValueTask<HardDeleteOptionPage<HardDeleteOption>> GetOutsourcedSupplyBatchesAsync(
+        HardDeleteOptionsQuery query,
+        CancellationToken cancellationToken) =>
+        GetPageAsync(
+            dbContext.Set<OutsourcedSupplyBatch>().AsNoTracking().Select(item => new Projection
+            {
+                Id = item.Id,
+                DisplayName = item.Id.ToString(),
+                Active = true,
+                RowVersion = item.RowVersion,
+                DeletedAt = item.DeletedAt,
+            }),
+            query,
+            cancellationToken);
+
+    public ValueTask<HardDeleteOptionPage<HardDeleteOption>> GetOutsourcedSupplyDetailsAsync(
+        HardDeleteOptionsQuery query,
+        CancellationToken cancellationToken) =>
+        GetPageAsync(
+            dbContext.Set<OutsourcedSupplyDetail>().AsNoTracking().Select(item => new Projection
+            {
+                Id = item.Id,
+                DisplayName = item.Id.ToString(),
+                Active = true,
+                RowVersion = item.RowVersion,
+                DeletedAt = item.DeletedAt,
+            }),
             query,
             cancellationToken);
 
@@ -65,12 +104,14 @@ internal sealed class EfHardDeleteOptionsReader(ErpDbContext dbContext) : IHardD
         HardDeleteOptionsQuery query,
         CancellationToken cancellationToken) =>
         GetPageAsync(
-            dbContext.Set<ProcurementBatch>().AsNoTracking().Select(item => new Projection(
-                item.Id,
-                item.Id.ToString(),
-                true,
-                item.RowVersion,
-                item.DeletedAt)),
+            dbContext.Set<ProcurementBatch>().AsNoTracking().Select(item => new Projection
+            {
+                Id = item.Id,
+                DisplayName = item.Id.ToString(),
+                Active = true,
+                RowVersion = item.RowVersion,
+                DeletedAt = item.DeletedAt,
+            }),
             query,
             cancellationToken);
 
@@ -78,12 +119,14 @@ internal sealed class EfHardDeleteOptionsReader(ErpDbContext dbContext) : IHardD
         HardDeleteOptionsQuery query,
         CancellationToken cancellationToken) =>
         GetPageAsync(
-            dbContext.Set<ProcurementEntry>().AsNoTracking().Select(item => new Projection(
-                item.Id,
-                item.Id.ToString(),
-                true,
-                item.RowVersion,
-                item.DeletedAt)),
+            dbContext.Set<ProcurementEntry>().AsNoTracking().Select(item => new Projection
+            {
+                Id = item.Id,
+                DisplayName = item.Id.ToString(),
+                Active = true,
+                RowVersion = item.RowVersion,
+                DeletedAt = item.DeletedAt,
+            }),
             query,
             cancellationToken);
 
@@ -91,12 +134,14 @@ internal sealed class EfHardDeleteOptionsReader(ErpDbContext dbContext) : IHardD
         HardDeleteOptionsQuery query,
         CancellationToken cancellationToken) =>
         GetPageAsync(
-            dbContext.Set<Sale>().AsNoTracking().Select(item => new Projection(
-                item.Id,
-                item.Id.ToString(),
-                true,
-                item.RowVersion,
-                item.DeletedAt)),
+            dbContext.Set<Sale>().AsNoTracking().Select(item => new Projection
+            {
+                Id = item.Id,
+                DisplayName = item.Id.ToString(),
+                Active = true,
+                RowVersion = item.RowVersion,
+                DeletedAt = item.DeletedAt,
+            }),
             query,
             cancellationToken);
 
@@ -104,12 +149,14 @@ internal sealed class EfHardDeleteOptionsReader(ErpDbContext dbContext) : IHardD
         HardDeleteOptionsQuery query,
         CancellationToken cancellationToken) =>
         GetPageAsync(
-            dbContext.Set<SalesDetail>().AsNoTracking().Select(item => new Projection(
-                item.Id,
-                item.Id.ToString(),
-                true,
-                item.RowVersion,
-                item.DeletedAt)),
+            dbContext.Set<SalesDetail>().AsNoTracking().Select(item => new Projection
+            {
+                Id = item.Id,
+                DisplayName = item.Id.ToString(),
+                Active = true,
+                RowVersion = item.RowVersion,
+                DeletedAt = item.DeletedAt,
+            }),
             query,
             cancellationToken);
 
@@ -117,12 +164,14 @@ internal sealed class EfHardDeleteOptionsReader(ErpDbContext dbContext) : IHardD
         HardDeleteOptionsQuery query,
         CancellationToken cancellationToken) =>
         GetPageAsync(
-            dbContext.Set<ProcessingExecution>().AsNoTracking().Select(item => new Projection(
-                item.Id,
-                item.Id.ToString(),
-                true,
-                item.RowVersion,
-                item.DeletedAt)),
+            dbContext.Set<ProcessingExecution>().AsNoTracking().Select(item => new Projection
+            {
+                Id = item.Id,
+                DisplayName = item.Id.ToString(),
+                Active = true,
+                RowVersion = item.RowVersion,
+                DeletedAt = item.DeletedAt,
+            }),
             query,
             cancellationToken);
 
@@ -130,12 +179,14 @@ internal sealed class EfHardDeleteOptionsReader(ErpDbContext dbContext) : IHardD
         HardDeleteOptionsQuery query,
         CancellationToken cancellationToken) =>
         GetPageAsync(
-            dbContext.Set<ProcessingExecutionInput>().AsNoTracking().Select(item => new Projection(
-                item.ProcessingExecutionId,
-                item.ProcessingExecutionId.ToString(),
-                true,
-                item.RowVersion,
-                item.DeletedAt)),
+            dbContext.Set<ProcessingExecutionInput>().AsNoTracking().Select(item => new Projection
+            {
+                Id = item.ProcessingExecutionId,
+                DisplayName = item.ProcessingExecutionId.ToString(),
+                Active = true,
+                RowVersion = item.RowVersion,
+                DeletedAt = item.DeletedAt,
+            }),
             query,
             cancellationToken);
 
@@ -143,12 +194,14 @@ internal sealed class EfHardDeleteOptionsReader(ErpDbContext dbContext) : IHardD
         HardDeleteOptionsQuery query,
         CancellationToken cancellationToken) =>
         GetPageAsync(
-            dbContext.Set<ProcessingExecutionOutput>().AsNoTracking().Select(item => new Projection(
-                item.Id,
-                item.Id.ToString(),
-                true,
-                item.RowVersion,
-                item.DeletedAt)),
+            dbContext.Set<ProcessingExecutionOutput>().AsNoTracking().Select(item => new Projection
+            {
+                Id = item.Id,
+                DisplayName = item.Id.ToString(),
+                Active = true,
+                RowVersion = item.RowVersion,
+                DeletedAt = item.DeletedAt,
+            }),
             query,
             cancellationToken);
 
@@ -188,10 +241,12 @@ internal sealed class EfHardDeleteOptionsReader(ErpDbContext dbContext) : IHardD
             hasMore ? query.Offset + query.Limit : null);
     }
 
-    private sealed record Projection(
-        Guid Id,
-        string? DisplayName,
-        bool Active,
-        long RowVersion,
-        DateTimeOffset? DeletedAt);
+    private sealed class Projection
+    {
+        public Guid Id { get; init; }
+        public string? DisplayName { get; init; }
+        public bool Active { get; init; }
+        public long RowVersion { get; init; }
+        public DateTimeOffset? DeletedAt { get; init; }
+    }
 }

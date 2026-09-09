@@ -56,7 +56,10 @@ public static class PersistenceServiceCollectionExtensions
         services.AddScoped<IProcurementWorkspaceReader, EfProcurementWorkspaceReader>();
         services.AddScoped<IConfirmOutsourcedSupplyDetailExecutor, PostgreSqlConfirmOutsourcedSupplyDetailExecutor>();
         services.AddScoped<ICloseOutsourcedSupplyBatchExecutor, PostgreSqlCloseOutsourcedSupplyBatchExecutor>();
+        services.AddScoped<IOutsourcedTransactionLifecycleExecutor, PostgreSqlOutsourcedTransactionLifecycleExecutor>();
+        services.AddScoped<IHardDeleteOutsourcedTransactionExecutor, PostgreSqlHardDeleteOutsourcedTransactionExecutor>();
         services.AddScoped<IOutsourcedSupplyDetailOptionsReader, EfOutsourcedSupplyDetailOptionsReader>();
+        services.AddScoped<IOutsourcedWorkspaceReader, EfOutsourcedWorkspaceReader>();
         services.AddScoped<IConfirmProcessingExecutionExecutor, PostgreSqlConfirmProcessingExecutionExecutor>();
         services.AddScoped<IProcessingTransactionLifecycleExecutor, PostgreSqlProcessingTransactionLifecycleExecutor>();
         services.AddScoped<IHardDeleteProcessingTransactionExecutor, PostgreSqlHardDeleteProcessingTransactionExecutor>();

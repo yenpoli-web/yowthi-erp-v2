@@ -49,6 +49,8 @@ app.MapInventoryEndpoints();
 app.MapInventoryOperationOptionEndpoints();
 app.MapInventoryPositionEndpoints();
 app.MapOutsourcedEndpoints();
+app.MapOutsourcedTransactionLifecycleEndpoints();
+app.MapOutsourcedWorkspaceEndpoints();
 app.MapOutsourcedSupplyDetailOptionEndpoints();
 app.MapSalesEndpoints();
 app.MapSalesTransactionLifecycleEndpoints();

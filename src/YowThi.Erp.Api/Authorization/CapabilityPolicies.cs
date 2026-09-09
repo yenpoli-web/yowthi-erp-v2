@@ -10,6 +10,7 @@ public static class CapabilityPolicies
     public const string ProcessingConfirm = SecurityCapabilities.ProcessingConfirm;
     public const string ProcessingTransactionLifecycle = SecurityCapabilities.ProcessingTransactionLifecycle;
     public const string OutsourcedConfirm = SecurityCapabilities.OutsourcedConfirm;
+    public const string OutsourcedTransactionLifecycle = SecurityCapabilities.OutsourcedTransactionLifecycle;
     public const string SalesConfirm = SecurityCapabilities.SalesConfirm;
     public const string SalesCorrectAllocation = SecurityCapabilities.SalesCorrectAllocation;
     public const string SalesTransactionLifecycle = SecurityCapabilities.SalesTransactionLifecycle;

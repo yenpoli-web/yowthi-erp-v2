@@ -20,6 +20,8 @@ const masterQueryKeys: Record<HardDeleteTargetKind, string> = {
   customers: 'customer-master',
   'outsourced-vendors': 'outsourced-vendor-master',
   farmers: 'farmer-master',
+  'outsourced-supply-batches': 'outsourced-workspace',
+  'outsourced-supply-details': 'outsourced-workspace',
   'procurement-batches': 'procurement-workspace',
   'procurement-entries': 'procurement-workspace',
   sales: 'sales-workspace',

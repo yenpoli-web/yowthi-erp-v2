@@ -29,6 +29,8 @@ const hardDeleteRoutes: Record<HardDeleteTargetKind, (id: string) => string> = {
   customers: (id) => `/api/v1/data-protection/customers/${id}/hard-delete`,
   'outsourced-vendors': (id) => `/api/v1/data-protection/outsourced-vendors/${id}/hard-delete`,
   farmers: (id) => `/api/v1/data-protection/farmers/${id}/hard-delete`,
+  'outsourced-supply-batches': (id) => `/api/v1/outsourced/batches/${id}/hard-delete`,
+  'outsourced-supply-details': (id) => `/api/v1/outsourced/supply-details/${id}/hard-delete`,
   'procurement-batches': (id) => `/api/v1/procurement/batches/${id}/hard-delete`,
   'procurement-entries': (id) => `/api/v1/procurement/entries/${id}/hard-delete`,
   sales: (id) => `/api/v1/sales/${id}/hard-delete`,

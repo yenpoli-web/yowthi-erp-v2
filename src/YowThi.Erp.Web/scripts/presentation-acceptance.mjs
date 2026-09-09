@@ -140,6 +140,8 @@ const dataProtectionTargets = [
   'customers',
   'outsourced-vendors',
   'farmers',
+  'outsourced-supply-batches',
+  'outsourced-supply-details',
   'processing-executions',
   'processing-execution-inputs',
   'processing-execution-outputs',
@@ -178,6 +180,9 @@ const routerSource = read('src/app/router.tsx');
 if (!routerSource.includes(`path: 'data-protection/hard-delete', element: <Navigate to=\"/data-protection\" replace />`)) {
   fail('Legacy Data Protection Hard Delete route must converge on the primary Data Protection workspace.');
 }
+if (!routerSource.includes(`path: 'outsourced', element: <OutsourcedLifecycleWorkspace />`)) {
+  fail('Outsourced module root must open the lifecycle workspace.');
+}
 
 const navigation = read('src/app/navigation.ts');
 if (!navigation.includes("to: '/modules',\n    icon: 'home'")) {
@@ -215,8 +220,9 @@ console.log(`- recovery debt: ${manualPageLocaleControls}/2 page locale controls
 console.log('- placeholder hints: 0');
 console.log('- raw JSX domain enums: 0');
 console.log('- module registry: 13 operational / 13 localized');
-console.log('- Data Protection correspondence: 11/11 target-specific Hard Delete controls');
+console.log('- Data Protection correspondence: 13/13 target-specific Hard Delete controls');
 console.log('- Data Protection deletion re-authentication: enforced');
+console.log('- Outsourced module root: lifecycle workspace');
 console.log('- Nature Green tablet/mobile shell markers: present');
 console.log('- mobile primary navigation: localized home + 3 core operations');
 console.log('- deterministic desktop/tablet/mobile override: present');

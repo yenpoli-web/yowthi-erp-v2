@@ -1,30 +1,31 @@
 import { Navigate, createBrowserRouter } from 'react-router';
 
 import { DataProtectionPage } from '../features/data-protection/DataProtectionPage';
-import { OutsourcedSupplyDetailPage } from '../features/outsourced/OutsourcedSupplyDetailPage';
 import { FinanceSettlementPage } from '../features/finance/FinanceSettlementPage';
+import { InfrastructureLifecyclePage } from '../features/infrastructure/InfrastructureLifecyclePage';
 import { InventoryOperationsPage } from '../features/inventory/InventoryOperationsPage';
 import { InventoryPositionPage } from '../features/inventory/InventoryPositionPage';
 import { StorageLocationMasterPage } from '../features/inventory/StorageLocationMasterPage';
 import { WarehouseMasterPage } from '../features/inventory/WarehouseMasterPage';
-import { InfrastructureLifecyclePage } from '../features/infrastructure/InfrastructureLifecyclePage';
 import { LaborDailyWagePage } from '../features/labor/LaborDailyWagePage';
-import { PartyLifecyclePage } from '../features/party/PartyLifecyclePage';
+import { OutsourcedLifecycleWorkspace } from '../features/outsourced/OutsourcedLifecycleWorkspace';
+import { OutsourcedSupplyDetailPage } from '../features/outsourced/OutsourcedSupplyDetailPage';
 import { CustomerMasterPage } from '../features/party/CustomerMasterPage';
 import { EmployeeMasterPage } from '../features/party/EmployeeMasterPage';
 import { FarmerMasterPage } from '../features/party/FarmerMasterPage';
 import { OutsourcedVendorMasterPage } from '../features/party/OutsourcedVendorMasterPage';
+import { PartyLifecyclePage } from '../features/party/PartyLifecyclePage';
 import { SupplierMasterPage } from '../features/party/SupplierMasterPage';
-import { ProcurementProductMasterPage } from '../features/product/ProcurementProductMasterPage';
-import { SalesProductMasterPage } from '../features/product/SalesProductMasterPage';
-import { SalesProductGroupLifecyclePage } from '../features/product/SalesProductGroupLifecyclePage';
-import { SalesProductGroupMasterPage } from '../features/product/SalesProductGroupMasterPage';
 import { ProcessingExecutionPage } from '../features/processing/ProcessingExecutionPage';
 import { ProcurementEntryPage } from '../features/procurement/ProcurementEntryPage';
 import { ProcurementWorkspacePage } from '../features/procurement/ProcurementWorkspacePage';
-import { SalesWorkspacePage } from '../features/sales/SalesWorkspacePage';
-import { SalesPackagingWorkPage } from '../features/sales-handling/SalesPackagingWorkPage';
+import { ProcurementProductMasterPage } from '../features/product/ProcurementProductMasterPage';
+import { SalesProductGroupLifecyclePage } from '../features/product/SalesProductGroupLifecyclePage';
+import { SalesProductGroupMasterPage } from '../features/product/SalesProductGroupMasterPage';
+import { SalesProductMasterPage } from '../features/product/SalesProductMasterPage';
 import { SalesPackagingItemMasterPage } from '../features/sales-handling/SalesPackagingItemMasterPage';
+import { SalesPackagingWorkPage } from '../features/sales-handling/SalesPackagingWorkPage';
+import { SalesWorkspacePage } from '../features/sales/SalesWorkspacePage';
 import { SecurityAccountPage } from '../features/security/SecurityAccountPage';
 import { App } from './App';
 import { ModuleIndexPage, ModuleSkeletonPage } from './modules/ModulePages';
@@ -38,6 +39,7 @@ export const router = createBrowserRouter([
       { index: true, element: <Navigate to="/modules" replace /> },
       { path: 'procurement', element: <ProcurementWorkspacePage /> },
       { path: 'procurement/entries/new', element: <ProcurementEntryPage /> },
+      { path: 'outsourced', element: <OutsourcedLifecycleWorkspace /> },
       { path: 'outsourced/supply-details/new', element: <OutsourcedSupplyDetailPage /> },
       { path: 'processing/executions/new', element: <ProcessingExecutionPage /> },
       { path: 'sales', element: <SalesWorkspacePage /> },

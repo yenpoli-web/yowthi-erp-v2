@@ -15,6 +15,8 @@ public static class HardDeleteOptionEndpoints
     public const string CustomersOperationId = "DataProtection_ListHardDeleteCustomers";
     public const string OutsourcedVendorsOperationId = "DataProtection_ListHardDeleteOutsourcedVendors";
     public const string FarmersOperationId = "DataProtection_ListHardDeleteFarmers";
+    public const string OutsourcedSupplyBatchesOperationId = "DataProtection_ListHardDeleteOutsourcedSupplyBatches";
+    public const string OutsourcedSupplyDetailsOperationId = "DataProtection_ListHardDeleteOutsourcedSupplyDetails";
     public const string ProcurementBatchesOperationId = "DataProtection_ListHardDeleteProcurementBatches";
     public const string ProcurementEntriesOperationId = "DataProtection_ListHardDeleteProcurementEntries";
     public const string SalesOperationId = "DataProtection_ListHardDeleteSales";
@@ -39,6 +41,10 @@ public static class HardDeleteOptionEndpoints
             (reader, query, ct) => reader.GetOutsourcedVendorsAsync(query, ct));
         Map(group, "/farmers", FarmersOperationId,
             (reader, query, ct) => reader.GetFarmersAsync(query, ct));
+        Map(group, "/outsourced-supply-batches", OutsourcedSupplyBatchesOperationId,
+            (reader, query, ct) => reader.GetOutsourcedSupplyBatchesAsync(query, ct));
+        Map(group, "/outsourced-supply-details", OutsourcedSupplyDetailsOperationId,
+            (reader, query, ct) => reader.GetOutsourcedSupplyDetailsAsync(query, ct));
         Map(group, "/procurement-batches", ProcurementBatchesOperationId,
             (reader, query, ct) => reader.GetProcurementBatchesAsync(query, ct));
         Map(group, "/procurement-entries", ProcurementEntriesOperationId,
