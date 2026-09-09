@@ -1,7 +1,6 @@
 import { Navigate, createBrowserRouter } from 'react-router';
 
 import { DataProtectionPage } from '../features/data-protection/DataProtectionPage';
-import { HardDeletePage } from '../features/data-protection/HardDeletePage';
 import { OutsourcedSupplyDetailPage } from '../features/outsourced/OutsourcedSupplyDetailPage';
 import { FinanceSettlementPage } from '../features/finance/FinanceSettlementPage';
 import { InventoryOperationsPage } from '../features/inventory/InventoryOperationsPage';
@@ -63,7 +62,7 @@ export const router = createBrowserRouter([
       { path: 'product/lifecycle', element: <SalesProductGroupLifecyclePage /> },
       { path: 'security/accounts', element: <SecurityAccountPage /> },
       { path: 'data-protection', element: <DataProtectionPage /> },
-      { path: 'data-protection/hard-delete', element: <HardDeletePage /> },
+      { path: 'data-protection/hard-delete', element: <Navigate to="/data-protection" replace /> },
       { path: 'modules', element: <ModuleIndexPage /> },
       ...skeletonModules.map((module) => ({
         path: module.route.slice(1),

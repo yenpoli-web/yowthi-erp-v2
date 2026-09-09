@@ -135,6 +135,27 @@ if (zhLabels !== 13 || thLabels < 13) {
   fail(`All 13 modules must carry zh-TW and th-TH labels; found zh-TW=${zhLabels}, th-TH=${thLabels}.`);
 }
 
+const hardDeleteOptions = read('src/features/data-protection/hardDeleteOptions.ts');
+for (const target of ['suppliers', 'customers', 'outsourced-vendors', 'farmers']) {
+  if (!hardDeleteOptions.includes(`'${target}'`)) {
+    fail(`Canonical Data Protection target list is missing ${target}.`);
+  }
+}
+const dataProtectionPage = read('src/features/data-protection/DataProtectionPage.tsx');
+if (!dataProtectionPage.includes('hardDeleteTargetKinds.map')) {
+  fail('Data Protection main page must render the canonical Hard Delete target list.');
+}
+if (!dataProtectionPage.includes('listHardDeleteOptions')) {
+  fail('Data Protection main page must read through the target-specific Hard Delete options API.');
+}
+if (dataProtectionPage.includes('listSuppliers') || dataProtectionPage.includes('listCustomers')) {
+  fail('Data Protection main page must not regress to Supplier/Customer-only master queries.');
+}
+const routerSource = read('src/app/router.tsx');
+if (!routerSource.includes(`path: 'data-protection/hard-delete', element: <Navigate to=\"/data-protection\" replace />`)) {
+  fail('Legacy Data Protection Hard Delete route must converge on the primary Data Protection workspace.');
+}
+
 const navigation = read('src/app/navigation.ts');
 if (!navigation.includes("to: '/modules',\n    icon: 'home'")) {
   fail('Mobile quick navigation must begin with the localized home workspace entry.');
@@ -171,6 +192,7 @@ console.log(`- recovery debt: ${manualPageLocaleControls}/2 page locale controls
 console.log('- placeholder hints: 0');
 console.log('- raw JSX domain enums: 0');
 console.log('- module registry: 13 operational / 13 localized');
+console.log('- Data Protection correspondence: 4/4 target-specific Hard Delete controls');
 console.log('- Nature Green tablet/mobile shell markers: present');
 console.log('- mobile primary navigation: localized home + 3 core operations');
 console.log('- deterministic desktop/tablet/mobile override: present');

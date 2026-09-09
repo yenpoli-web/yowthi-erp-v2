@@ -1,7 +1,14 @@
 import { getApiJson } from '../../app/api/apiTransport';
 import type { OperationalLocale } from '../../app/i18n/locale';
 
-export type HardDeleteTargetKind = 'suppliers' | 'customers' | 'outsourced-vendors' | 'farmers';
+export const hardDeleteTargetKinds = [
+  'suppliers',
+  'customers',
+  'outsourced-vendors',
+  'farmers',
+] as const;
+
+export type HardDeleteTargetKind = (typeof hardDeleteTargetKinds)[number];
 
 export interface HardDeleteOption {
   id: string;

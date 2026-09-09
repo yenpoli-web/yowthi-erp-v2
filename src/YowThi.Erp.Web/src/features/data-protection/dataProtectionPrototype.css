@@ -25,6 +25,7 @@
 
 .protection-target-switcher {
   display: inline-flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 0.2rem;
   padding: 0.2rem;
@@ -185,6 +186,11 @@
   font-size: 0.67rem;
   font-weight: 780;
   white-space: nowrap;
+}
+
+.protection-deleted-pill.is-current {
+  background: #edf8f2;
+  color: #0b6d54;
 }
 
 .protection-empty,
