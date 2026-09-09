@@ -10,12 +10,17 @@ public static class SecurityCapabilities
     public const string SalesCorrectAllocation = "sales.correct-allocation";
     public const string SalesHandlingWorkRecord = "sales-handling.work-record.record";
     public const string SalesPackagingItemLifecycle = "sales-handling.packaging-item.lifecycle";
+    public const string ProcurementProductManage = "product.procurement-product.manage";
+    public const string SalesProductManage = "product.sales-product.manage";
     public const string SalesProductGroupLifecycle = "product.sales-product-group.lifecycle";
     public const string InfrastructureContainerLifecycle = "infrastructure.container.lifecycle";
+    public const string InfrastructureWarehouseManage = "infrastructure.warehouse.manage";
     public const string InfrastructureWarehouseLifecycle = "infrastructure.warehouse.lifecycle";
+    public const string InfrastructureStorageLocationManage = "infrastructure.storage-location.manage";
     public const string LaborDailyWageConfirm = "labor.daily-wage.confirm";
     public const string FinancePay = "finance.pay";
     public const string FinanceCorrect = "finance.correct";
+    public const string InventoryView = "inventory.view";
     public const string InventoryAdjust = "inventory.adjust";
     public const string SupplierLifecycle = "party.supplier.lifecycle";
     public const string FarmerLifecycle = "party.farmer.lifecycle";
@@ -35,12 +40,17 @@ public static class SecurityCapabilities
         SalesCorrectAllocation,
         SalesHandlingWorkRecord,
         SalesPackagingItemLifecycle,
+        ProcurementProductManage,
+        SalesProductManage,
         SalesProductGroupLifecycle,
         InfrastructureContainerLifecycle,
+        InfrastructureWarehouseManage,
         InfrastructureWarehouseLifecycle,
+        InfrastructureStorageLocationManage,
         LaborDailyWageConfirm,
         FinancePay,
         FinanceCorrect,
+        InventoryView,
         InventoryAdjust,
         SupplierLifecycle,
         FarmerLifecycle,

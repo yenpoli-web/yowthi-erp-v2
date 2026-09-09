@@ -122,7 +122,12 @@ public sealed class SecurityFoundationEndpointContractTests
     public void Security_capability_registry_is_explicit_and_contains_account_management()
     {
         Assert.Equal("security.account.manage", SecurityCapabilities.SecurityAccountManage);
-        Assert.Equal(22, SecurityCapabilities.All.Count);
+        Assert.Equal(27, SecurityCapabilities.All.Count);
+        Assert.Contains(SecurityCapabilities.ProcurementProductManage, SecurityCapabilities.All);
+        Assert.Contains(SecurityCapabilities.SalesProductManage, SecurityCapabilities.All);
+        Assert.Contains(SecurityCapabilities.InfrastructureWarehouseManage, SecurityCapabilities.All);
+        Assert.Contains(SecurityCapabilities.InfrastructureStorageLocationManage, SecurityCapabilities.All);
+        Assert.Contains(SecurityCapabilities.InventoryView, SecurityCapabilities.All);
         Assert.Equal(SecurityCapabilities.All.Count, SecurityCapabilities.All.Distinct(StringComparer.Ordinal).Count());
         Assert.DoesNotContain("*", SecurityCapabilities.All);
     }

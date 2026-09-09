@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router';
 import { useDeferredValue, useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
 import { useOperationalLocale } from '../../app/i18n/locale';
+import { ModuleSubnav, type ModuleSubnavItem } from '../../app/modules/ModuleSubnav';
 import { ApiProblemError } from '../../app/api/apiTransport';
 import {
   changeSalesProductGroupLifecycle,
@@ -18,6 +19,12 @@ import '../party/supplierMasterPrototype.css';
 type EditorMode = 'detail' | 'create' | 'edit';
 type Draft = { nameZhTw: string; nameThTh: string; active: boolean };
 type SubmissionIdentity = { fingerprint: string; idempotencyKey: string };
+
+const navItems: readonly ModuleSubnavItem[] = [
+  { to: '/product', end: true, label: { 'zh-TW': '採購產品', 'th-TH': 'สินค้าจัดซื้อ' } },
+  { to: '/product/sales-products', label: { 'zh-TW': '銷售產品', 'th-TH': 'สินค้าขาย' } },
+  { to: '/product/sales-product-groups', label: { 'zh-TW': '銷售產品群組', 'th-TH': 'กลุ่มสินค้าขาย' } },
+];
 
 const copy = {
   'zh-TW': {
@@ -95,6 +102,7 @@ export function SalesProductGroupMasterPage() {
   function submitLifecycle(action: SalesProductGroupLifecycleAction) { if (!selected) return; const fingerprint = JSON.stringify({ id: selected.id, action, rowVersion: selected.rowVersion }); if (lifecycleIdentity.current?.fingerprint !== fingerprint) lifecycleIdentity.current = { fingerprint, idempotencyKey: crypto.randomUUID() }; lifecycleMutation.mutate({ id: selected.id, action, expectedRowVersion: selected.rowVersion, idempotencyKey: lifecycleIdentity.current.idempotencyKey }); }
 
   return <section className="supplier-master-prototype" aria-labelledby="sales-product-group-master-title">
+    <ModuleSubnav locale={locale} items={navItems} ariaLabel={labels.eyebrow} />
     <header className="supplier-master-header"><div><p className="eyebrow">{labels.eyebrow}</p><h1 id="sales-product-group-master-title">{labels.title}</h1></div><div className="supplier-master-header-actions"><Link className="supplier-secondary-action" to="/product/lifecycle">{labels.workEntry}</Link><button className="supplier-primary-action" type="button" onClick={beginCreate} disabled={busy}>＋{labels.newItem}</button></div></header>
     <div className="supplier-master-toolbar"><label className="supplier-search"><input type="search" value={search} aria-label={labels.search} onChange={(event) => setSearch(event.target.value)} /></label><div className="supplier-filter-tabs" role="group" aria-label={labels.status}>{(['all','active','inactive','deleted'] as const).map(candidate => <button key={candidate} type="button" className={filter === candidate ? 'is-active' : ''} onClick={() => { setFilter(candidate); setSelectedId(''); setMode('detail'); }}>{labels[candidate]}</button>)}</div></div>
     <div className="supplier-master-grid"><aside className="supplier-list-panel" aria-label={labels.item}><div className="supplier-list-meta"><strong>{labels.item}</strong><span>{items.length} {labels.records}</span></div><div className="supplier-list-body">{items.map(item => <div key={item.id} role="button" tabIndex={0} className={`supplier-list-item${selected?.id === item.id ? ` is-selected` : ``}`} onClick={() => selectItem(item)} onKeyDown={(event) => handleListKey(event,item)}><span className="supplier-list-name"><strong>{displayName(item)}</strong>{secondaryName(item) && <small>{secondaryName(item)}</small>}</span><StatusPill item={item} labels={labels}/></div>)}{!itemsQuery.isPending && items.length === 0 && <p className="supplier-list-empty">{labels.noResult}</p>}</div></aside>

@@ -1,0 +1,23 @@
+.module-subnav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0 0 1rem;
+}
+
+.module-subnav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.25rem;
+  padding: 0.45rem 0.8rem;
+  border: 1px solid var(--border-subtle, #d6d9de);
+  border-radius: 999px;
+  color: inherit;
+  text-decoration: none;
+  background: var(--surface, #fff);
+}
+
+.module-subnav a.is-active {
+  border-color: currentColor;
+  font-weight: 700;
+}

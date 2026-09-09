@@ -68,7 +68,17 @@ public static class PersistenceServiceCollectionExtensions
         services.AddScoped<ISalesProductGroupMasterReader, EfSalesProductGroupMasterReader>();
         services.AddScoped<ISalesProductGroupLifecycleExecutor, PostgreSqlSalesProductGroupLifecycleExecutor>();
         services.AddScoped<ISalesProductGroupLifecycleOptionsReader, EfSalesProductGroupLifecycleOptionsReader>();
+        services.AddScoped<IProcurementProductMasterExecutor, PostgreSqlProcurementProductMasterExecutor>();
+        services.AddScoped<IProcurementProductMasterReader, EfProcurementProductMasterReader>();
+        services.AddScoped<ISalesProductMasterExecutor, PostgreSqlSalesProductMasterExecutor>();
+        services.AddScoped<ISalesProductMasterReader, EfSalesProductMasterReader>();
+        services.AddScoped<IProductMasterOptionsReader, EfProductMasterOptionsReader>();
+        services.AddScoped<ISalesProductMasterOptionsReader, EfSalesProductMasterOptionsReader>();
         services.AddScoped<IContainerLifecycleExecutor, PostgreSqlContainerLifecycleExecutor>();
+        services.AddScoped<IWarehouseMasterExecutor, PostgreSqlWarehouseMasterExecutor>();
+        services.AddScoped<IWarehouseMasterReader, EfWarehouseMasterReader>();
+        services.AddScoped<IStorageLocationMasterExecutor, PostgreSqlStorageLocationMasterExecutor>();
+        services.AddScoped<IStorageLocationMasterReader, EfStorageLocationMasterReader>();
         services.AddScoped<IWarehouseLifecycleExecutor, PostgreSqlWarehouseLifecycleExecutor>();
         services.AddScoped<IInfrastructureLifecycleOptionsReader, EfInfrastructureLifecycleOptionsReader>();
         services.AddScoped<IConfirmEmployeeDailyWageExecutor, PostgreSqlConfirmEmployeeDailyWageExecutor>();
@@ -83,6 +93,7 @@ public static class PersistenceServiceCollectionExtensions
         services.AddScoped<ITransferInventoryExecutor, PostgreSqlTransferInventoryExecutor>();
         services.AddScoped<IAdjustInventoryExecutor, PostgreSqlAdjustInventoryExecutor>();
         services.AddScoped<IInventoryOperationOptionsReader, EfInventoryOperationOptionsReader>();
+        services.AddScoped<IInventoryPositionReader, EfInventoryPositionReader>();
         services.AddScoped<ISupplierMasterExecutor, PostgreSqlSupplierMasterExecutor>();
         services.AddScoped<ISupplierMasterReader, EfSupplierMasterReader>();
         services.AddScoped<ICustomerMasterExecutor, PostgreSqlCustomerMasterExecutor>();

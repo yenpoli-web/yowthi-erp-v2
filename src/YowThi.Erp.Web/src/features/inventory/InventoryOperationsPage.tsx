@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useDeferredValue, useMemo, useRef, useState } from 'react';
 
 import { useOperationalLocale } from '../../app/i18n/locale';
+import { ModuleSubnav, type ModuleSubnavItem } from '../../app/modules/ModuleSubnav';
 import {
   listInventoryAdjustmentIdentities,
   listInventoryAdjustmentLocations,
@@ -33,6 +34,13 @@ interface MutationResult {
   quantity: number;
 }
 interface SubmissionIdentity { fingerprint: string; idempotencyKey: string }
+
+const navItems: readonly ModuleSubnavItem[] = [
+  { to: '/inventory', end: true, label: { 'zh-TW': '庫存現況', 'th-TH': 'ยอดคงเหลือ' } },
+  { to: '/inventory/operations', label: { 'zh-TW': '調撥與調整', 'th-TH': 'โอนและปรับปรุง' } },
+  { to: '/inventory/warehouses', label: { 'zh-TW': '倉庫', 'th-TH': 'คลัง' } },
+  { to: '/inventory/storage-locations', label: { 'zh-TW': '儲位', 'th-TH': 'ตำแหน่งจัดเก็บ' } },
+];
 
 export function InventoryOperationsPage() {
   const { locale } = useOperationalLocale();
@@ -196,6 +204,7 @@ export function InventoryOperationsPage() {
 
   return (
     <section className="procurement-page" aria-labelledby="inventory-operations-title">
+      <ModuleSubnav locale={locale} items={navItems} ariaLabel={labels.eyebrow} />
       <header className="page-header">
         <div>
           <p className="eyebrow">{labels.eyebrow}</p>

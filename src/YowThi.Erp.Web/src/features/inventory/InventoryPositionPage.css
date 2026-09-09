@@ -1,0 +1,154 @@
+.inventory-position-page {
+  width: min(100%, 1480px);
+  margin: 0 auto;
+}
+
+.inventory-position-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.inventory-position-header h1 {
+  margin: 0;
+}
+
+.inventory-position-toolbar {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) minmax(150px, auto) minmax(170px, auto) auto;
+  gap: 0.65rem;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.inventory-position-toolbar input,
+.inventory-position-toolbar select {
+  min-height: 2.65rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.inventory-zero-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 2.65rem;
+  white-space: nowrap;
+}
+
+.inventory-zero-toggle input {
+  width: auto;
+  min-height: auto;
+}
+
+.inventory-position-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border-subtle, #d6d9de);
+  border-radius: 0.8rem;
+  background: var(--surface, #fff);
+}
+
+.inventory-position-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 900px;
+}
+
+.inventory-position-table th,
+.inventory-position-table td {
+  padding: 0.8rem 0.9rem;
+  border-bottom: 1px solid var(--border-subtle, #e5e7eb);
+  text-align: left;
+  vertical-align: top;
+}
+
+.inventory-position-table th {
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.inventory-position-table td small {
+  display: block;
+  margin-top: 0.15rem;
+  opacity: 0.68;
+}
+
+.inventory-position-table .is-number {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.inventory-position-empty {
+  padding: 2rem;
+  text-align: center;
+}
+
+@media (max-width: 760px) {
+  .inventory-position-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .inventory-position-toolbar {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .inventory-position-search,
+  .inventory-zero-toggle {
+    grid-column: 1 / -1;
+  }
+
+  .inventory-position-table-wrap {
+    overflow: visible;
+    border: 0;
+    background: transparent;
+  }
+
+  .inventory-position-table {
+    min-width: 0;
+  }
+
+  .inventory-position-table thead {
+    display: none;
+  }
+
+  .inventory-position-table,
+  .inventory-position-table tbody,
+  .inventory-position-table tr,
+  .inventory-position-table td {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .inventory-position-table tr {
+    margin-bottom: 0.75rem;
+    padding: 0.75rem;
+    border: 1px solid var(--border-subtle, #d6d9de);
+    border-radius: 0.8rem;
+    background: var(--surface, #fff);
+  }
+
+  .inventory-position-table td {
+    display: grid;
+    grid-template-columns: 7rem 1fr;
+    gap: 0.5rem;
+    padding: 0.4rem 0;
+    border: 0;
+    text-align: left;
+  }
+
+  .inventory-position-table td::before {
+    content: attr(data-label);
+    font-size: 0.8rem;
+    font-weight: 700;
+    opacity: 0.7;
+  }
+
+  .inventory-position-table .is-number {
+    text-align: left;
+  }
+}
