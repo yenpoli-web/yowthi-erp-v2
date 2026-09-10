@@ -231,6 +231,7 @@ public static class ProcurementEndpoints
 public sealed record ConfirmProcurementEntryRequest(
     DateOnly ProcurementDate,
     Guid ProcurementProductId,
+    [property: JsonConverter(typeof(JsonStringEnumConverter))]
     ProcurementSourceType SourceType,
     Guid? SupplierId,
     Guid? FarmerId,
