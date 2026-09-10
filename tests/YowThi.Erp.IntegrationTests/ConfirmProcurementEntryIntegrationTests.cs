@@ -35,8 +35,7 @@ public sealed class ConfirmProcurementEntryIntegrationTests
                 null,
                 125.5m,
                 18.25m,
-                false,
-                null);
+                false);
 
             var supplierExecution = Execution(
                 supplierCommandId,
@@ -158,6 +157,12 @@ public sealed class ConfirmProcurementEntryIntegrationTests
                     cancellationToken,
                     ("command_id", supplierCommandId)));
 
+            await ExecuteNonQueryAsync(
+                "UPDATE product.procurement_products SET default_storage_location_id = @location_id WHERE id = @product_id;",
+                cancellationToken,
+                ("location_id", scenario.ExplicitLocationId),
+                ("product_id", scenario.ProductId));
+
             var farmerCommand = new ConfirmProcurementEntryCommand(
                 scenario.ProcurementDate,
                 scenario.ProductId,
@@ -166,8 +171,7 @@ public sealed class ConfirmProcurementEntryIntegrationTests
                 scenario.FarmerId,
                 20m,
                 7.5m,
-                true,
-                scenario.ExplicitLocationId);
+                true);
 
             var farmerResult = await ExecuteAsync(
                 Execution(farmerCommandId, scenario.ActorAccountId, Hash(3), farmerCommand),
@@ -175,7 +179,7 @@ public sealed class ConfirmProcurementEntryIntegrationTests
 
             Assert.True(farmerResult.IsSuccess);
             Assert.Equal(supplierResult.Value.ProcurementBatchId, farmerResult.Value.ProcurementBatchId);
-            Assert.Equal(scenario.ExplicitLocationId, farmerResult.Value.ReceiptStorageLocationId);
+            Assert.Equal(scenario.DefaultLocationId, farmerResult.Value.ReceiptStorageLocationId);
             Assert.Equal(150L, farmerResult.Value.AmountThb);
             Assert.NotNull(farmerResult.Value.CompanyPickupTransportBasisId);
             Assert.NotEqual(supplierResult.Value.PayableId, farmerResult.Value.PayableId);
@@ -195,7 +199,7 @@ public sealed class ConfirmProcurementEntryIntegrationTests
                     """,
                     cancellationToken,
                     ("operation_id", farmerResult.Value.InventoryOperationId),
-                    ("location_id", scenario.ExplicitLocationId)));
+                    ("location_id", scenario.DefaultLocationId)));
             Assert.Equal(
                 "PROCUREMENT_FARMER",
                 await ScalarAsync<string>(
@@ -250,9 +254,14 @@ public sealed class ConfirmProcurementEntryIntegrationTests
                         null,
                         12.5m,
                         10m,
-                        false,
-                        null)),
+                        false)),
                 cancellationToken);
+            await ExecuteNonQueryAsync(
+                "UPDATE product.procurement_products SET default_storage_location_id = @location_id WHERE id = @product_id;",
+                cancellationToken,
+                ("location_id", scenario.ExplicitLocationId),
+                ("product_id", scenario.ProductId));
+
             var farmerResult = await ExecuteAsync(
                 Execution(
                     farmerCommandId,
@@ -266,8 +275,7 @@ public sealed class ConfirmProcurementEntryIntegrationTests
                         scenario.FarmerId,
                         4m,
                         8m,
-                        true,
-                        scenario.ExplicitLocationId)),
+                        true)),
                 cancellationToken);
 
             Assert.True(supplierResult.IsSuccess);
@@ -295,6 +303,9 @@ public sealed class ConfirmProcurementEntryIntegrationTests
             Assert.Equal(scenario.ProductId, workspace.ProcurementProductId);
             Assert.Equal("P6 product", workspace.ProcurementProductDisplayName);
             Assert.Equal("kg", workspace.UnitCode);
+            Assert.Equal(scenario.DefaultLocationId, workspace.ReceiptStorageLocationId);
+            Assert.Equal(scenario.WarehouseId, workspace.WarehouseId);
+            Assert.Equal("P6 warehouse", workspace.WarehouseDisplayName);
             Assert.Equal("OPEN", workspace.ProcurementStatus);
             Assert.Equal("ACTIVE", workspace.LifecycleStatus);
             Assert.Equal(2, workspace.Entries.Count);
@@ -306,8 +317,6 @@ public sealed class ConfirmProcurementEntryIntegrationTests
             Assert.Equal(scenario.SupplierId, supplierEntry.SourceId);
             Assert.Equal("P6 supplier", supplierEntry.SourceDisplayName);
             Assert.Equal(12.5m, supplierEntry.NetQuantity);
-            Assert.Equal(scenario.DefaultLocationId, supplierEntry.ReceiptStorageLocationId);
-            Assert.Equal("P6 default location", supplierEntry.ReceiptStorageLocationDisplayName);
 
             var farmerEntry = Assert.Single(
                 workspace.Entries,
@@ -316,8 +325,6 @@ public sealed class ConfirmProcurementEntryIntegrationTests
             Assert.Equal(scenario.FarmerId, farmerEntry.SourceId);
             Assert.Equal("P6 farmer", farmerEntry.SourceDisplayName);
             Assert.Equal(4m, farmerEntry.NetQuantity);
-            Assert.Equal(scenario.ExplicitLocationId, farmerEntry.ReceiptStorageLocationId);
-            Assert.Equal("P6 explicit location", farmerEntry.ReceiptStorageLocationDisplayName);
 
             Assert.Null(await reader.GetBatchAsync(Guid.CreateVersion7(), "zh-TW", cancellationToken));
         }
@@ -328,7 +335,7 @@ public sealed class ConfirmProcurementEntryIntegrationTests
     }
 
     [Fact]
-    public async Task Missing_default_receipt_location_requires_explicit_choice_without_persisting_command()
+    public async Task Missing_default_receipt_location_blocks_new_batch_without_persisting_command()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         var scenario = await SeedScenarioAsync(productHasDefaultLocation: false, cancellationToken);
@@ -344,8 +351,7 @@ public sealed class ConfirmProcurementEntryIntegrationTests
                 null,
                 10m,
                 4m,
-                false,
-                null);
+                false);
 
             var result = await ExecuteAsync(
                 Execution(commandId, scenario.ActorAccountId, Hash(4), command),
@@ -402,8 +408,7 @@ public sealed class ConfirmProcurementEntryIntegrationTests
                 null,
                 10m,
                 4m,
-                false,
-                null);
+                false);
 
             var result = await ExecuteAsync(
                 Execution(commandId, scenario.ActorAccountId, Hash(5), command),
@@ -449,8 +454,7 @@ public sealed class ConfirmProcurementEntryIntegrationTests
                 null,
                 11m,
                 2m,
-                false,
-                null);
+                false);
             var secondCommand = new ConfirmProcurementEntryCommand(
                 scenario.ProcurementDate,
                 scenario.ProductId,
@@ -459,8 +463,7 @@ public sealed class ConfirmProcurementEntryIntegrationTests
                 null,
                 13m,
                 3m,
-                false,
-                null);
+                false);
 
             var results = await Task.WhenAll(
                 ExecuteAsync(Execution(firstCommandId, scenario.ActorAccountId, Hash(6), firstCommand), cancellationToken).AsTask(),
@@ -468,6 +471,13 @@ public sealed class ConfirmProcurementEntryIntegrationTests
 
             Assert.All(results, result => Assert.True(result.IsSuccess));
             Assert.Equal(results[0].Value.ProcurementBatchId, results[1].Value.ProcurementBatchId);
+            Assert.All(results, result => Assert.Equal(scenario.DefaultLocationId, result.Value.ReceiptStorageLocationId));
+            Assert.Equal(
+                scenario.DefaultLocationId,
+                await ScalarAsync<Guid>(
+                    "SELECT receipt_storage_location_id FROM procurement.procurement_batches WHERE id = @batch_id;",
+                    cancellationToken,
+                    ("batch_id", results[0].Value.ProcurementBatchId)));
             Assert.Equal(
                 1L,
                 await ScalarAsync<long>(
@@ -534,8 +544,7 @@ public sealed class ConfirmProcurementEntryIntegrationTests
                 null,
                 1m,
                 1m,
-                false,
-                null);
+                false);
 
             var exception = await Assert.ThrowsAsync<PostgresException>(async () =>
                 await ExecuteAsync(
@@ -607,8 +616,7 @@ public sealed class ConfirmProcurementEntryIntegrationTests
             null,
             0m,
             1m,
-            false,
-            null);
+            false);
 
         var result = await ExecuteAsync(
             Execution(commandId, accountId, Hash(9), command),

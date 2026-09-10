@@ -786,30 +786,21 @@ It validates:
 - Problem Details / API contract
 - one atomic PostgreSQL transaction
 
-## 41. ConfirmProcurementEntry receipt location refinement
+## 41. ConfirmProcurementEntry receipt destination refinement
 
-The confirmed safe handling for PROC-002 must be implemented end-to-end.
+PROC-002 was superseded by the confirmed YowThi operating fact on 2026-09-10.
 
-`ConfirmProcurementEntry` accepts an optional:
+Receipt destination is Procurement Batch/header state:
+- `ConfirmProcurementEntry` does not accept a Receipt Storage Location input
+- a new date + product Batch captures the Procurement Product current valid default Storage Location
+- later Entries reuse the Batch destination even if the Product default later changes
+- Inventory Movements retain the concrete Storage Location as ledger truth
+- an older Batch with multiple historical receipt locations is ambiguous; do not guess a destination
+- if a new Batch has no valid product default, block at the header boundary instead of asking for a per-detail override
 
-```text
-Receipt Storage Location
-```
+The Procurement UI/query layer presents the owning Warehouse at header level. A read-only receipt-destination query may preview the server resolution before the first detail is confirmed.
 
-REST field:
-
-```text
-receiptStorageLocationId
-```
-
-Resolution semantics:
-- if explicitly supplied: validate and use it
-- if omitted: use the unique applicable default when one can be resolved
-- if omitted and there is no unique applicable default: block confirmation and require explicit choice
-
-This is not a new Business Rule. It is the command/API representation of the already approved PROC-002 safe v0.1 handling.
-
-The Procurement UI/query layer therefore needs a location-selection query when receipt location cannot be resolved uniquely.
+A more specific date-range/calendar-to-Warehouse routing rule remains TO VERIFY; implementation must not invent one.
 
 ## 42. Procurement concurrency prerequisites
 
@@ -859,7 +850,7 @@ POST /api/v1/procurement/entries
 
 including:
 - request/response DTO
-- `receiptStorageLocationId`
+- server-owned Procurement Batch receipt destination; no detail-level location field
 - Idempotency-Key
 - Problem Details
 - stable OperationId
@@ -873,9 +864,9 @@ Cover:
 - same-key replay
 - same key + different hash rejection
 - same key + different actor rejection
-- receipt default location path
-- explicit receipt-location path
-- ambiguous location requires choice
+- new Batch captures product default receipt location
+- later same-date+product Entries reuse the captured Batch destination after Product default changes
+- historical multi-location Batch is treated as ambiguous without guessing
 - concurrent same Procurement Batch resolution
 - transaction rollback on later failure
 - Company Pickup basis path without inventing transport Payable grouping
@@ -1187,7 +1178,7 @@ Migration execution is a deployment action.
 
 This Build Plan introduces no new YowThi Business Rules.
 
-The `receiptStorageLocationId` refinement is the implementation representation of existing PROC-002 safe handling.
+The Procurement Batch receipt-destination capture/reuse contract is the implementation representation of the confirmed 2026-09-10 PROC-002 resolution; detail-level `receiptStorageLocationId` is superseded.
 The AuthN/AuthZ hard gate is ERP Control Governance / security architecture.
 
 Existing Business Rule gaps remain governed by the Gap Register.

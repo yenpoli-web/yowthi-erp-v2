@@ -86,8 +86,7 @@ public static class ProcurementEndpoints
             request.FarmerId,
             request.NetQuantity,
             request.UnitPrice,
-            request.CompanyPickup,
-            request.ReceiptStorageLocationId);
+            request.CompanyPickup);
 
         var canonicalPayload = JsonPayload.FromUtf8Json(
             JsonSerializer.SerializeToUtf8Bytes(
@@ -237,8 +236,7 @@ public sealed record ConfirmProcurementEntryRequest(
     Guid? FarmerId,
     decimal NetQuantity,
     decimal UnitPrice,
-    bool CompanyPickup,
-    Guid? ReceiptStorageLocationId);
+    bool CompanyPickup);
 
 public sealed record CloseProcurementBatchRequest(long ExpectedRowVersion);
 

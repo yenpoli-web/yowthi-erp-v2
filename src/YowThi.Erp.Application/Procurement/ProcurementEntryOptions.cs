@@ -22,18 +22,6 @@ public sealed record ProcurementSourceOption(
     string? Code,
     string DisplayName);
 
-public sealed record ProcurementReceiptStorageLocationOption(
-    Guid Id,
-    string DisplayName,
-    string? Code,
-    Guid WarehouseId,
-    bool IsProductDefault);
-
-public sealed record ProcurementReceiptStorageLocationOptions(
-    Guid ProcurementProductId,
-    Guid? DefaultStorageLocationId,
-    ProcurementEntryOptionPage<ProcurementReceiptStorageLocationOption> Locations);
-
 public interface IProcurementEntryOptionsReader
 {
     ValueTask<ProcurementEntryOptionPage<ProcurementProductOption>> GetProductsAsync(
@@ -45,8 +33,4 @@ public interface IProcurementEntryOptionsReader
         ProcurementEntryOptionsQuery query,
         CancellationToken cancellationToken);
 
-    ValueTask<ProcurementReceiptStorageLocationOptions?> GetReceiptStorageLocationsAsync(
-        Guid procurementProductId,
-        ProcurementEntryOptionsQuery query,
-        CancellationToken cancellationToken);
 }

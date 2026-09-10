@@ -25,21 +25,6 @@ export interface ProcurementSourceOptionsResponse {
   nextCursor: string | null;
 }
 
-export interface ProcurementReceiptStorageLocationOption {
-  id: string;
-  displayName: string;
-  code: string | null;
-  warehouseId: string;
-  isProductDefault: boolean;
-}
-
-export interface ProcurementReceiptStorageLocationOptionsResponse {
-  procurementProductId: string;
-  defaultStorageLocationId: string | null;
-  items: ProcurementReceiptStorageLocationOption[];
-  nextCursor: string | null;
-}
-
 interface OptionQuery {
   locale: OperationalLocale;
   search?: string;
@@ -65,17 +50,6 @@ export async function listProcurementSourceOptions(
     '/api/v1/procurement/entry-options/sources',
     query,
     { sourceType },
-  );
-}
-
-export async function listProcurementReceiptStorageLocationOptions(
-  procurementProductId: string,
-  query: OptionQuery,
-): Promise<ProcurementReceiptStorageLocationOptionsResponse> {
-  return getJson<ProcurementReceiptStorageLocationOptionsResponse>(
-    '/api/v1/procurement/entry-options/storage-locations',
-    query,
-    { procurementProductId },
   );
 }
 

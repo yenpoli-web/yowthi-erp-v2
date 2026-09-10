@@ -7,6 +7,7 @@ public sealed class ProcurementBatch : IHasRowVersion
     public Guid Id { get; private set; }
     public DateOnly ProcurementDate { get; private set; }
     public Guid ProcurementProductId { get; private set; }
+    public Guid? ReceiptStorageLocationId { get; private set; }
     public ProcurementStatus ProcurementStatus { get; private set; }
     public ProcurementBatchLifecycleStatus LifecycleStatus { get; private set; }
     public Guid? ProcessingRouteId { get; private set; }

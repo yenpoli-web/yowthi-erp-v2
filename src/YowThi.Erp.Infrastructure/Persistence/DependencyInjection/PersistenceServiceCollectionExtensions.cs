@@ -46,6 +46,7 @@ public static class PersistenceServiceCollectionExtensions
         services.AddSingleton(TimeProvider.System);
         services.AddSingleton<ICommandRequestHasher, Sha256CommandRequestHasher>();
         services.AddScoped<ICommandTransactionRunner, EfCommandTransactionRunner>();
+        services.AddScoped<IProcurementReceiptDestinationResolver, EfProcurementReceiptDestinationResolver>();
         services.AddScoped<IConfirmProcurementEntryExecutor, PostgreSqlConfirmProcurementEntryExecutor>();
         services.AddScoped<ICloseProcurementBatchExecutor, PostgreSqlCloseProcurementBatchExecutor>();
         services.AddScoped<IReopenProcurementBatchExecutor, PostgreSqlReopenProcurementBatchExecutor>();

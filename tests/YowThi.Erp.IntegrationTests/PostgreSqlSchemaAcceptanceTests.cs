@@ -13,6 +13,7 @@ public sealed class PostgreSqlSchemaAcceptanceTests
         "20260908002500_P8SecurityFoundation",
         "20260908140602_P8PartyBusinessCodes",
         "20260909081500_P8ProcessingDetailLifecycle",
+        "20260910021436_P8ProcurementReceiptDestination",
     ];
 
     private static readonly string[] ExpectedSchemas =

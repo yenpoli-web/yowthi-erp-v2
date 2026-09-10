@@ -14,7 +14,7 @@ The later registration/control boundary is authoritative for classification:
 | ID | Gap / concern | Class | Safe v0.1 handling / current decision |
 |---|---|---|---|
 | PROC-001 | Procurement Batch COMPLETED then late entry | A | Block normal entry |
-| PROC-002 | Procurement receipt location default vs override | B | use unique default; otherwise require explicit choice |
+| PROC-002 | Procurement receipt destination ownership / default capture | RESOLVED | Confirmed 2026-09-10: receipt destination belongs to Procurement Batch/header, not Entry. A new date+product Batch captures the Procurement Product current valid default Storage Location; later Entries reuse the Batch value and cannot override it per detail. If no valid default exists, block the new Batch rather than request a per-detail location. Historical multi-location Batches remain ambiguous and are not guessed. A more specific date-range/calendar-to-Warehouse routing rule has not been confirmed and remains TO VERIFY rather than being invented. |
 | PROC-003 | Procurement Entry zero Net Quantity confirmation | A | Block zero-quantity confirmation until real YowThi behavior is confirmed; Procurement Entry currently permits zero but required PURCHASE_RECEIPT structurally requires a positive movement |
 | PROCESS-001 | Input spread across multiple locations | A | require explicit source if ambiguous |
 | PROCESS-002 | Processing output location | B | unique default or explicit choice |

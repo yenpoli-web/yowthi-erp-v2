@@ -22,8 +22,7 @@ public sealed class ProcurementRequestJsonContractTests
               "farmerId": null,
               "netQuantity": 1,
               "unitPrice": 1,
-              "companyPickup": false,
-              "receiptStorageLocationId": null
+              "companyPickup": false
             }
             """;
 
@@ -33,5 +32,8 @@ public sealed class ProcurementRequestJsonContractTests
 
         Assert.NotNull(request);
         Assert.Equal(expected, request.SourceType);
+        Assert.DoesNotContain(
+            typeof(ConfirmProcurementEntryRequest).GetProperties(),
+            property => property.Name == "ReceiptStorageLocationId");
     }
 }

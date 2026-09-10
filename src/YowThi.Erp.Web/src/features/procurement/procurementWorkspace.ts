@@ -19,6 +19,13 @@ export interface ProcurementBatchListResponse {
   nextOffset: number | null;
 }
 
+export interface ProcurementReceiptDestination {
+  storageLocationId: string;
+  warehouseId: string;
+  warehouseDisplayName: string;
+  resolutionSource: string;
+}
+
 export interface ProcurementBatchEntry {
   id: string;
   sourceType: string;
@@ -30,8 +37,6 @@ export interface ProcurementBatchEntry {
   unitPrice: number;
   amountThb: number;
   companyPickup: boolean;
-  receiptStorageLocationId: string | null;
-  receiptStorageLocationDisplayName: string | null;
   rowVersion: number;
   recordedAt: string;
   deletedAt: string | null;
@@ -43,6 +48,9 @@ export interface ProcurementBatchWorkspace {
   procurementProductId: string;
   procurementProductDisplayName: string;
   unitCode: string;
+  receiptStorageLocationId: string | null;
+  warehouseId: string | null;
+  warehouseDisplayName: string | null;
   procurementStatus: string;
   lifecycleStatus: string;
   rowVersion: number;
@@ -59,6 +67,19 @@ interface ListQuery {
   offset?: number;
   limit?: number;
   signal?: AbortSignal;
+}
+
+export async function getProcurementReceiptDestination(
+  procurementDate: string,
+  procurementProductId: string,
+  locale: OperationalLocale,
+  signal?: AbortSignal,
+): Promise<ProcurementReceiptDestination> {
+  const parameters = new URLSearchParams({ procurementDate, procurementProductId });
+  return getApiJson<ProcurementReceiptDestination>(
+    `/api/v1/procurement/receipt-destination?${parameters.toString()}`,
+    { locale, signal },
+  );
 }
 
 export async function listProcurementBatches(query: ListQuery): Promise<ProcurementBatchListResponse> {

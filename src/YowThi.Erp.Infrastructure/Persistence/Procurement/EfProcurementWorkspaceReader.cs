@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using YowThi.Erp.Application.Procurement;
 using YowThi.Erp.Domain.Infrastructure;
-using YowThi.Erp.Domain.Inventory;
 using YowThi.Erp.Domain.Party;
 using YowThi.Erp.Domain.Procurement;
 using YowThi.Erp.Domain.Product;
@@ -91,6 +90,7 @@ internal sealed class EfProcurementWorkspaceReader(ErpDbContext dbContext) : IPr
                 product.NameZhTw,
                 product.NameThTh,
                 product.UnitCode,
+                batch.ReceiptStorageLocationId,
                 batch.ProcurementStatus,
                 batch.LifecycleStatus,
                 batch.RowVersion,
@@ -103,6 +103,22 @@ internal sealed class EfProcurementWorkspaceReader(ErpDbContext dbContext) : IPr
         if (header is null)
         {
             return null;
+        }
+
+        ReceiptDestinationProjection? destination = null;
+        if (header.ReceiptStorageLocationId is Guid receiptStorageLocationId)
+        {
+            destination = await (
+                from location in dbContext.Set<StorageLocation>().AsNoTracking()
+                join warehouse in dbContext.Set<Warehouse>().AsNoTracking()
+                    on location.WarehouseId equals warehouse.Id
+                where location.Id == receiptStorageLocationId
+                select new ReceiptDestinationProjection(
+                    location.Id,
+                    warehouse.Id,
+                    warehouse.NameZhTw,
+                    warehouse.NameThTh))
+                .SingleOrDefaultAsync(cancellationToken);
         }
 
         var entryRows = await dbContext.Set<ProcurementEntry>()
@@ -158,29 +174,8 @@ internal sealed class EfProcurementWorkspaceReader(ErpDbContext dbContext) : IPr
             item.Code,
             DisplayName(item.NameZhTw, item.NameThTh, validatedLocale)));
 
-        var entryIds = entryRows.Select(entry => entry.Id).ToArray();
-        var nullableEntryIds = entryIds.Select(static id => (Guid?)id).ToArray();
-        var receiptRows = entryIds.Length == 0
-            ? []
-            : await (
-                from operation in dbContext.Set<InventoryOperation>().AsNoTracking()
-                join movement in dbContext.Set<InventoryMovement>().AsNoTracking()
-                    on operation.Id equals movement.InventoryOperationId
-                join location in dbContext.Set<StorageLocation>().AsNoTracking()
-                    on movement.StorageLocationId equals location.Id
-                where nullableEntryIds.Contains(operation.ProcurementEntryId)
-                    && movement.MovementType == InventoryMovementType.PURCHASE_RECEIPT
-                select new ReceiptProjection(
-                    operation.ProcurementEntryId,
-                    location.Id,
-                    location.NameZhTw,
-                    location.NameThTh,
-                    location.Code))
-                .ToArrayAsync(cancellationToken);
-
-        var receiptByEntry = receiptRows.ToDictionary(item => item.ProcurementEntryId.GetValueOrDefault());
         var entries = entryRows
-            .Select(entry => ToEntryItem(entry, validatedLocale, supplierSources, farmerSources, receiptByEntry))
+            .Select(entry => ToEntryItem(entry, supplierSources, farmerSources))
             .ToArray();
 
         return new ProcurementBatchWorkspace(
@@ -189,6 +184,11 @@ internal sealed class EfProcurementWorkspaceReader(ErpDbContext dbContext) : IPr
             header.ProcurementProductId,
             DisplayName(header.ProductNameZhTw, header.ProductNameThTh, validatedLocale),
             header.UnitCode,
+            header.ReceiptStorageLocationId,
+            destination?.WarehouseId,
+            destination is null
+                ? null
+                : DisplayName(destination.WarehouseNameZhTw, destination.WarehouseNameThTh, validatedLocale),
             header.ProcurementStatus.ToString(),
             header.LifecycleStatus.ToString(),
             header.RowVersion,
@@ -214,10 +214,8 @@ internal sealed class EfProcurementWorkspaceReader(ErpDbContext dbContext) : IPr
 
     private static ProcurementBatchEntryItem ToEntryItem(
         EntryProjection entry,
-        string locale,
         IReadOnlyDictionary<Guid, SourceProjection> supplierSources,
-        IReadOnlyDictionary<Guid, SourceProjection> farmerSources,
-        IReadOnlyDictionary<Guid, ReceiptProjection> receiptByEntry)
+        IReadOnlyDictionary<Guid, SourceProjection> farmerSources)
     {
         var (sourceId, source) = entry.SourceType switch
         {
@@ -228,7 +226,6 @@ internal sealed class EfProcurementWorkspaceReader(ErpDbContext dbContext) : IPr
             _ => throw new InvalidOperationException($"Procurement Entry {entry.Id} has an invalid or missing source reference."),
         };
 
-        receiptByEntry.TryGetValue(entry.Id, out var receipt);
         return new ProcurementBatchEntryItem(
             entry.Id,
             entry.SourceType.ToString(),
@@ -240,17 +237,9 @@ internal sealed class EfProcurementWorkspaceReader(ErpDbContext dbContext) : IPr
             entry.UnitPrice,
             entry.AmountThb,
             entry.CompanyPickup,
-            receipt?.StorageLocationId,
-            receipt is null ? null : DisplayLocationName(receipt, locale),
             entry.RowVersion,
             entry.RecordedAt,
             entry.DeletedAt);
-    }
-
-    private static string DisplayLocationName(ReceiptProjection location, string locale)
-    {
-        var name = DisplayName(location.NameZhTw, location.NameThTh, locale);
-        return string.IsNullOrWhiteSpace(location.Code) ? name : $"{name} · {location.Code}";
     }
 
     private static string DisplayName(string? nameZhTw, string? nameThTh, string locale) =>
@@ -307,6 +296,7 @@ internal sealed class EfProcurementWorkspaceReader(ErpDbContext dbContext) : IPr
         string? ProductNameZhTw,
         string? ProductNameThTh,
         string UnitCode,
+        Guid? ReceiptStorageLocationId,
         ProcurementStatus ProcurementStatus,
         ProcurementBatchLifecycleStatus LifecycleStatus,
         long RowVersion,
@@ -314,6 +304,11 @@ internal sealed class EfProcurementWorkspaceReader(ErpDbContext dbContext) : IPr
         DateTimeOffset? CompletedAt,
         DateTimeOffset? ClosedAt,
         DateTimeOffset? DeletedAt);
+    private sealed record ReceiptDestinationProjection(
+        Guid StorageLocationId,
+        Guid WarehouseId,
+        string? WarehouseNameZhTw,
+        string? WarehouseNameThTh);
     private sealed record EntryProjection(
         Guid Id,
         ProcurementSourceType SourceType,
@@ -327,10 +322,4 @@ internal sealed class EfProcurementWorkspaceReader(ErpDbContext dbContext) : IPr
         long RowVersion,
         DateTimeOffset RecordedAt,
         DateTimeOffset? DeletedAt);
-    private sealed record ReceiptProjection(
-        Guid? ProcurementEntryId,
-        Guid StorageLocationId,
-        string? NameZhTw,
-        string? NameThTh,
-        string? Code);
 }

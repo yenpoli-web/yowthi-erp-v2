@@ -244,13 +244,14 @@
 .procurement-new-header-fields {
   margin: 0;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.55rem;
 }
 
 .procurement-header-fields > div,
 .procurement-new-header-fields > label,
-.procurement-new-header-fields > .searchable-select {
+.procurement-new-header-fields > .searchable-select,
+.procurement-new-header-fields > .procurement-new-header-readonly {
   min-width: 0;
 }
 
@@ -274,9 +275,27 @@
   font-weight: 700;
 }
 
-.procurement-new-header-fields > label {
+.procurement-new-header-fields > label,
+.procurement-new-header-readonly {
   display: grid;
   gap: 0.32rem;
+}
+
+.procurement-new-header-readonly > span {
+  color: #294a39;
+  font-size: 0.76rem;
+  font-weight: 760;
+}
+
+.procurement-new-header-readonly > strong {
+  min-height: 2.65rem;
+  display: flex;
+  align-items: center;
+  padding: 0.55rem 0.68rem;
+  border: 1px solid #d7e3d4;
+  border-radius: 0.62rem;
+  background: #eff6ed;
+  color: #173b2a;
 }
 
 .procurement-detail-section {
@@ -483,7 +502,6 @@
   .procurement-detail-table .cell-quantity,
   .procurement-detail-table .cell-price,
   .procurement-detail-table .cell-amount { grid-column: span 2; }
-  .procurement-detail-table .cell-location,
   .procurement-detail-table .cell-pickup,
   .procurement-detail-table .cell-recorded,
   .procurement-detail-table .cell-actions { grid-column: 1 / -1; }

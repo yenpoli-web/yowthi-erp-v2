@@ -49,6 +49,15 @@ public sealed class M3RelationalModelTests
         Assert.Equal(new[] { "Id", "ProcessingRouteId" }, PropertyNames(routeVersionForeignKey.PrincipalKey.Properties));
         Assert.Equal(DeleteBehavior.Restrict, routeVersionForeignKey.DeleteBehavior);
 
+        var receiptLocationForeignKey = Assert.Single(
+            batch.GetForeignKeys(),
+            foreignKey => foreignKey.PrincipalEntityType.GetTableName() == "storage_locations");
+        Assert.Equal(new[] { "ReceiptStorageLocationId" }, PropertyNames(receiptLocationForeignKey.Properties));
+        Assert.Equal(DeleteBehavior.Restrict, receiptLocationForeignKey.DeleteBehavior);
+        Assert.Contains(
+            batch.GetIndexes(),
+            index => PropertyNames(index.Properties).SequenceEqual(new[] { "ReceiptStorageLocationId" }));
+
         var checks = CheckNames(batch);
         Assert.Contains("ck_procurement_batches_status", checks);
         Assert.Contains("ck_procurement_batches_lifecycle_status", checks);

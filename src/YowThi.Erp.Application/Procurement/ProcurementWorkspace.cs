@@ -33,8 +33,6 @@ public sealed record ProcurementBatchEntryItem(
     decimal UnitPrice,
     long AmountThb,
     bool CompanyPickup,
-    Guid? ReceiptStorageLocationId,
-    string? ReceiptStorageLocationDisplayName,
     long RowVersion,
     DateTimeOffset RecordedAt,
     DateTimeOffset? DeletedAt);
@@ -45,6 +43,9 @@ public sealed record ProcurementBatchWorkspace(
     Guid ProcurementProductId,
     string ProcurementProductDisplayName,
     string UnitCode,
+    Guid? ReceiptStorageLocationId,
+    Guid? WarehouseId,
+    string? WarehouseDisplayName,
     string ProcurementStatus,
     string LifecycleStatus,
     long RowVersion,

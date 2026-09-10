@@ -17,6 +17,7 @@ import {
 } from './procurementTransactionLifecycle';
 import {
   getProcurementBatchWorkspace,
+  getProcurementReceiptDestination,
   listProcurementBatches,
   type ProcurementBatchEntry,
   type ProcurementBatchWorkspace,
@@ -29,7 +30,7 @@ const copy = {
     search: '搜尋日期或產品', loading: '載入中', unavailable: '資料載入失敗', empty: '尚無採購主單', header: '主單',
     date: '日期', product: '產品', productSearch: '搜尋採購產品', productSelect: '選擇採購產品', status: '採購狀態', lifecycle: '主單狀態',
     details: '採購明細', noDetails: '尚無採購明細', code: '編號', source: '供應商', quantity: '數量', unitPrice: '單價', amount: '金額',
-    receiptLocation: '收貨儲位', pickup: '取貨', recordedAt: '登錄時間', actions: '操作', companyPickup: '公司取貨', otherPickup: '非公司取貨',
+    warehouse: '倉庫', pickup: '取貨', recordedAt: '登錄時間', actions: '操作', companyPickup: '公司取貨', otherPickup: '非公司取貨',
     open: '開放', completed: '已完成', active: '啟用', closed: '已關閉', deleted: '已刪除', softDelete: '刪除', restore: '還原', hardDelete: '永久刪除',
     stale: '資料已更新，請重新載入。', notFound: '資料已不存在，請重新載入。', dependency: '相關資料無法安全關閉，未執行刪除。', reauth: '刪除前需要重新驗證登入身分。', unexpected: '操作失敗。',
   },
@@ -38,7 +39,7 @@ const copy = {
     search: 'ค้นหาวันที่หรือสินค้า', loading: 'กำลังโหลด', unavailable: 'โหลดข้อมูลไม่สำเร็จ', empty: 'ยังไม่มีเอกสารจัดซื้อ', header: 'เอกสารหลัก',
     date: 'วันที่', product: 'สินค้า', productSearch: 'ค้นหาสินค้าจัดซื้อ', productSelect: 'เลือกสินค้าจัดซื้อ', status: 'สถานะจัดซื้อ', lifecycle: 'สถานะเอกสาร',
     details: 'รายการจัดซื้อ', noDetails: 'ยังไม่มีรายการจัดซื้อ', code: 'รหัส', source: 'ผู้จำหน่าย', quantity: 'ปริมาณ', unitPrice: 'ราคาต่อหน่วย', amount: 'จำนวนเงิน',
-    receiptLocation: 'ตำแหน่งรับสินค้า', pickup: 'การรับสินค้า', recordedAt: 'เวลาบันทึก', actions: 'จัดการ', companyPickup: 'บริษัทรับสินค้า', otherPickup: 'ไม่ใช่บริษัทรับสินค้า',
+    warehouse: 'คลังสินค้า', pickup: 'การรับสินค้า', recordedAt: 'เวลาบันทึก', actions: 'จัดการ', companyPickup: 'บริษัทรับสินค้า', otherPickup: 'ไม่ใช่บริษัทรับสินค้า',
     open: 'เปิด', completed: 'เสร็จสมบูรณ์', active: 'ใช้งาน', closed: 'ปิด', deleted: 'ลบแล้ว', softDelete: 'ลบ', restore: 'กู้คืน', hardDelete: 'ลบถาวร',
     stale: 'ข้อมูลถูกเปลี่ยนแล้ว โปรดโหลดใหม่', notFound: 'ไม่พบข้อมูลแล้ว โปรดโหลดใหม่', dependency: 'ไม่สามารถปิดข้อมูลที่เกี่ยวข้องได้อย่างปลอดภัย จึงยังไม่ได้ลบ', reauth: 'ต้องยืนยันตัวตนอีกครั้งก่อนลบ', unexpected: 'ดำเนินการไม่สำเร็จ',
   },
@@ -76,6 +77,12 @@ export function ProcurementWorkspacePage() {
     queryFn: ({ signal }) => listProcurementProductOptions({ locale, search: draftProductSearch, limit: 50, signal }),
     enabled: creatingHeader,
     staleTime: 10_000,
+  });
+  const destinationQuery = useQuery({
+    queryKey: ['procurement-workspace', 'receipt-destination', locale, draftDate, draftProduct?.id ?? null],
+    queryFn: ({ signal }) => getProcurementReceiptDestination(draftDate, draftProduct!.id, locale, signal),
+    enabled: creatingHeader && draftDate !== '' && draftProduct !== null,
+    staleTime: 1_000,
   });
 
   const batches = batchQuery.data?.items ?? [];
@@ -125,8 +132,8 @@ export function ProcurementWorkspacePage() {
   const detailHeader = creatingHeader
     ? draftProduct && draftDate ? { procurementDate: draftDate, procurementProductId: draftProduct.id, procurementProductDisplayName: draftProduct.displayName, unitCode: draftProduct.unitCode } : null
     : existingWorkspace ? { procurementDate: existingWorkspace.procurementDate, procurementProductId: existingWorkspace.procurementProductId, procurementProductDisplayName: existingWorkspace.procurementProductDisplayName, unitCode: existingWorkspace.unitCode } : null;
-  const existingCanAddDetail = existingWorkspace !== null && existingWorkspace.procurementStatus === 'OPEN' && existingWorkspace.lifecycleStatus === 'ACTIVE' && existingWorkspace.deletedAt === null;
-  const canAddDetail = creatingHeader ? detailHeader !== null : existingCanAddDetail;
+  const existingCanAddDetail = existingWorkspace !== null && existingWorkspace.procurementStatus === 'OPEN' && existingWorkspace.lifecycleStatus === 'ACTIVE' && existingWorkspace.deletedAt === null && existingWorkspace.receiptStorageLocationId !== null;
+  const canAddDetail = creatingHeader ? detailHeader !== null && destinationQuery.isSuccess : existingCanAddDetail;
 
   function startNewProcurement() {
     setCreatingHeader(true); setSelectedBatchId(null); setDraftDate(todayValue()); setDraftProduct(null); setDraftProductSearch(''); setDetailEditorOpen(false); lifecycleMutation.reset();
@@ -170,7 +177,7 @@ export function ProcurementWorkspacePage() {
         <section className="procurement-document-workspace">
           {lifecycleProblem && <div className="problem-banner" role="alert">{lifecycleProblem}</div>}
           {creatingHeader ? (
-            <NewProcurementHeader labels={labels} locale={locale} date={draftDate} onDateChange={(value) => { setDraftDate(value); setDetailEditorOpen(false); }} selectedProduct={draftProduct} productItems={productItems} productSearch={draftProductSearch} onProductSearchChange={setDraftProductSearch} onProductChange={(id) => { setDraftProduct(productItems.find((item) => item.id === id) ?? null); setDetailEditorOpen(false); }} productLoading={productQuery.isPending} onCancel={cancelNewProcurement} onAddDetail={() => setDetailEditorOpen(true)} canAddDetail={canAddDetail} />
+            <NewProcurementHeader labels={labels} locale={locale} date={draftDate} onDateChange={(value) => { setDraftDate(value); setDetailEditorOpen(false); }} selectedProduct={draftProduct} productItems={productItems} productSearch={draftProductSearch} onProductSearchChange={setDraftProductSearch} onProductChange={(id) => { setDraftProduct(productItems.find((item) => item.id === id) ?? null); setDetailEditorOpen(false); }} productLoading={productQuery.isPending} warehouseDisplayName={destinationQuery.data?.warehouseDisplayName ?? null} warehouseLoading={destinationQuery.isFetching} warehouseError={destinationQuery.isError} onCancel={cancelNewProcurement} onAddDetail={() => setDetailEditorOpen(true)} canAddDetail={canAddDetail} />
           ) : (
             <ExistingProcurementDocument labels={labels} locale={locale} workspace={existingWorkspace} loading={workspaceQuery.isPending && effectiveSelectedBatchId !== null} error={workspaceQuery.isError} onAddDetail={() => setDetailEditorOpen(true)} canAddDetail={canAddDetail} canHardDelete={canHardDelete} onLifecycle={(input) => lifecycleMutation.mutate(input)} lifecyclePending={lifecycleMutation.isPending} />
           )}
@@ -197,7 +204,7 @@ function ExistingProcurementDocument({ labels, locale, workspace, loading, error
         </div>
       </header>
       <dl className="procurement-header-fields">
-        <HeaderField label={labels.date} value={formatDate(workspace.procurementDate, locale)} /><HeaderField label={labels.product} value={workspace.procurementProductDisplayName} /><HeaderField label={labels.status} value={procurementStatusLabel(workspace.procurementStatus, labels)} /><HeaderField label={labels.lifecycle} value={workspace.deletedAt ? labels.deleted : lifecycleStatusLabel(workspace.lifecycleStatus, labels)} />
+        <HeaderField label={labels.date} value={formatDate(workspace.procurementDate, locale)} /><HeaderField label={labels.product} value={workspace.procurementProductDisplayName} /><HeaderField label={labels.warehouse} value={workspace.warehouseDisplayName ?? '—'} /><HeaderField label={labels.status} value={procurementStatusLabel(workspace.procurementStatus, labels)} /><HeaderField label={labels.lifecycle} value={workspace.deletedAt ? labels.deleted : lifecycleStatusLabel(workspace.lifecycleStatus, labels)} />
       </dl>
       <section className="procurement-detail-section">
         <header className="procurement-detail-section-header"><h2>{labels.details}</h2><button type="button" className="procurement-primary-action" onClick={onAddDetail} disabled={!canAddDetail}>＋ {labels.addDetail}</button></header>
@@ -210,7 +217,7 @@ function ExistingProcurementDocument({ labels, locale, workspace, loading, error
 function ProcurementDetailTable({ entries, labels, locale, pending, canHardDelete, onLifecycle }: { entries: readonly ProcurementBatchEntry[]; labels: WorkspaceLabels; locale: 'zh-TW' | 'th-TH'; pending: boolean; canHardDelete: boolean; onLifecycle: (input: LifecycleInput) => void }) {
   return (
     <div className="procurement-detail-table-wrap"><table className="procurement-detail-table">
-      <thead><tr><th>{labels.code}</th><th>{labels.source}</th><th>{labels.quantity}</th><th>{labels.unitPrice}</th><th>{labels.amount}</th><th>{labels.receiptLocation}</th><th>{labels.pickup}</th><th>{labels.recordedAt}</th><th>{labels.actions}</th></tr></thead>
+      <thead><tr><th>{labels.code}</th><th>{labels.source}</th><th>{labels.quantity}</th><th>{labels.unitPrice}</th><th>{labels.amount}</th><th>{labels.pickup}</th><th>{labels.recordedAt}</th><th>{labels.actions}</th></tr></thead>
       <tbody>{entries.map((entry) => (
         <tr key={entry.id} className={entry.deletedAt ? 'is-deleted' : ''}>
           <td className="cell-code" data-label={labels.code}><strong>{entry.sourceCode ?? '—'}</strong></td>
@@ -218,7 +225,6 @@ function ProcurementDetailTable({ entries, labels, locale, pending, canHardDelet
           <td className="cell-quantity" data-label={labels.quantity}>{formatNumber(entry.netQuantity, locale)} {entry.unitCodeSnapshot}</td>
           <td className="cell-price" data-label={labels.unitPrice}>{formatNumber(entry.unitPrice, locale)}</td>
           <td className="cell-amount" data-label={labels.amount}>{formatMoney(entry.amountThb, locale)}</td>
-          <td className="cell-location" data-label={labels.receiptLocation}>{entry.receiptStorageLocationDisplayName ?? '—'}</td>
           <td className="cell-pickup" data-label={labels.pickup}>{entry.companyPickup ? labels.companyPickup : labels.otherPickup}</td>
           <td className="cell-recorded" data-label={labels.recordedAt}>{formatDateTime(entry.recordedAt, locale)}</td>
           <td className="cell-actions" data-label={labels.actions}><LifecycleButtons compact deleted={entry.deletedAt !== null} pending={pending} labels={labels} canHardDelete={canHardDelete} onSoft={() => onLifecycle({ target: 'entry', id: entry.id, action: 'soft-delete', rowVersion: entry.rowVersion })} onRestore={() => onLifecycle({ target: 'entry', id: entry.id, action: 'restore', rowVersion: entry.rowVersion })} onHard={() => onLifecycle({ target: 'entry', id: entry.id, action: 'hard-delete', rowVersion: entry.rowVersion })} /></td>
@@ -235,10 +241,10 @@ function LifecycleButtons({ deleted, pending, labels, canHardDelete, onSoft, onR
   </span>;
 }
 
-function NewProcurementHeader({ labels, locale, date, onDateChange, selectedProduct, productItems, productSearch, onProductSearchChange, onProductChange, productLoading, onCancel, onAddDetail, canAddDetail }: { labels: WorkspaceLabels; locale: 'zh-TW' | 'th-TH'; date: string; onDateChange: (value: string) => void; selectedProduct: ProcurementProductOption | null; productItems: readonly ProcurementProductOption[]; productSearch: string; onProductSearchChange: (value: string) => void; onProductChange: (id: string) => void; productLoading: boolean; onCancel: () => void; onAddDetail: () => void; canAddDetail: boolean }) {
+function NewProcurementHeader({ labels, locale, date, onDateChange, selectedProduct, productItems, productSearch, onProductSearchChange, onProductChange, productLoading, warehouseDisplayName, warehouseLoading, warehouseError, onCancel, onAddDetail, canAddDetail }: { labels: WorkspaceLabels; locale: 'zh-TW' | 'th-TH'; date: string; onDateChange: (value: string) => void; selectedProduct: ProcurementProductOption | null; productItems: readonly ProcurementProductOption[]; productSearch: string; onProductSearchChange: (value: string) => void; onProductChange: (id: string) => void; productLoading: boolean; warehouseDisplayName: string | null; warehouseLoading: boolean; warehouseError: boolean; onCancel: () => void; onAddDetail: () => void; canAddDetail: boolean }) {
   return <div className="procurement-document procurement-new-document">
     <header className="procurement-document-header"><div className="procurement-document-title"><span>{labels.header}</span><strong>{labels.newProcurement}</strong></div><button type="button" className="procurement-secondary-action" onClick={onCancel}>{labels.cancelNew}</button></header>
-    <div className="procurement-new-header-fields"><label><span>{labels.date}</span><input type="date" value={date} onChange={(event) => onDateChange(event.target.value)} /></label><SearchableSelect label={labels.product} value={selectedProduct?.id ?? ''} options={productItems.map((item) => ({ id: item.id, label: item.displayName, secondaryLabel: item.unitCode }))} onChange={onProductChange} searchValue={productSearch} onSearchChange={onProductSearchChange} searchLabel={labels.productSearch} chooseLabel={labels.productSelect} loadingLabel={labels.loading} loading={productLoading} /></div>
+    <div className="procurement-new-header-fields"><label><span>{labels.date}</span><input type="date" value={date} onChange={(event) => onDateChange(event.target.value)} /></label><SearchableSelect label={labels.product} value={selectedProduct?.id ?? ''} options={productItems.map((item) => ({ id: item.id, label: item.displayName, secondaryLabel: item.unitCode }))} onChange={onProductChange} searchValue={productSearch} onSearchChange={onProductSearchChange} searchLabel={labels.productSearch} chooseLabel={labels.productSelect} loadingLabel={labels.loading} loading={productLoading} /><div className="procurement-new-header-readonly"><span>{labels.warehouse}</span><strong>{warehouseLoading ? labels.loading : warehouseError ? labels.unavailable : warehouseDisplayName ?? '—'}</strong></div></div>
     <section className="procurement-detail-section"><header className="procurement-detail-section-header"><h2>{labels.details}</h2><button type="button" className="procurement-primary-action" onClick={onAddDetail} disabled={!canAddDetail}>＋ {labels.addDetail}</button></header><div className="procurement-state">{labels.noDetails}</div></section><span className="procurement-date-context">{formatDate(date, locale)}</span>
   </div>;
 }

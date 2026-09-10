@@ -13,7 +13,7 @@ public sealed class ProcurementEntryOptionsIntegrationTests
         "Host=127.0.0.1;Port=55432;Database=yowthi_dev;Username=yowthi_dev";
 
     [Fact]
-    public async Task Purpose_specific_options_resolve_locale_filter_current_use_and_expose_applicable_default()
+    public async Task Purpose_specific_options_resolve_locale_and_filter_current_use()
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         var scenario = await SeedScenarioAsync(cancellationToken);
@@ -61,37 +61,6 @@ public sealed class ProcurementEntryOptionsIntegrationTests
             Assert.Equal(scenario.FarmerId, farmer.Id);
             Assert.Equal(scenario.FarmerThaiName, farmer.DisplayName);
 
-            var locations = await reader.GetReceiptStorageLocationsAsync(
-                scenario.ProductAId,
-                new ProcurementEntryOptionsQuery("zh-TW", null, 0, 50),
-                cancellationToken);
-
-            Assert.NotNull(locations);
-            Assert.Equal(scenario.DefaultLocationId, locations.DefaultStorageLocationId);
-            Assert.Contains(
-                locations.Locations.Items,
-                item => item.Id == scenario.DefaultLocationId && item.IsProductDefault);
-            Assert.Contains(
-                locations.Locations.Items,
-                item => item.Id == scenario.OtherLocationId && !item.IsProductDefault);
-            Assert.DoesNotContain(locations.Locations.Items, item => item.Id == scenario.InactiveLocationId);
-
-            var noApplicableDefault = await reader.GetReceiptStorageLocationsAsync(
-                scenario.ProductBId,
-                new ProcurementEntryOptionsQuery("th-TH", scenario.OtherLocationSearchText, 0, 50),
-                cancellationToken);
-
-            Assert.NotNull(noApplicableDefault);
-            Assert.Null(noApplicableDefault.DefaultStorageLocationId);
-            Assert.Single(noApplicableDefault.Locations.Items);
-            Assert.Equal(scenario.OtherLocationId, noApplicableDefault.Locations.Items[0].Id);
-
-            var missing = await reader.GetReceiptStorageLocationsAsync(
-                Guid.CreateVersion7(),
-                new ProcurementEntryOptionsQuery("zh-TW", null, 0, 50),
-                cancellationToken);
-
-            Assert.Null(missing);
         }
         finally
         {

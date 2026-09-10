@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using YowThi.Erp.Domain.Infrastructure;
 using YowThi.Erp.Domain.ProcessingConfiguration;
 using YowThi.Erp.Domain.Procurement;
 using YowThi.Erp.Domain.Product;
@@ -27,6 +28,7 @@ internal sealed class ProcurementBatchConfiguration : IEntityTypeConfiguration<P
         builder.Property(x => x.Id).HasColumnName("id").ValueGeneratedNever();
         builder.Property(x => x.ProcurementDate).HasColumnName("procurement_date").HasColumnType("date").IsRequired();
         builder.Property(x => x.ProcurementProductId).HasColumnName("procurement_product_id").IsRequired();
+        builder.Property(x => x.ReceiptStorageLocationId).HasColumnName("receipt_storage_location_id");
         builder.Property(x => x.ProcurementStatus).HasColumnName("procurement_status").HasConversion<string>().HasColumnType("text").IsRequired();
         builder.Property(x => x.LifecycleStatus).HasColumnName("lifecycle_status").HasConversion<string>().HasColumnType("text").IsRequired();
         builder.Property(x => x.ProcessingRouteId).HasColumnName("processing_route_id");
@@ -42,6 +44,7 @@ internal sealed class ProcurementBatchConfiguration : IEntityTypeConfiguration<P
         builder.Property(x => x.DeletedByAccountId).HasColumnName("deleted_by_account_id");
 
         builder.HasOne<ProcurementProduct>().WithMany().HasForeignKey(x => x.ProcurementProductId).OnDelete(DeleteBehavior.Restrict).HasConstraintName("fk_procurement_batches_product");
+        builder.HasOne<StorageLocation>().WithMany().HasForeignKey(x => x.ReceiptStorageLocationId).OnDelete(DeleteBehavior.Restrict).HasConstraintName("fk_procurement_batches_receipt_storage_location");
         builder.HasOne<ProcessingRoute>().WithMany().HasForeignKey(x => x.ProcessingRouteId).OnDelete(DeleteBehavior.Restrict).HasConstraintName("fk_procurement_batches_route");
         builder.HasOne<ProcessingRouteVersion>().WithMany().HasForeignKey(x => new { x.ProcessingRouteVersionId, x.ProcessingRouteId }).HasPrincipalKey(x => new { x.Id, x.ProcessingRouteId }).OnDelete(DeleteBehavior.Restrict).HasConstraintName("fk_procurement_batches_route_version_route");
 
@@ -52,6 +55,7 @@ internal sealed class ProcurementBatchConfiguration : IEntityTypeConfiguration<P
 
         builder.HasIndex(x => new { x.ProcurementDate, x.ProcurementProductId }).IsUnique().HasDatabaseName("ux_procurement_batches_date_product");
         builder.HasIndex(x => x.ProcurementProductId).HasDatabaseName("ix_procurement_batches_product_id");
+        builder.HasIndex(x => x.ReceiptStorageLocationId).HasDatabaseName("ix_procurement_batches_receipt_storage_location_id");
         builder.HasIndex(x => x.ProcessingRouteId).HasDatabaseName("ix_procurement_batches_route_id");
         builder.HasIndex(x => new { x.ProcessingRouteVersionId, x.ProcessingRouteId }).HasDatabaseName("ix_procurement_batches_route_version_route");
         builder.HasIndex(x => x.CreatedByAccountId).HasDatabaseName("ix_procurement_batches_created_by_account_id");

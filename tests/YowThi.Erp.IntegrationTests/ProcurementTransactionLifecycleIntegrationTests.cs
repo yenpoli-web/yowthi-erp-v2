@@ -37,8 +37,7 @@ public sealed class ProcurementTransactionLifecycleIntegrationTests
                     null,
                     10m,
                     20m,
-                    false,
-                    null), ct)).Value;
+                    false), ct)).Value;
 
             second = (await ConfirmAsync(
                 commandIds[1], scenario.ActorAccountId, Hash(2),
@@ -50,8 +49,7 @@ public sealed class ProcurementTransactionLifecycleIntegrationTests
                     null,
                     5m,
                     30m,
-                    true,
-                    null), ct)).Value;
+                    true), ct)).Value;
 
             Assert.Equal(first.ProcurementBatchId, second.ProcurementBatchId);
             Assert.Equal(first.PayableId, second.PayableId);

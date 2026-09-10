@@ -15,7 +15,6 @@ export interface ConfirmProcurementEntryRequest {
   netQuantity: number;
   unitPrice: number;
   companyPickup: boolean;
-  receiptStorageLocationId: string | null;
 }
 
 export interface ConfirmProcurementEntryResult {

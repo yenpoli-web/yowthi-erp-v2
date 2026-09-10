@@ -24,15 +24,18 @@ internal sealed class PostgreSqlConfirmProcurementEntryExecutor : IConfirmProcur
 
     private readonly ErpDbContext _dbContext;
     private readonly ICommandTransactionRunner _transactionRunner;
+    private readonly IProcurementReceiptDestinationResolver _receiptDestinationResolver;
     private readonly TimeProvider _timeProvider;
 
     public PostgreSqlConfirmProcurementEntryExecutor(
         ErpDbContext dbContext,
         ICommandTransactionRunner transactionRunner,
+        IProcurementReceiptDestinationResolver receiptDestinationResolver,
         TimeProvider timeProvider)
     {
         _dbContext = dbContext;
         _transactionRunner = transactionRunner;
+        _receiptDestinationResolver = receiptDestinationResolver;
         _timeProvider = timeProvider;
     }
 
@@ -97,20 +100,10 @@ internal sealed class PostgreSqlConfirmProcurementEntryExecutor : IConfirmProcur
                         ApplicationResult<ConfirmProcurementEntryResult>.Failure(sourceError));
                 }
 
-                var receiptLocationResolution = await ResolveReceiptLocationAsync(
-                    command.ReceiptStorageLocationId,
-                    product.DefaultStorageLocationId,
-                    operationCancellationToken);
-
-                if (receiptLocationResolution.Error is not null)
-                {
-                    return CommandTransactionDecision<ApplicationResult<ConfirmProcurementEntryResult>>.Rollback(
-                        ApplicationResult<ConfirmProcurementEntryResult>.Failure(receiptLocationResolution.Error));
-                }
-
                 var batch = await ResolveAndLockBatchAsync(
                     command.ProcurementDate,
                     command.ProcurementProductId,
+                    product.DefaultStorageLocationId,
                     execution.ActorAccountId.Value,
                     startedAt,
                     operationCancellationToken);
@@ -123,6 +116,25 @@ internal sealed class PostgreSqlConfirmProcurementEntryExecutor : IConfirmProcur
                 if (batch.LifecycleStatus != ProcurementBatchLifecycleStatus.ACTIVE || batch.DeletedAt is not null)
                 {
                     return RollbackFailure(ApplicationErrorKind.Conflict, ProcurementApplicationErrorCodes.BatchUnavailable);
+                }
+
+                var receiptDestinationResult = await _receiptDestinationResolver.ResolveAsync(
+                    command.ProcurementDate,
+                    command.ProcurementProductId,
+                    operationCancellationToken);
+                if (receiptDestinationResult.IsFailure)
+                {
+                    return CommandTransactionDecision<ApplicationResult<ConfirmProcurementEntryResult>>.Rollback(
+                        ApplicationResult<ConfirmProcurementEntryResult>.Failure(receiptDestinationResult.Error));
+                }
+
+                var receiptDestination = receiptDestinationResult.Value;
+                if (batch.ReceiptStorageLocationId is null)
+                {
+                    await CaptureBatchReceiptDestinationAsync(
+                        batch.Id,
+                        receiptDestination.StorageLocationId,
+                        operationCancellationToken);
                 }
 
                 var payableKind = command.SourceType == ProcurementSourceType.SUPPLIER
@@ -172,7 +184,7 @@ internal sealed class PostgreSqlConfirmProcurementEntryExecutor : IConfirmProcur
                     inventoryOperationId,
                     batch.Id,
                     command.ProcurementProductId,
-                    receiptLocationResolution.StorageLocationId,
+                    receiptDestination.StorageLocationId,
                     rawSourceKind,
                     command.SourceType == ProcurementSourceType.SUPPLIER ? command.SupplierId : null,
                     command.NetQuantity,
@@ -202,7 +214,7 @@ internal sealed class PostgreSqlConfirmProcurementEntryExecutor : IConfirmProcur
                 await UpsertInventoryPositionAsync(
                     batch.Id,
                     command.ProcurementProductId,
-                    receiptLocationResolution.StorageLocationId,
+                    receiptDestination.StorageLocationId,
                     command.SourceType,
                     command.SupplierId,
                     command.NetQuantity,
@@ -220,7 +232,7 @@ internal sealed class PostgreSqlConfirmProcurementEntryExecutor : IConfirmProcur
                     inventoryOperationId,
                     payableId,
                     transportBasisId,
-                    receiptLocationResolution.StorageLocationId,
+                    receiptDestination.StorageLocationId,
                     amountThb,
                     entry.RowVersion);
 
@@ -291,54 +303,10 @@ internal sealed class PostgreSqlConfirmProcurementEntryExecutor : IConfirmProcur
         return null;
     }
 
-    private async ValueTask<ReceiptLocationResolution> ResolveReceiptLocationAsync(
-        Guid? requestedStorageLocationId,
-        Guid? productDefaultStorageLocationId,
-        CancellationToken cancellationToken)
-    {
-        if (requestedStorageLocationId is Guid requestedId)
-        {
-            var requested = await _dbContext.Set<StorageLocation>()
-                .AsNoTracking()
-                .SingleOrDefaultAsync(x => x.Id == requestedId, cancellationToken);
-
-            if (requested is null)
-            {
-                return ReceiptLocationResolution.Failed(
-                    Error(ApplicationErrorKind.NotFound, ProcurementApplicationErrorCodes.ReceiptLocationNotFound));
-            }
-
-            if (!requested.Active || requested.DeletedAt is not null)
-            {
-                return ReceiptLocationResolution.Failed(
-                    Error(ApplicationErrorKind.Conflict, ProcurementApplicationErrorCodes.ReceiptLocationInactive));
-            }
-
-            return ReceiptLocationResolution.Resolved(requested.Id);
-        }
-
-        if (productDefaultStorageLocationId is not Guid defaultId)
-        {
-            return ReceiptLocationResolution.Failed(
-                Error(ApplicationErrorKind.Validation, ProcurementApplicationErrorCodes.ReceiptLocationRequired));
-        }
-
-        var defaultLocation = await _dbContext.Set<StorageLocation>()
-            .AsNoTracking()
-            .SingleOrDefaultAsync(x => x.Id == defaultId, cancellationToken);
-
-        if (defaultLocation is null || !defaultLocation.Active || defaultLocation.DeletedAt is not null)
-        {
-            return ReceiptLocationResolution.Failed(
-                Error(ApplicationErrorKind.Validation, ProcurementApplicationErrorCodes.ReceiptLocationRequired));
-        }
-
-        return ReceiptLocationResolution.Resolved(defaultLocation.Id);
-    }
-
     private async ValueTask<BatchState> ResolveAndLockBatchAsync(
         DateOnly procurementDate,
         Guid procurementProductId,
+        Guid? initialReceiptStorageLocationId,
         Guid actorAccountId,
         DateTimeOffset now,
         CancellationToken cancellationToken)
@@ -348,11 +316,11 @@ internal sealed class PostgreSqlConfirmProcurementEntryExecutor : IConfirmProcur
         await using (var insert = CreateSqlCommand(
             """
             INSERT INTO procurement.procurement_batches
-                (id, procurement_date, procurement_product_id, procurement_status,
+                (id, procurement_date, procurement_product_id, receipt_storage_location_id, procurement_status,
                  lifecycle_status, processing_route_id, processing_route_version_id,
                  created_at, created_by_account_id)
             VALUES
-                (@id, @procurement_date, @product_id, 'OPEN',
+                (@id, @procurement_date, @product_id, @receipt_storage_location_id, 'OPEN',
                  'ACTIVE', NULL, NULL, @created_at, @created_by)
             ON CONFLICT (procurement_date, procurement_product_id) DO NOTHING;
             """))
@@ -360,6 +328,7 @@ internal sealed class PostgreSqlConfirmProcurementEntryExecutor : IConfirmProcur
             insert.Parameters.AddWithValue("id", candidateBatchId);
             insert.Parameters.AddWithValue("procurement_date", procurementDate);
             insert.Parameters.AddWithValue("product_id", procurementProductId);
+            insert.Parameters.AddWithValue("receipt_storage_location_id", (object?)initialReceiptStorageLocationId ?? DBNull.Value);
             insert.Parameters.AddWithValue("created_at", now);
             insert.Parameters.AddWithValue("created_by", actorAccountId);
             await insert.ExecuteNonQueryAsync(cancellationToken);
@@ -367,7 +336,7 @@ internal sealed class PostgreSqlConfirmProcurementEntryExecutor : IConfirmProcur
 
         await using var select = CreateSqlCommand(
             """
-            SELECT id, procurement_status, lifecycle_status, deleted_at
+            SELECT id, receipt_storage_location_id, procurement_status, lifecycle_status, deleted_at
             FROM procurement.procurement_batches
             WHERE procurement_date = @procurement_date
               AND procurement_product_id = @product_id
@@ -384,9 +353,28 @@ internal sealed class PostgreSqlConfirmProcurementEntryExecutor : IConfirmProcur
 
         return new BatchState(
             reader.GetGuid(0),
-            Enum.Parse<ProcurementStatus>(reader.GetString(1), ignoreCase: false),
-            Enum.Parse<ProcurementBatchLifecycleStatus>(reader.GetString(2), ignoreCase: false),
-            reader.IsDBNull(3) ? null : reader.GetFieldValue<DateTimeOffset>(3));
+            reader.IsDBNull(1) ? null : reader.GetGuid(1),
+            Enum.Parse<ProcurementStatus>(reader.GetString(2), ignoreCase: false),
+            Enum.Parse<ProcurementBatchLifecycleStatus>(reader.GetString(3), ignoreCase: false),
+            reader.IsDBNull(4) ? null : reader.GetFieldValue<DateTimeOffset>(4));
+    }
+
+    private async ValueTask CaptureBatchReceiptDestinationAsync(
+        Guid procurementBatchId,
+        Guid receiptStorageLocationId,
+        CancellationToken cancellationToken)
+    {
+        await using var command = CreateSqlCommand(
+            """
+            UPDATE procurement.procurement_batches
+            SET receipt_storage_location_id = @receipt_storage_location_id,
+                row_version = row_version + 1
+            WHERE id = @batch_id
+              AND receipt_storage_location_id IS NULL;
+            """);
+        command.Parameters.AddWithValue("batch_id", procurementBatchId);
+        command.Parameters.AddWithValue("receipt_storage_location_id", receiptStorageLocationId);
+        await command.ExecuteNonQueryAsync(cancellationToken);
     }
 
     private async ValueTask<Guid> ResolvePayableAsync(
@@ -755,14 +743,9 @@ internal sealed class PostgreSqlConfirmProcurementEntryExecutor : IConfirmProcur
     private static ApplicationError Error(ApplicationErrorKind kind, string code) =>
         ApplicationError.Create(kind, code);
 
-    private sealed record ReceiptLocationResolution(Guid StorageLocationId, ApplicationError? Error)
-    {
-        public static ReceiptLocationResolution Resolved(Guid storageLocationId) => new(storageLocationId, null);
-        public static ReceiptLocationResolution Failed(ApplicationError error) => new(Guid.Empty, error);
-    }
-
     private sealed record BatchState(
         Guid Id,
+        Guid? ReceiptStorageLocationId,
         ProcurementStatus ProcurementStatus,
         ProcurementBatchLifecycleStatus LifecycleStatus,
         DateTimeOffset? DeletedAt);

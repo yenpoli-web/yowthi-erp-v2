@@ -259,10 +259,22 @@ Business identity:
 Core state:
 - Procurement status `OPEN / COMPLETED`
 - lifecycle `ACTIVE / CLOSED`
+- optional `receipt_storage_location_id` FK -> `infrastructure.storage_locations(id)`; this is the Procurement Batch/header receipt destination
 - optional Route + Route Version binding, both null or both present
 - Route Version must belong to selected Route using composite FK
 - completion/closing actor-time pairs
 - row version + lifecycle metadata
+
+Receipt-destination ownership confirmed 2026-09-10:
+- receipt destination belongs to the Procurement Batch/header, not to each Procurement Entry
+- a new date + Procurement Product Batch captures the Procurement Product's current valid default Storage Location
+- later Entries in the same Batch reuse the captured Batch location even if the Product default later changes
+- Inventory Movements continue to record the concrete Storage Location used by the receipt ledger
+- no per-Entry receipt-location override is part of the Procurement command contract
+- historical Batch data with multiple distinct PURCHASE_RECEIPT locations is ambiguous and must not be silently assigned one destination
+- a more specific calendar/date-range-to-Warehouse routing rule remains TO VERIFY unless confirmed from real YowThi operations
+
+The receipt-location FK uses core Restrict / No Action semantics and an operational index.
 
 The rule that route binding becomes fixed once processing begins remains a transaction/lifecycle invariant.
 

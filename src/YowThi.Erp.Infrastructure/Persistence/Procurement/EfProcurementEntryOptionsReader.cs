@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using YowThi.Erp.Application.Procurement;
-using YowThi.Erp.Domain.Infrastructure;
 using YowThi.Erp.Domain.Party;
 using YowThi.Erp.Domain.Procurement;
 using YowThi.Erp.Domain.Product;
@@ -63,96 +62,6 @@ internal sealed class EfProcurementEntryOptionsReader(ErpDbContext dbContext) : 
             ProcurementSourceType.FARMER => await GetFarmerOptionsAsync(validated, cancellationToken),
             _ => throw new ArgumentOutOfRangeException(nameof(sourceType), sourceType, "Unsupported Procurement source type."),
         };
-    }
-
-    public async ValueTask<ProcurementReceiptStorageLocationOptions?> GetReceiptStorageLocationsAsync(
-        Guid procurementProductId,
-        ProcurementEntryOptionsQuery query,
-        CancellationToken cancellationToken)
-    {
-        if (procurementProductId == Guid.Empty)
-        {
-            throw new ArgumentException("Procurement Product ID cannot be empty.", nameof(procurementProductId));
-        }
-
-        var validated = Validate(query);
-        var preferZhTw = validated.Locale == LocaleZhTw;
-
-        var product = await dbContext.Set<ProcurementProduct>()
-            .AsNoTracking()
-            .Where(candidate =>
-                candidate.Id == procurementProductId
-                && candidate.Active
-                && candidate.DeletedAt == null)
-            .Select(candidate => new
-            {
-                candidate.Id,
-                candidate.DefaultStorageLocationId,
-            })
-            .SingleOrDefaultAsync(cancellationToken);
-
-        if (product is null)
-        {
-            return null;
-        }
-
-        Guid? applicableDefaultStorageLocationId = null;
-        if (product.DefaultStorageLocationId is Guid defaultStorageLocationId)
-        {
-            var defaultIsApplicable = await dbContext.Set<StorageLocation>()
-                .AsNoTracking()
-                .AnyAsync(location =>
-                    location.Id == defaultStorageLocationId
-                    && location.Active
-                    && location.DeletedAt == null,
-                    cancellationToken);
-
-            if (defaultIsApplicable)
-            {
-                applicableDefaultStorageLocationId = defaultStorageLocationId;
-            }
-        }
-
-        var locations = dbContext.Set<StorageLocation>()
-            .AsNoTracking()
-            .Where(location => location.Active && location.DeletedAt == null);
-
-        if (validated.Search is not null)
-        {
-            var search = validated.Search;
-            locations = locations.Where(location =>
-                (location.NameZhTw != null && location.NameZhTw.Contains(search))
-                || (location.NameThTh != null && location.NameThTh.Contains(search))
-                || (location.Code != null && location.Code.Contains(search)));
-        }
-
-        var ordered = preferZhTw
-            ? locations
-                .OrderByDescending(location => location.Id == applicableDefaultStorageLocationId)
-                .ThenBy(location => location.NameZhTw ?? location.NameThTh)
-                .ThenBy(location => location.Id)
-                .Select(location => new ProcurementReceiptStorageLocationOption(
-                    location.Id,
-                    location.NameZhTw ?? location.NameThTh!,
-                    location.Code,
-                    location.WarehouseId,
-                    location.Id == applicableDefaultStorageLocationId))
-            : locations
-                .OrderByDescending(location => location.Id == applicableDefaultStorageLocationId)
-                .ThenBy(location => location.NameThTh ?? location.NameZhTw)
-                .ThenBy(location => location.Id)
-                .Select(location => new ProcurementReceiptStorageLocationOption(
-                    location.Id,
-                    location.NameThTh ?? location.NameZhTw!,
-                    location.Code,
-                    location.WarehouseId,
-                    location.Id == applicableDefaultStorageLocationId));
-
-        var page = await MaterializePageAsync(ordered, validated, cancellationToken);
-        return new ProcurementReceiptStorageLocationOptions(
-            product.Id,
-            applicableDefaultStorageLocationId,
-            page);
     }
 
     private async ValueTask<ProcurementEntryOptionPage<ProcurementSourceOption>> GetSupplierOptionsAsync(

@@ -14,8 +14,7 @@ public sealed record ConfirmProcurementEntryCommand(
     Guid? FarmerId,
     decimal NetQuantity,
     decimal UnitPrice,
-    bool CompanyPickup,
-    Guid? ReceiptStorageLocationId);
+    bool CompanyPickup);
 
 public sealed record ConfirmProcurementEntryExecution(
     CommandId CommandId,
@@ -103,11 +102,6 @@ public static class ConfirmProcurementEntryValidation
         if (command.UnitPrice < 0)
         {
             return Validation(ProcurementApplicationErrorCodes.InvalidUnitPrice);
-        }
-
-        if (command.ReceiptStorageLocationId == Guid.Empty)
-        {
-            return Validation(ProcurementApplicationErrorCodes.ReceiptLocationNotFound);
         }
 
         return null;

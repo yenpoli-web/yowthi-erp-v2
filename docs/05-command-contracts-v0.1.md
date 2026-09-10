@@ -56,23 +56,24 @@ Input:
 - Net Quantity
 - Unit Price
 - Company Pickup
-- Receipt Storage Location — optional
 - Command Identity
 
 System resolves:
 - Procurement Batch by date + product
 - Unit from Procurement Product
 - Amount = floor(quantity × price)
-- Receipt Storage Location when not explicitly supplied: use the unique applicable default when one can be resolved
+- Receipt destination from the Procurement Batch/header
 
-Receipt-location safe v0.1 handling under PROC-002:
-- if Receipt Storage Location is supplied, validate and use it
-- if it is not supplied and exactly one applicable default can be resolved, use that default
-- if it is not supplied and no unique applicable default can be resolved, block confirmation and require an explicit Receipt Storage Location
+PROC-002 is superseded by the confirmed 2026-09-10 receipt-destination contract:
+- Receipt Storage Location is not a Procurement Entry input
+- a new Procurement Batch captures the Procurement Product's current valid default Storage Location
+- later Entries in the same date + product Batch reuse the captured Batch location
+- if an older Batch has no captured header value, only an unambiguous historical PURCHASE_RECEIPT location may be adopted; multiple historical locations are treated as ambiguous and are not guessed
+- if a new Batch cannot resolve a valid product default, confirmation is blocked at the Batch/header boundary; the user is not asked to choose a location per detail
 
 Atomic effects:
 - Procurement Entry
-- PURCHASE_RECEIPT at the resolved Receipt Storage Location
+- PURCHASE_RECEIPT at the Procurement Batch receipt Storage Location
 - Procurement Payable source
 - Transport obligation basis if applicable
 - audit/idempotency/outbox

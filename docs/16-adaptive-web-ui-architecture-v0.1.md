@@ -207,7 +207,7 @@ Device presentation must not create or relax Business Rules.
 
 Examples:
 - SALES-001 explicit resolution requirement remains identical on all devices
-- PROC-002 receipt-location safe handling remains identical on all devices
+- Procurement receipt destination remains Batch/header-owned on all devices; Warehouse is presented on the header and no detail-level receipt-location selector is exposed
 - Processing location/mode gaps remain governed by the Gap Register
 - Finance concurrency and expected outstanding version remain identical
 

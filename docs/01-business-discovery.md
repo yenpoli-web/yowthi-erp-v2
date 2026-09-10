@@ -25,6 +25,24 @@ regardless of:
 
 Inventory and Payable do not wait for Procurement Batch completion.
 
+### Procurement receipt destination — confirmed 2026-09-10
+
+Receipt destination belongs to the Procurement Batch/header, not to each Procurement Entry.
+
+For a new Procurement Batch:
+- the system resolves the current Procurement Product default Storage Location
+- that Storage Location is captured on the Procurement Batch
+- the UI presents the owning Warehouse as the operational header value
+
+For later Procurement Entries with the same Procurement Date + Procurement Product:
+- reuse the Procurement Batch receipt destination
+- do not ask the operator to select a receipt location per detail
+- changing the Procurement Product default later does not move an already-created Procurement Batch
+
+The Inventory Movement still records the concrete Storage Location used by the receipt ledger.
+
+No separate calendar/date-range routing table or rule mapping date to Warehouse has yet been confirmed from Legacy or another YowThi Business Fact source. Procurement Date participates through the Batch identity and therefore through the captured daily Batch destination. Any more specific date-routing rule remains TO VERIFY and must not be invented.
+
 ### Procurement Entry
 
 Each entry records:

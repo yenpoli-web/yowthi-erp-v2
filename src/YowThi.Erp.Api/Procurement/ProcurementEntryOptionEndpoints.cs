@@ -14,7 +14,6 @@ public static class ProcurementEntryOptionEndpoints
 {
     public const string ProductsOperationId = "Procurement_ListEntryProductOptions";
     public const string SourcesOperationId = "Procurement_ListEntrySourceOptions";
-    public const string StorageLocationsOperationId = "Procurement_ListEntryStorageLocationOptions";
 
     private const int DefaultLimit = 50;
     private const int MaxLimit = 100;
@@ -41,14 +40,6 @@ public static class ProcurementEntryOptionEndpoints
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status403Forbidden);
 
-        procurement.MapGet("/entry-options/storage-locations", ListStorageLocationsAsync)
-            .WithName(StorageLocationsOperationId)
-            .RequireAuthorization(CapabilityPolicies.ProcurementConfirm)
-            .Produces<ProcurementReceiptStorageLocationOptionsResponse>(StatusCodes.Status200OK)
-            .ProducesProblem(StatusCodes.Status400BadRequest)
-            .ProducesProblem(StatusCodes.Status401Unauthorized)
-            .ProducesProblem(StatusCodes.Status403Forbidden)
-            .ProducesProblem(StatusCodes.Status404NotFound);
 
         return endpoints;
     }
@@ -95,46 +86,6 @@ public static class ProcurementEntryOptionEndpoints
                 .Select(item => new ProcurementSourceOptionResponse(item.Id, item.Code, item.DisplayName))
                 .ToArray(),
             EncodeCursor(page.NextOffset)));
-    }
-
-    private static async Task<IResult> ListStorageLocationsAsync(
-        HttpContext httpContext,
-        [FromServices] IApiLocaleResolver localeResolver,
-        [FromServices] IProcurementEntryOptionsReader reader,
-        CancellationToken cancellationToken)
-    {
-        if (!TryParseRequiredGuid(httpContext, "procurementProductId", out var procurementProductId, out var idError))
-        {
-            return idError!;
-        }
-
-        if (!TryCreateQuery(httpContext, localeResolver, out var query, out var error))
-        {
-            return error!;
-        }
-
-        var result = await reader.GetReceiptStorageLocationsAsync(procurementProductId, query!, cancellationToken);
-        if (result is null)
-        {
-            return ApiProblemResults.Create(
-                httpContext,
-                StatusCodes.Status404NotFound,
-                "resource.not-found",
-                "Procurement Product was not found in the current-use view.");
-        }
-
-        return TypedResults.Ok(new ProcurementReceiptStorageLocationOptionsResponse(
-            result.ProcurementProductId,
-            result.DefaultStorageLocationId,
-            result.Locations.Items
-                .Select(item => new ProcurementReceiptStorageLocationOptionResponse(
-                    item.Id,
-                    item.DisplayName,
-                    item.Code,
-                    item.WarehouseId,
-                    item.IsProductDefault))
-                .ToArray(),
-            EncodeCursor(result.Locations.NextOffset)));
     }
 
     private static bool TryCreateQuery(
@@ -202,28 +153,6 @@ public static class ProcurementEntryOptionEndpoints
             || sourceType is not (ProcurementSourceType.SUPPLIER or ProcurementSourceType.FARMER))
         {
             error = ValidationProblem(httpContext, "sourceType must be SUPPLIER or FARMER.");
-            return false;
-        }
-
-        error = null;
-        return true;
-    }
-
-    private static bool TryParseRequiredGuid(
-        HttpContext httpContext,
-        string name,
-        out Guid value,
-        out IResult? error)
-    {
-        if (!TryReadSingleQueryValue(httpContext, name, required: true, out var raw, out error))
-        {
-            value = Guid.Empty;
-            return false;
-        }
-
-        if (!Guid.TryParse(raw, out value) || value == Guid.Empty)
-        {
-            error = ValidationProblem(httpContext, $"{name} must be a non-empty UUID.");
             return false;
         }
 
@@ -321,15 +250,3 @@ public sealed record ProcurementSourceOptionsResponse(
     IReadOnlyList<ProcurementSourceOptionResponse> Items,
     string? NextCursor);
 
-public sealed record ProcurementReceiptStorageLocationOptionResponse(
-    Guid Id,
-    string DisplayName,
-    string? Code,
-    Guid WarehouseId,
-    bool IsProductDefault);
-
-public sealed record ProcurementReceiptStorageLocationOptionsResponse(
-    Guid ProcurementProductId,
-    Guid? DefaultStorageLocationId,
-    IReadOnlyList<ProcurementReceiptStorageLocationOptionResponse> Items,
-    string? NextCursor);

@@ -397,6 +397,27 @@ builder.HasOne(x => x.Farmer)
 
 The CHECK enforces SUPPLIER/FARMER exactly-one-FK shape.
 
+### Procurement Batch receipt destination mapping
+
+The confirmed 2026-09-10 Procurement receipt-destination ownership is mapped on `ProcurementBatch`, not on `ProcurementEntry` request state.
+
+Required mapping:
+- `ProcurementBatch.ReceiptStorageLocationId` -> `procurement.procurement_batches.receipt_storage_location_id`
+- real FK to `infrastructure.storage_locations(id)`
+- `DeleteBehavior.Restrict`
+- B-tree FK index
+- nullable in the relational shape only to preserve/identify legacy ambiguous rows during forward migration; new confirmable Batch state must resolve/capture a valid destination at the command boundary
+
+Command/persistence behavior:
+- the first confirmed Entry for a new date + product Batch captures the Product's current valid default Storage Location on the Batch
+- all later Entries for the same Batch use that captured value
+- Product default changes do not rewrite an already-created Batch destination
+- the HTTP/Application command does not accept a detail-level receipt-location override
+- an older Batch whose header destination is null may adopt an existing PURCHASE_RECEIPT location only when historical ledger evidence is unambiguous
+- multiple historical receipt locations remain an explicit data ambiguity; persistence must not guess one
+
+Inventory Movement remains the immutable receipt ledger and still records the concrete Storage Location. It does not replace the Batch-owned receipt-destination relationship.
+
 ## 18. Sales Allocation mapping
 
 Historical allocation truth:

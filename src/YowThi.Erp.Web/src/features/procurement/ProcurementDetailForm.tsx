@@ -10,9 +10,7 @@ import {
   type ProcurementSourceType,
 } from './confirmProcurementEntry';
 import {
-  listProcurementReceiptStorageLocationOptions,
   listProcurementSourceOptions,
-  type ProcurementReceiptStorageLocationOption,
   type ProcurementSourceOption,
 } from './procurementEntryOptions';
 import './ProcurementDetailForm.css';
@@ -46,15 +44,11 @@ const copy = {
     quantity: '數量',
     unitPrice: '單價',
     amount: '金額',
-    location: '收貨儲位',
-    locationSearch: '搜尋收貨儲位',
-    locationSelect: '選擇收貨儲位',
-    useDefault: '使用產品預設儲位',
     companyPickup: '公司取貨',
     loading: '載入中',
     save: '儲存並新增下一筆',
     cancel: '結束新增',
-    invalid: '請完整輸入供應來源、數量、單價與收貨儲位。',
+    invalid: '請完整輸入供應來源、數量與單價。',
     failed: '採購明細儲存失敗。',
   },
   'th-TH': {
@@ -72,15 +66,11 @@ const copy = {
     quantity: 'ปริมาณ',
     unitPrice: 'ราคาต่อหน่วย',
     amount: 'จำนวนเงิน',
-    location: 'ตำแหน่งรับสินค้า',
-    locationSearch: 'ค้นหาตำแหน่งรับสินค้า',
-    locationSelect: 'เลือกตำแหน่งรับสินค้า',
-    useDefault: 'ใช้ตำแหน่งเริ่มต้นของสินค้า',
     companyPickup: 'บริษัทรับสินค้า',
     loading: 'กำลังโหลด',
     save: 'บันทึกและเพิ่มรายการถัดไป',
     cancel: 'จบการเพิ่มรายการ',
-    invalid: 'กรุณากรอกแหล่งจัดซื้อ ปริมาณ ราคา และตำแหน่งรับสินค้าให้ครบถ้วน',
+    invalid: 'กรุณากรอกแหล่งจัดซื้อ ปริมาณ และราคาให้ครบถ้วน',
     failed: 'บันทึกรายการจัดซื้อไม่สำเร็จ',
   },
 } as const;
@@ -93,8 +83,6 @@ export function ProcurementDetailForm({ header, onSaved, onCancel }: Procurement
   const [selectedSource, setSelectedSource] = useState<ProcurementSourceOption | null>(null);
   const [quantity, setQuantity] = useState('');
   const [unitPrice, setUnitPrice] = useState('');
-  const [locationSearch, setLocationSearch] = useState('');
-  const [selectedLocation, setSelectedLocation] = useState<ProcurementReceiptStorageLocationOption | null>(null);
   const [companyPickup, setCompanyPickup] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
 
@@ -109,21 +97,7 @@ export function ProcurementDetailForm({ header, onSaved, onCancel }: Procurement
     staleTime: 10_000,
   });
 
-  const locationQuery = useQuery({
-    queryKey: ['procurement-detail', 'locations', locale, header.procurementProductId, locationSearch],
-    queryFn: ({ signal }) => listProcurementReceiptStorageLocationOptions(header.procurementProductId, {
-      locale,
-      search: locationSearch,
-      limit: 50,
-      signal,
-    }),
-    staleTime: 10_000,
-  });
-
   const sourceItems = includeSelected(sourceQuery.data?.items ?? [], selectedSource);
-  const locationItems = includeSelected(locationQuery.data?.items ?? [], selectedLocation);
-  const requiresExplicitLocation = locationQuery.isSuccess
-    && locationQuery.data.defaultStorageLocationId === null;
   const amountThb = useMemo(() => calculateAmount(quantity, unitPrice), [quantity, unitPrice]);
 
   const mutation = useMutation({
@@ -136,7 +110,6 @@ export function ProcurementDetailForm({ header, onSaved, onCancel }: Procurement
         || netQuantity <= 0
         || !Number.isFinite(price)
         || price < 0
-        || (requiresExplicitLocation && selectedLocation === null)
       ) {
         throw new LocalValidationError();
       }
@@ -150,7 +123,6 @@ export function ProcurementDetailForm({ header, onSaved, onCancel }: Procurement
         netQuantity,
         unitPrice: price,
         companyPickup,
-        receiptStorageLocationId: selectedLocation?.id ?? null,
       }, {
         idempotencyKey: crypto.randomUUID(),
         locale,
@@ -186,8 +158,6 @@ export function ProcurementDetailForm({ header, onSaved, onCancel }: Procurement
     setSourceSearch('');
     setQuantity('');
     setUnitPrice('');
-    setSelectedLocation(null);
-    setLocationSearch('');
     setCompanyPickup(false);
   }
 
@@ -278,27 +248,6 @@ export function ProcurementDetailForm({ header, onSaved, onCancel }: Procurement
           </select>
         </label>
 
-        <SearchableSelect
-          label={labels.location}
-          value={selectedLocation?.id ?? ''}
-          options={locationItems.map((item) => ({
-            id: item.id,
-            label: item.displayName,
-            secondaryLabel: [item.code, item.isProductDefault ? labels.useDefault : null].filter(Boolean).join(' · '),
-          }))}
-          onChange={(id) => {
-            setSelectedLocation(locationItems.find((item) => item.id === id) ?? null);
-            setLocalError(null);
-          }}
-          searchValue={locationSearch}
-          onSearchChange={setLocationSearch}
-          searchLabel={labels.locationSearch}
-          chooseLabel={labels.locationSelect}
-          emptyOptionLabel={locationQuery.data?.defaultStorageLocationId ? labels.useDefault : undefined}
-          loadingLabel={labels.loading}
-          loading={locationQuery.isPending}
-        />
-
         <label className="procurement-detail-pickup">
           <input type="checkbox" checked={companyPickup} onChange={(event) => setCompanyPickup(event.target.checked)} />
           <span>{labels.companyPickup}</span>
@@ -315,9 +264,7 @@ export function ProcurementDetailForm({ header, onSaved, onCancel }: Procurement
       </div>
 
       {localError && <div className="problem-banner" role="alert">{localError}</div>}
-      {(sourceQuery.isError || locationQuery.isError) && (
-        <div className="problem-banner" role="alert">{labels.failed}</div>
-      )}
+      {sourceQuery.isError && <div className="problem-banner" role="alert">{labels.failed}</div>}
     </section>
   );
 }

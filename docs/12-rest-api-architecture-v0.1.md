@@ -1163,17 +1163,18 @@ Body concept:
   "supplierId": "...",
   "netQuantity": 125.5,
   "unitPrice": 18.25,
-  "companyPickup": true,
-  "receiptStorageLocationId": null
+  "companyPickup": true
 }
 ```
 
-`receiptStorageLocationId` is optional and implements the existing PROC-002 safe v0.1 control:
-- when supplied, the command validates and uses that Storage Location
-- when omitted, the command uses the unique applicable default if one can be resolved
-- when omitted and no unique applicable default can be resolved, confirmation is blocked and the client must explicitly choose a Receipt Storage Location
+The 2026-09-10 Procurement receipt-destination contract makes receipt location server-owned Batch/header state:
+- `ConfirmProcurementEntryRequest` does not expose `receiptStorageLocationId`
+- a new date+product Procurement Batch captures the Procurement Product current valid default Storage Location
+- later Entries reuse the captured Batch destination even if the Product default later changes
+- the Inventory receipt ledger still records the concrete Storage Location
+- an older Batch with multiple historical receipt locations is ambiguous and is not silently repaired
 
-The Procurement UI/query contract therefore needs a location-selection query for ambiguous receipt-location cases.
+The Procurement UI may query `GET /api/v1/procurement/receipt-destination?procurementDate=...&procurementProductId=...` to present the resolved Warehouse at header level. This read endpoint does not create a Batch and does not require an Idempotency Key.
 
 The client does not supply server-owned derived/created facts such as:
 - Procurement amount THB
@@ -1205,7 +1206,7 @@ Before an endpoint slice is considered implemented, tests must cover the applica
 - correction endpoints only where owning command exists
 - no sensitive technical detail in `500`
 - OpenAPI semantic contract
-- Procurement receipt-location default/explicit/ambiguous behavior when that endpoint is implemented
+- Procurement Batch receipt-destination capture/reuse/legacy-ambiguity behavior and header Warehouse query
 
 Production integration testing later adds HTTPS/proxy/CORS/rate-limit/security-hosting checks according to deployment topology.
 
@@ -1223,7 +1224,7 @@ Technical controls such as:
 
 are ERP Control Governance / operational controls, not assertions about YowThi business operations.
 
-The optional Procurement `receiptStorageLocationId` is the HTTP representation of existing PROC-002 safe handling and does not add a new Business Rule.
+Procurement `receiptStorageLocationId` is no longer a detail/write input. The server-owned Batch receipt destination and read-only header Warehouse projection implement the confirmed 2026-09-10 PROC-002 resolution.
 
 Existing unresolved Business Rule gaps remain governed by `docs/06-business-rule-gap-register-v0.1.md`.
 

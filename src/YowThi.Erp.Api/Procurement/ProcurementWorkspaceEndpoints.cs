@@ -3,6 +3,7 @@ using YowThi.Erp.Api.Authorization;
 using YowThi.Erp.Api.Errors;
 using YowThi.Erp.Api.Localization;
 using YowThi.Erp.Api.Routing;
+using YowThi.Erp.Application.Common.Errors;
 using YowThi.Erp.Application.Procurement;
 
 namespace YowThi.Erp.Api.Procurement;
@@ -11,12 +12,23 @@ public static class ProcurementWorkspaceEndpoints
 {
     public const string ListBatchesOperationId = "Procurement_ListBatches";
     public const string GetBatchWorkspaceOperationId = "Procurement_GetBatchWorkspace";
+    public const string GetReceiptDestinationOperationId = "Procurement_GetReceiptDestination";
 
     public static IEndpointRouteBuilder MapProcurementWorkspaceEndpoints(this IEndpointRouteBuilder endpoints)
     {
         ArgumentNullException.ThrowIfNull(endpoints);
 
         var procurement = endpoints.MapApiV1().MapGroup("/procurement");
+
+        procurement.MapGet("/receipt-destination", GetReceiptDestinationAsync)
+            .WithName(GetReceiptDestinationOperationId)
+            .RequireAuthorization(CapabilityPolicies.ProcurementConfirm)
+            .Produces<ProcurementReceiptDestinationResponse>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict)
+            .ProducesProblem(StatusCodes.Status422UnprocessableEntity);
 
         procurement.MapGet("/batches", ListBatchesAsync)
             .WithName(ListBatchesOperationId)
@@ -35,6 +47,53 @@ public static class ProcurementWorkspaceEndpoints
             .ProducesProblem(StatusCodes.Status404NotFound);
 
         return endpoints;
+    }
+
+    private static async Task<IResult> GetReceiptDestinationAsync(
+        DateOnly procurementDate,
+        Guid procurementProductId,
+        HttpContext httpContext,
+        [FromServices] IApiLocaleResolver localeResolver,
+        [FromServices] IProcurementReceiptDestinationResolver resolver,
+        CancellationToken cancellationToken)
+    {
+        var result = await resolver.ResolveAsync(
+            procurementDate,
+            procurementProductId,
+            cancellationToken);
+
+        if (result.IsFailure)
+        {
+            var statusCode = result.Error.Kind switch
+            {
+                ApplicationErrorKind.Validation => StatusCodes.Status422UnprocessableEntity,
+                ApplicationErrorKind.NotFound => StatusCodes.Status404NotFound,
+                ApplicationErrorKind.Conflict => StatusCodes.Status409Conflict,
+                ApplicationErrorKind.Forbidden => StatusCodes.Status403Forbidden,
+                _ => throw new ArgumentOutOfRangeException(
+                    nameof(result.Error.Kind),
+                    result.Error.Kind,
+                    "Unsupported application error kind."),
+            };
+
+            return ApiProblemResults.Create(
+                httpContext,
+                statusCode,
+                result.Error.Code,
+                "Procurement receipt destination resolution failed.");
+        }
+
+        var locale = localeResolver.Resolve(httpContext.Request);
+        var destination = result.Value;
+        var warehouseDisplayName = locale == "zh-TW"
+            ? destination.WarehouseNameZhTw ?? destination.WarehouseNameThTh ?? "—"
+            : destination.WarehouseNameThTh ?? destination.WarehouseNameZhTw ?? "—";
+
+        return TypedResults.Ok(new ProcurementReceiptDestinationResponse(
+            destination.StorageLocationId,
+            destination.WarehouseId,
+            warehouseDisplayName,
+            destination.ResolutionSource));
     }
 
     private static async Task<IResult> ListBatchesAsync(
@@ -96,6 +155,9 @@ public static class ProcurementWorkspaceEndpoints
             workspace.ProcurementProductId,
             workspace.ProcurementProductDisplayName,
             workspace.UnitCode,
+            workspace.ReceiptStorageLocationId,
+            workspace.WarehouseId,
+            workspace.WarehouseDisplayName,
             workspace.ProcurementStatus,
             workspace.LifecycleStatus,
             workspace.RowVersion,
@@ -131,12 +193,16 @@ public static class ProcurementWorkspaceEndpoints
             item.UnitPrice,
             item.AmountThb,
             item.CompanyPickup,
-            item.ReceiptStorageLocationId,
-            item.ReceiptStorageLocationDisplayName,
             item.RowVersion,
             item.RecordedAt,
             item.DeletedAt);
 }
+
+public sealed record ProcurementReceiptDestinationResponse(
+    Guid StorageLocationId,
+    Guid WarehouseId,
+    string WarehouseDisplayName,
+    string ResolutionSource);
 
 public sealed record ProcurementBatchListItemResponse(
     Guid Id,
@@ -165,8 +231,6 @@ public sealed record ProcurementBatchEntryResponse(
     decimal UnitPrice,
     long AmountThb,
     bool CompanyPickup,
-    Guid? ReceiptStorageLocationId,
-    string? ReceiptStorageLocationDisplayName,
     long RowVersion,
     DateTimeOffset RecordedAt,
     DateTimeOffset? DeletedAt);
@@ -177,6 +241,9 @@ public sealed record ProcurementBatchWorkspaceResponse(
     Guid ProcurementProductId,
     string ProcurementProductDisplayName,
     string UnitCode,
+    Guid? ReceiptStorageLocationId,
+    Guid? WarehouseId,
+    string? WarehouseDisplayName,
     string ProcurementStatus,
     string LifecycleStatus,
     long RowVersion,

@@ -1080,3 +1080,24 @@ main@cae5a5c0bf2f1cec7bf0ffa96dde7cbafbbe4ced
 -> next hard gate: strengthen acceptance, shared searchable selector, correct module roots, then Procurement Batch/Entry workspace
 ```
 
+## Procurement receipt destination baseline — confirmed 2026-09-10
+
+The Procurement receipt destination is a Procurement Batch/header fact, not a per-detail operator choice.
+
+Authoritative operating/persistence boundary:
+- Procurement Batch identity remains Procurement Date + Procurement Product
+- a new Batch captures the Procurement Product current valid default Storage Location
+- the captured Storage Location is persisted as `procurement.procurement_batches.receipt_storage_location_id`
+- the UI presents the owning Warehouse on the Procurement header
+- Procurement detail input remains code/source, quantity, unit price, amount, and applicable pickup controls; no receipt-location selector is exposed per detail
+- later Entries in the same Batch reuse the captured Batch destination even if the Product default changes later
+- Inventory PURCHASE_RECEIPT movements retain the concrete Storage Location as ledger truth
+- historical Batches with more than one distinct receipt location are ambiguous and are not silently repaired
+- if a new Batch cannot resolve a valid Product default, confirmation is blocked at the Batch/header boundary rather than asking each detail to choose a location
+- no separate calendar/date-range-to-Warehouse rule has been confirmed from Legacy or another YowThi Business Fact source; any such more specific routing remains TO VERIFY and must not be invented
+
+Implementation architecture cross-reference:
+- relational baseline: `docs/10-relational-model-consolidation-v0.1.md`
+- EF mapping baseline: `docs/11-ef-core-mapping-architecture-v0.1.md`
+- REST contract: `docs/12-rest-api-architecture-v0.1.md`
+- command contract / gap history: `docs/05-command-contracts-v0.1.md`, `docs/06-business-rule-gap-register-v0.1.md`

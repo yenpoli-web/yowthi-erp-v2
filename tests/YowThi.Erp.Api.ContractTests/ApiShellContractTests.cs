@@ -121,7 +121,6 @@ public sealed class ApiShellContractTests
         {
             ["/api/v1/procurement/entry-options/products"] = ProcurementEntryOptionEndpoints.ProductsOperationId,
             ["/api/v1/procurement/entry-options/sources"] = ProcurementEntryOptionEndpoints.SourcesOperationId,
-            ["/api/v1/procurement/entry-options/storage-locations"] = ProcurementEntryOptionEndpoints.StorageLocationsOperationId,
         };
 
         foreach (var pair in expected)
@@ -150,6 +149,7 @@ public sealed class ApiShellContractTests
 
         var expected = new Dictionary<string, string>(StringComparer.Ordinal)
         {
+            ["/api/v1/procurement/receipt-destination"] = ProcurementWorkspaceEndpoints.GetReceiptDestinationOperationId,
             ["/api/v1/procurement/batches"] = ProcurementWorkspaceEndpoints.ListBatchesOperationId,
             ["/api/v1/procurement/batches/{procurementBatchId:guid}"] = ProcurementWorkspaceEndpoints.GetBatchWorkspaceOperationId,
         };
