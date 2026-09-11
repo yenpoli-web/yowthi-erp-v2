@@ -90,6 +90,7 @@ public static class PersistenceServiceCollectionExtensions
         services.AddScoped<IWarehouseMasterExecutor, PostgreSqlWarehouseMasterExecutor>();
         services.AddScoped<IWarehouseMasterReader, EfWarehouseMasterReader>();
         services.AddScoped<IStorageLocationMasterExecutor, PostgreSqlStorageLocationMasterExecutor>();
+        services.AddScoped<IStorageLocationLifecycleExecutor, PostgreSqlStorageLocationLifecycleExecutor>();
         services.AddScoped<IStorageLocationMasterReader, EfStorageLocationMasterReader>();
         services.AddScoped<IWarehouseLifecycleExecutor, PostgreSqlWarehouseLifecycleExecutor>();
         services.AddScoped<IInfrastructureLifecycleOptionsReader, EfInfrastructureLifecycleOptionsReader>();

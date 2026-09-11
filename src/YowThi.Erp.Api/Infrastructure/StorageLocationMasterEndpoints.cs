@@ -43,6 +43,31 @@ public static class StorageLocationMasterEndpoints
             .RequireIdempotencyKey()
             .Produces<StorageLocationMasterWriteResult>(StatusCodes.Status200OK);
 
+        group.MapPost("/storage-locations/{storageLocationId:guid}/soft-delete", SoftDeleteAsync)
+            .WithName("Infrastructure_SoftDeleteStorageLocation")
+            .RequireAuthorization(CapabilityPolicies.InfrastructureStorageLocationManage)
+            .RequireRecentDeletionReauthentication()
+            .RequireIdempotencyKey()
+            .Produces<StorageLocationLifecycleResult>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict)
+            .ProducesProblem(StatusCodes.Status422UnprocessableEntity);
+
+        group.MapPost("/storage-locations/{storageLocationId:guid}/restore", RestoreAsync)
+            .WithName("Infrastructure_RestoreStorageLocation")
+            .RequireAuthorization(CapabilityPolicies.InfrastructureStorageLocationManage)
+            .RequireIdempotencyKey()
+            .Produces<StorageLocationLifecycleResult>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status403Forbidden)
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict)
+            .ProducesProblem(StatusCodes.Status422UnprocessableEntity);
+
         return endpoints;
     }
 
@@ -133,6 +158,54 @@ public static class StorageLocationMasterEndpoints
             ? TypedResults.Ok(result.Value)
             : InfrastructureMasterEndpointSupport.Failure(httpContext, result.Error, "Storage Location update failed.");
     }
+
+    private static async Task<IResult> SoftDeleteAsync(
+        Guid storageLocationId,
+        StorageLocationLifecycleRequest request,
+        HttpContext httpContext,
+        [FromServices] IActorContext actorContext,
+        [FromServices] ICommandRequestHasher requestHasher,
+        [FromServices] IStorageLocationLifecycleExecutor executor,
+        CancellationToken cancellationToken)
+    {
+        if (request.ExpectedRowVersion < 1)
+        {
+            return TypedResults.BadRequest();
+        }
+
+        var command = new SoftDeleteStorageLocationCommand(storageLocationId, request.ExpectedRowVersion);
+        var payload = JsonPayload.FromUtf8Json(JsonSerializer.SerializeToUtf8Bytes(
+            new { commandType = "SoftDeleteStorageLocation", command }, CanonicalJsonOptions));
+        var result = await executor.SoftDeleteAsync(new SoftDeleteStorageLocationExecution(
+            httpContext.GetRequiredCommandId(), requestHasher.Compute(payload), actorContext.ActorAccountId, command), cancellationToken);
+        return result.IsSuccess
+            ? TypedResults.Ok(result.Value)
+            : InfrastructureMasterEndpointSupport.Failure(httpContext, result.Error, "Storage Location Soft Delete failed.");
+    }
+
+    private static async Task<IResult> RestoreAsync(
+        Guid storageLocationId,
+        StorageLocationLifecycleRequest request,
+        HttpContext httpContext,
+        [FromServices] IActorContext actorContext,
+        [FromServices] ICommandRequestHasher requestHasher,
+        [FromServices] IStorageLocationLifecycleExecutor executor,
+        CancellationToken cancellationToken)
+    {
+        if (request.ExpectedRowVersion < 1)
+        {
+            return TypedResults.BadRequest();
+        }
+
+        var command = new RestoreStorageLocationCommand(storageLocationId, request.ExpectedRowVersion);
+        var payload = JsonPayload.FromUtf8Json(JsonSerializer.SerializeToUtf8Bytes(
+            new { commandType = "RestoreStorageLocation", command }, CanonicalJsonOptions));
+        var result = await executor.RestoreAsync(new RestoreStorageLocationExecution(
+            httpContext.GetRequiredCommandId(), requestHasher.Compute(payload), actorContext.ActorAccountId, command), cancellationToken);
+        return result.IsSuccess
+            ? TypedResults.Ok(result.Value)
+            : InfrastructureMasterEndpointSupport.Failure(httpContext, result.Error, "Storage Location Restore failed.");
+    }
 }
 
 public sealed record CreateStorageLocationRequest(
@@ -149,3 +222,5 @@ public sealed record UpdateStorageLocationRequest(
     string? NameZhTw,
     string? NameThTh,
     bool Active);
+
+public sealed record StorageLocationLifecycleRequest(long ExpectedRowVersion);

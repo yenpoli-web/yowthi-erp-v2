@@ -1,5 +1,6 @@
 import { getApiJson, postApiCommand } from '../../app/api/apiTransport';
 import type { OperationalLocale } from '../../app/i18n/locale';
+import { prepareDeletionReauthentication } from '../../app/security/authSession';
 
 export type InfrastructureMasterStatus = 'all' | 'active' | 'inactive' | 'deleted';
 export type InventoryOrigin = 'IN_HOUSE' | 'OUTSOURCED';
@@ -104,6 +105,8 @@ export interface StorageLocationMasterItem {
 export interface StorageLocationMasterPage { items: StorageLocationMasterItem[]; nextOffset: number | null }
 export interface StorageLocationDraft { warehouseId: string; code: string | null; nameZhTw: string | null; nameThTh: string | null; active: boolean }
 export interface StorageLocationWriteResult { storageLocationId: string; rowVersion: number }
+export type StorageLocationLifecycleAction = 'soft-delete' | 'restore';
+export interface StorageLocationLifecycleResult { storageLocationId: string; rowVersion: number; deleted: boolean }
 export interface WarehouseOption { id: string; displayName: string; code: string | null }
 export interface WarehouseOptions { items: WarehouseOption[] }
 
@@ -124,4 +127,18 @@ export function createStorageLocation(request: StorageLocationDraft, options: Co
 }
 export function updateStorageLocation(id: string, request: StorageLocationDraft & { expectedRowVersion: number }, options: CommandOptions): Promise<StorageLocationWriteResult> {
   return postApiCommand(`/api/v1/infrastructure/storage-locations/${id}/update`, request, options);
+}
+
+export async function changeStorageLocationLifecycle(
+  id: string,
+  action: StorageLocationLifecycleAction,
+  expectedRowVersion: number,
+  options: CommandOptions,
+): Promise<StorageLocationLifecycleResult> {
+  if (action === 'soft-delete') await prepareDeletionReauthentication();
+  return postApiCommand<{ expectedRowVersion: number }, StorageLocationLifecycleResult>(
+    `/api/v1/infrastructure/storage-locations/${id}/${action}`,
+    { expectedRowVersion },
+    options,
+  );
 }
