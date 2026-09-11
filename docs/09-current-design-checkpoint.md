@@ -1,6 +1,6 @@
 # Current Design Checkpoint — YowThi ERP V2
 
-Checkpoint status: **P6 / V8 backend/control baseline remains COMPLETE. P8 master/security and operational recovery work has advanced beyond S7 and is formally on main through Storage Location lifecycle checkpoint `0cd7baf8c9caf78f6caddec0307fde5a2ac6d187`. Procurement Header/Detail workspace recovery, product/inventory completion, system-wide transaction deletion controls, procurement receipt-destination header semantics, deletion re-authentication, and Storage Location Soft Delete / Restore are now included in the formal baseline. Operational Document UI Architecture Recovery remains ACTIVE for modules that have not yet been recovered to the document/workspace completeness standard. `docs/31-operational-document-ui-architecture-recovery-v0.1.md` remains the active UI recovery baseline. No Business Rule is changed by this recovery.**
+Checkpoint status: **P6 / V8 backend/control baseline remains COMPLETE. P8 master/security and operational recovery work has advanced beyond S7. The formal implementation baseline includes Storage Location lifecycle at `0cd7baf8c9caf78f6caddec0307fde5a2ac6d187`; the subsequent system-recheck checkpoint refresh was validated at `a5a5c24e16eb987563d581d0946ba1378ef9eb9b` and promoted ff-only after self-hosted success. Procurement Header/Detail workspace recovery, product/inventory completion, system-wide transaction deletion controls, procurement receipt-destination header semantics, deletion re-authentication, and Storage Location Soft Delete / Restore are included in the formal baseline. Operational Document UI Architecture Recovery remains ACTIVE for modules that have not yet been recovered to the document/workspace completeness standard. `docs/31-operational-document-ui-architecture-recovery-v0.1.md` remains the active UI recovery baseline. No Business Rule is changed by this recovery.**
 
 Purpose: recover the current architecture and implementation state if conversational context is lost.
 
@@ -182,20 +182,25 @@ P8    Master-management / security / operational recovery ACTIVE
 
 P6/V8 is COMPLETE because remaining candidate control scope is now explicitly deferred or future target-specific scope; unresolved Business Facts remain governed by the Gap Register.
 
-## 5. Current formal Git baseline
+## 5. Formal validation baseline and latest evidence
 
-Current formal Git baseline:
-- `main = origin/main`
-- SHA: `0cd7baf8c9caf78f6caddec0307fde5a2ac6d187`
-- commit: `docs: checkpoint storage location lifecycle`
+Latest validated system-recheck evidence:
+- formal implementation baseline entering system recheck: `main = origin/main`
+- implementation baseline SHA: `0cd7baf8c9caf78f6caddec0307fde5a2ac6d187`
+- implementation baseline commit: `docs: checkpoint storage location lifecycle`
 - validation branch: `p8-storage-location-lifecycle-validation`
 - exact validation SHA: `0cd7baf8c9caf78f6caddec0307fde5a2ac6d187`
 - self-hosted run: `34555047230` — SUCCESS
 - job: `build-test` on runner `YowThi-ERP-V2`
 - required labels: `self-hosted`, `yowthi-erp-v2`
 - `eligibleForMainFastForward=true`
-- promotion: ff-only; push non-force; final read-back confirmed `main = origin/main = 0cd7baf8c9caf78f6caddec0307fde5a2ac6d187`
-- current follow-up validation branch: `p8-system-recheck-validation`, base `0cd7baf8c9caf78f6caddec0307fde5a2ac6d187`
+- Storage Location promotion was ff-only with non-force push; its pre-system-recheck read-back confirmed `main = origin/main = 0cd7baf8c9caf78f6caddec0307fde5a2ac6d187`
+- system-recheck validation branch: `p8-system-recheck-validation`, base `0cd7baf8c9caf78f6caddec0307fde5a2ac6d187`
+- system-recheck candidate SHA: `a5a5c24e16eb987563d581d0946ba1378ef9eb9b`
+- system-recheck self-hosted run: `34557248340` — SUCCESS
+- system-recheck candidate was promoted ff-only to main and pushed non-force after exact-SHA validation
+- current closure validation branch: `p8-system-recheck-closure-validation`, base `a5a5c24e16eb987563d581d0946ba1378ef9eb9b`
+- recovery rule: read current main identity from Git status/read-back; historical SHA evidence in this section is not a self-referential current-SHA declaration
 - separate local-only Warehouse WIP remains historical evidence at `p8-s8-warehouse-master-validation@6fbf8229601c7b5bedcca9a90d3536d711812fde`; it was not the source of the later formal Warehouse/Product/Inventory baseline
 - Formal r21 primary channel; Bootstrap/P28 recovery/read-back channels remain independent
 
