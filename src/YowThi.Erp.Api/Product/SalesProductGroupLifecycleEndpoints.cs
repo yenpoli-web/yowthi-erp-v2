@@ -30,6 +30,7 @@ public static class SalesProductGroupLifecycleEndpoints
         product.MapPost("/sales-product-groups/{salesProductGroupId:guid}/soft-delete", SoftDeleteAsync)
             .WithName(SoftDeleteOperationId)
             .RequireAuthorization(CapabilityPolicies.SalesProductGroupLifecycle)
+            .RequireRecentDeletionReauthentication()
             .RequireIdempotencyKey()
             .Produces<SalesProductGroupLifecycleResult>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest)

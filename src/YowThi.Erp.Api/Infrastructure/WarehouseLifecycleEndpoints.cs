@@ -29,6 +29,7 @@ public static class WarehouseLifecycleEndpoints
         infrastructure.MapPost("/warehouses/{warehouseId:guid}/soft-delete", SoftDeleteAsync)
             .WithName(SoftDeleteOperationId)
             .RequireAuthorization(CapabilityPolicies.InfrastructureWarehouseLifecycle)
+            .RequireRecentDeletionReauthentication()
             .RequireIdempotencyKey()
             .Produces<WarehouseLifecycleResult>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest)

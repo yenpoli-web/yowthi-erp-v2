@@ -147,6 +147,10 @@ public sealed class ContainerLifecycleEndpointContractTests
         await using var responseBody = new MemoryStream();
 
         var context = new DefaultHttpContext { RequestServices = app.Services };
+        context.User = new System.Security.Claims.ClaimsPrincipal(
+            new System.Security.Claims.ClaimsIdentity(
+                [DeletionReauthenticationClaims.CreateClaim(DateTimeOffset.UtcNow)],
+                "contract-test"));
         context.Features.Set<IHttpRequestBodyDetectionFeature>(new RequestBodyDetectionFeature());
         context.Request.Method = HttpMethods.Post;
         context.Request.Path = endpoint.RoutePattern.RawText!

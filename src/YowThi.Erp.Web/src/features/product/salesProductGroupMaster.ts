@@ -1,5 +1,6 @@
 import { getApiJson, postApiCommand } from '../../app/api/apiTransport';
 import type { OperationalLocale } from '../../app/i18n/locale';
+import { prepareDeletionReauthentication } from '../../app/security/authSession';
 
 export { ApiProblemError } from '../../app/api/apiTransport';
 
@@ -91,12 +92,13 @@ export function updateSalesProductGroup(
 
 export type SalesProductGroupLifecycleAction = 'soft-delete' | 'restore';
 
-export function changeSalesProductGroupLifecycle(
+export async function changeSalesProductGroupLifecycle(
   salesProductGroupId: string,
   action: SalesProductGroupLifecycleAction,
   expectedRowVersion: number,
   options: SalesProductGroupCommandOptions,
 ): Promise<{ salesProductGroupId: string; rowVersion: number; deleted: boolean }> {
+  if (action === 'soft-delete') await prepareDeletionReauthentication();
   return postApiCommand<{ expectedRowVersion: number }, { salesProductGroupId: string; rowVersion: number; deleted: boolean }>(
     `/api/v1/product/sales-product-groups/${salesProductGroupId}/${action}`,
     { expectedRowVersion },

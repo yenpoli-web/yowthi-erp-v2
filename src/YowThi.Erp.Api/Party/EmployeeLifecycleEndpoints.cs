@@ -30,6 +30,7 @@ public static class EmployeeLifecycleEndpoints
         party.MapPost("/employees/{employeeId:guid}/soft-delete", SoftDeleteEmployeeAsync)
             .WithName(SoftDeleteEmployeeOperationId)
             .RequireAuthorization(CapabilityPolicies.EmployeeLifecycle)
+            .RequireRecentDeletionReauthentication()
             .RequireIdempotencyKey()
             .Produces<EmployeeLifecycleResult>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest)

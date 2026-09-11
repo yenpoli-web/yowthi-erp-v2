@@ -29,6 +29,7 @@ public static class ContainerLifecycleEndpoints
         infrastructure.MapPost("/containers/{containerId:guid}/soft-delete", SoftDeleteAsync)
             .WithName(SoftDeleteOperationId)
             .RequireAuthorization(CapabilityPolicies.InfrastructureContainerLifecycle)
+            .RequireRecentDeletionReauthentication()
             .RequireIdempotencyKey()
             .Produces<ContainerLifecycleResult>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest)

@@ -30,6 +30,7 @@ public static class SalesPackagingItemLifecycleEndpoints
         salesHandling.MapPost("/packaging-items/{salesPackagingItemId:guid}/soft-delete", SoftDeleteAsync)
             .WithName(SoftDeleteOperationId)
             .RequireAuthorization(CapabilityPolicies.SalesPackagingItemLifecycle)
+            .RequireRecentDeletionReauthentication()
             .RequireIdempotencyKey()
             .Produces<SalesPackagingItemLifecycleResult>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest)

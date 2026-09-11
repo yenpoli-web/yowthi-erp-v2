@@ -30,6 +30,7 @@ public static class FarmerLifecycleEndpoints
         party.MapPost("/farmers/{farmerId:guid}/soft-delete", SoftDeleteFarmerAsync)
             .WithName(SoftDeleteFarmerOperationId)
             .RequireAuthorization(CapabilityPolicies.FarmerLifecycle)
+            .RequireRecentDeletionReauthentication()
             .RequireIdempotencyKey()
             .Produces<FarmerLifecycleResult>(StatusCodes.Status200OK)
             .ProducesProblem(StatusCodes.Status400BadRequest)
