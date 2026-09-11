@@ -1,6 +1,6 @@
 # Current Design Checkpoint — YowThi ERP V2
 
-Checkpoint status: **P6 / V8 backend/control baseline remains COMPLETE. P8 master/security and operational recovery work has advanced beyond S7. The formal implementation baseline includes Storage Location lifecycle at `0cd7baf8c9caf78f6caddec0307fde5a2ac6d187`; the subsequent system-recheck checkpoint refresh was validated at `a5a5c24e16eb987563d581d0946ba1378ef9eb9b` and promoted ff-only after self-hosted success. Procurement Header/Detail workspace recovery, product/inventory completion, system-wide transaction deletion controls, procurement receipt-destination header semantics, deletion re-authentication, and Storage Location Soft Delete / Restore are included in the formal baseline. Operational Document UI Architecture Recovery remains ACTIVE for modules that have not yet been recovered to the document/workspace completeness standard. `docs/31-operational-document-ui-architecture-recovery-v0.1.md` remains the active UI recovery baseline. No Business Rule is changed by this recovery.**
+Checkpoint status: **P6 / V8 backend/control baseline remains COMPLETE. P8 master/security and operational recovery work has advanced beyond S7. The latest implementation baseline entering this checkpoint sync is `77c6331a61607adfb14e95a6796599a70dae7aa2` (`fix(outsourced): recover operational workspace`); the actual current `main` / `origin/main` identity must always be read from Git status/read-back rather than self-declared by this checkpoint file. Procurement and Outsourced operational modules now use recovered Header/Detail document workspaces; product/inventory completion, system-wide transaction deletion controls, Procurement receipt-destination header semantics, deletion re-authentication, and Storage Location Soft Delete / Restore are also included in the formal baseline. Earlier Storage Location `0cd7baf8c9caf78f6caddec0307fde5a2ac6d187` and system-recheck `a5a5c24e16eb987563d581d0946ba1378ef9eb9b` SHAs remain historical validation evidence rather than current-main declarations. Operational Document UI Architecture Recovery remains ACTIVE for modules that have not yet reached the document/workspace completeness standard. `docs/31-operational-document-ui-architecture-recovery-v0.1.md` remains the active UI recovery baseline. No Business Rule is changed by this recovery; `OUT-003` remains unresolved and Outsourced Supply Batch Reopen remains DEFERRED.**
 
 Purpose: recover the current architecture and implementation state if conversational context is lost.
 
@@ -172,6 +172,7 @@ P8    Master-management / security / operational recovery ACTIVE
       S7 Sales Product Group Master                       COMPLETE / MAIN
       Operational UI recovery foundation                  COMPLETE / MAIN
       Procurement document workspace recovery             COMPLETE / MAIN
+      Outsourced document workspace recovery              COMPLETE / MAIN
       Product + Inventory management completion           COMPLETE / MAIN
       Transaction lifecycle + deletion controls           COMPLETE / MAIN
       Procurement receipt destination header semantics    COMPLETE / MAIN
@@ -184,7 +185,24 @@ P6/V8 is COMPLETE because remaining candidate control scope is now explicitly de
 
 ## 5. Formal validation baseline and latest evidence
 
-Latest validated system-recheck evidence:
+Latest implementation baseline entering this checkpoint sync and its validation evidence:
+- implementation baseline before this documentation-only checkpoint sync: `77c6331a61607adfb14e95a6796599a70dae7aa2`
+- current `main` / `origin/main` identity is intentionally not self-declared here; recover it from Git status/read-back
+- commit: `fix(outsourced): recover operational workspace`
+- validation branch: `p8-outsourced-operational-recovery-validation`
+- exact validation SHA: `77c6331a61607adfb14e95a6796599a70dae7aa2`
+- self-hosted run: `34576613084` — SUCCESS
+- job: `build-test` on runner `YowThi-ERP-V2`
+- required labels: `self-hosted`, `yowthi-erp-v2`
+- `eligibleForMainFastForward=true`
+- ff-only main promotion + non-force push + fetch/read-back: COMPLETE
+- local Release solution build: 0 warnings / 0 errors
+- full .NET suite: 413/413 PASS, 0 failed, 0 skipped
+- ESLint / TypeScript / presentation acceptance / Vite production build: PASS
+- browser visual acceptance: 76/76 PASS
+- real Development browser acceptance against Web 4173 -> API 5180 -> PostgreSQL passed for Outsourced workspace readback, persisted receipt location, Close sellable-inventory guard, Desktop 1440x900, and Mobile 390x844 without horizontal/interactive overflow
+
+Previous validated system-recheck evidence:
 - formal implementation baseline entering system recheck: `main = origin/main`
 - implementation baseline SHA: `0cd7baf8c9caf78f6caddec0307fde5a2ac6d187`
 - implementation baseline commit: `docs: checkpoint storage location lifecycle`
@@ -1092,7 +1110,14 @@ main@cae5a5c0bf2f1cec7bf0ffa96dde7cbafbbe4ced
 -> Procurement save transport fix and Batch-header receipt destination semantics reached formal main
 -> master deletion re-authentication reached formal main
 -> Storage Location lifecycle candidate validated and promoted through main@0cd7baf8c9caf78f6caddec0307fde5a2ac6d187
+-> Procurement real browser operational acceptance checkpoint reached formal main@e202ecb22d6e76c907f871f0b0be09252d5a753c
+-> Outsourced integrated document workspace recovery COMPLETE / main@77c6331a61607adfb14e95a6796599a70dae7aa2
+-> exact Outsourced recovery self-hosted run 34576613084 SUCCESS; build-test on YowThi-ERP-V2; eligibleForMainFastForward=true
+-> Outsourced real browser acceptance passed persisted detail/readback, receipt location, Close sellable-inventory guard, Desktop 1440x900, and Mobile 390x844 without horizontal/interactive overflow
+-> EF/Npgsql Workspace Reader nullable-Guid translation defect is fixed and covered by a PostgreSQL integration regression test; full .NET suite is 413/413 PASS
+-> OUT-003 remains unresolved; Outsourced Supply Batch Reopen remains DEFERRED and no late-detail Business Rule is inferred
 -> Warehouse S8 local-only WIP p8-s8-warehouse-master-validation@6fbf8229601c7b5bedcca9a90d3536d711812fde remains historical/non-formal evidence and does not override the later formal baseline
+-> latest implementation baseline entering the checkpoint sync = 77c6331a61607adfb14e95a6796599a70dae7aa2; actual current main must be read from Git status/read-back
 -> remaining hard gate: continue Operational Document UI recovery module-by-module without inventing Business Rules
 ```
 
@@ -1171,3 +1196,52 @@ Acceptance evidence for the candidate:
 - browser visual acceptance: 76/76 PASS
 
 This checkpoint does **not** declare Storage Location deletion-complete under `docs/33`: target-specific Hard Delete / Data Protection dependency closure remains separate implementation work. The prior current-use consistency observations for automatic Processing inference and Sales allocation also remain relevant and are not converted into new Business Rules by this lifecycle control.
+
+## Outsourced operational recovery — 2026-09-11
+
+The Outsourced module has now passed document-workspace recovery and real Development runtime acceptance without changing an unresolved YowThi Business Rule.
+
+Recovered operational boundary:
+- `/outsourced` is the unified Outsourced document workspace
+- legacy `/outsourced/supply-details/new` converges to `/outsourced` instead of maintaining a second standalone command-form UI
+- Header identity is Supply Date + Outsourced Vendor, with lifecycle/status presented at the document level
+- a new Outsourced document is established through Header context and the embedded detail editor
+- existing ACTIVE, non-deleted documents may add further details through the same workspace
+- detail input uses Sales Product, persisted pricing basis, quantity, unit price, and receipt Storage Location selection/default behavior already supported by `ConfirmOutsourcedSupplyDetail`
+- persisted detail rows display Product, Quantity, Pricing, Unit Price, Amount, Receipt Storage Location, recorded time, and lifecycle controls
+- document Close uses the existing `CloseOutsourcedSupplyBatch` command; the existing sellable-inventory guard remains authoritative
+
+Read-model/runtime correction:
+- the Workspace reader now resolves each Outsourced Detail's concrete `OUTSOURCED_RECEIPT` Storage Location through typed Inventory Operation/Movement relations
+- the first live readback exposed an EF Core / Npgsql translation defect caused by nullable `Guid.GetValueOrDefault()` inside the server query
+- the query was rewritten into an EF-translatable nullable-Guid coalesce while retaining the explicit `HasValue` predicate
+- the same persisted Batch that had returned HTTP 500 then returned HTTP 200 with its detail and concrete receipt Storage Location
+- `OutsourcedWorkspaceReaderIntegrationTests.Persisted_outsourced_detail_workspace_readback_includes_receipt_location` now exercises the real PostgreSQL -> EF Workspace Reader path so the translation/readback failure is a CI regression gate
+
+Real browser acceptance:
+- Development Test Admin login: PASS
+- persisted Outsourced workspace/detail readback: PASS
+- concrete receipt Storage Location display: PASS
+- Close with sellable inventory remaining is rejected and leaves the Batch ACTIVE: PASS
+- Desktop 1440x900: PASS
+- Mobile 390x844: PASS with no horizontal or interactive-control overflow
+- the acceptance transaction was removed through fresh Development deletion re-authentication and the formal Outsourced Batch Hard Delete endpoint; post-delete workspace readback returned 404
+
+Validation / formal promotion:
+- validation branch: `p8-outsourced-operational-recovery-validation`
+- exact SHA: `77c6331a61607adfb14e95a6796599a70dae7aa2`
+- local Release build: 0 warnings / 0 errors
+- full .NET suite: 413/413 PASS
+- ESLint / TypeScript / presentation acceptance / production build: PASS
+- browser visual acceptance: 76/76 PASS
+- self-hosted run `34576613084`: SUCCESS
+- job `build-test` on `YowThi-ERP-V2` with labels `self-hosted`, `yowthi-erp-v2`
+- `eligibleForMainFastForward=true`
+- ff-only promotion + non-force main push + fetch/read-back: COMPLETE
+- formal baseline after promotion: `main = origin/main = 77c6331a61607adfb14e95a6796599a70dae7aa2`
+
+Business Fact boundary:
+- no new Business Rule is introduced
+- `OUT-003` remains unresolved
+- Outsourced Supply Batch Reopen remains DEFERRED
+- the recovered UI does not infer that reopening or another ERP Control permits late Outsourced Supply Detail registration
