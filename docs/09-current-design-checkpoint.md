@@ -1118,6 +1118,34 @@ Implementation architecture cross-reference:
 - REST contract: `docs/12-rest-api-architecture-v0.1.md`
 - command contract / gap history: `docs/05-command-contracts-v0.1.md`, `docs/06-business-rule-gap-register-v0.1.md`
 
+## Procurement operational acceptance — 2026-09-11
+
+Procurement Header/Detail workspace has now passed a real browser-backed Development runtime acceptance against the formal PostgreSQL development database.
+
+Accepted path:
+- Development Test Admin login and authenticated Procurement capability resolution passed through the real Web -> API path
+- a clean new Procurement Batch candidate was selected by Procurement Date + Procurement Product without colliding with an existing Batch
+- the new Batch resolved the Procurement Product current valid default Storage Location at the header boundary and displayed the owning Warehouse
+- the detail UI selected an existing Supplier and registered quantity / unit price / derived amount through the normal `ConfirmProcurementEntry` path
+- `POST /api/v1/procurement/entries` returned `201`
+- the resulting Batch and Entry were read back through the Procurement workspace API and the saved Entry rendered in the Procurement detail table
+- the persisted Batch `receipt_storage_location_id` and returned Warehouse matched the header destination resolved before save
+- acceptance cleanup used fresh Development deletion re-authentication, Procurement Entry Hard Delete, then Procurement Batch Hard Delete; both Hard Delete calls returned `200` and no acceptance transaction was retained
+
+Adaptive layout acceptance:
+- Desktop detail entry keeps code, supplier, quantity, unit price, and amount on one operational row
+- Tablet detail entry keeps the same five fields on one operational row
+- true Mobile `390 x 844` acceptance, with device metrics applied before page load, has no horizontal overflow
+- Mobile row 1 is code + supplier
+- Mobile row 2 is quantity + unit price + amount
+- an earlier apparent Mobile failure was traced to changing Chrome device metrics after a Desktop page had already loaded, which produced an invalid effective CSS viewport; it was an acceptance-harness artifact and did not justify a product CSS change
+
+Runtime observation:
+- the Development Agent automatically cut over from r41 to r42 during this acceptance, which terminated Agent-owned API/Web child processes and temporarily produced Tailscale `502`
+- restarting API `5180` and Web preview `4173` under healthy r42 restored the same-origin runtime; this was an infrastructure runtime handoff effect, not a Procurement defect
+
+No Business Rule, relational model, EF mapping, migration, or Procurement source-code change was required by this acceptance.
+
 ## Storage Location lifecycle checkpoint — implementation candidate 2026-09-11
 
 Storage Location Soft Delete / Restore is now implemented as a target-specific ERP Control candidate. This supersedes the earlier DEFERRED candidate state for the Storage Location master lifecycle itself; the older C16 dependency notes remain historical evidence of the state at that time.
