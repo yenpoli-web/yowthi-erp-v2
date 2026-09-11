@@ -107,7 +107,8 @@ public static class OutsourcedWorkspaceEndpoints
 
     private static OutsourcedWorkspaceDetailResponse ToResponse(OutsourcedWorkspaceDetailItem item) =>
         new(item.Id, item.SalesProductId, item.SalesProductDisplayName, item.Quantity, item.PricingBasis,
-            item.UnitPrice, item.AmountThb, item.RowVersion, item.RecordedAt, item.DeletedAt);
+            item.UnitPrice, item.AmountThb, item.ReceiptStorageLocationId, item.ReceiptStorageLocationDisplayName,
+            item.RowVersion, item.RecordedAt, item.DeletedAt);
 }
 
 public sealed record OutsourcedWorkspaceListItemResponse(
@@ -133,6 +134,8 @@ public sealed record OutsourcedWorkspaceDetailResponse(
     string PricingBasis,
     decimal UnitPrice,
     long AmountThb,
+    Guid ReceiptStorageLocationId,
+    string ReceiptStorageLocationDisplayName,
     long RowVersion,
     DateTimeOffset RecordedAt,
     DateTimeOffset? DeletedAt);

@@ -98,14 +98,14 @@ if (pageLocaleControls !== 0) {
   fail(`LocaleControl must be owned by the application shells only; found ${pageLocaleControls} page-level instance(s).`);
 }
 const manualPageLocaleControls = Math.max(0, manualLocaleControlMarkupCount - 1);
-if (manualPageLocaleControls > 2) {
-  fail(`Operational UI recovery allows at most 2 remaining page-level locale controls; found ${manualPageLocaleControls}.`);
+if (manualPageLocaleControls > 1) {
+  fail(`Operational UI recovery allows at most 1 remaining page-level locale control; found ${manualPageLocaleControls}.`);
 }
-if (legacyOptionPickerCount > 18) {
-  fail(`Operational UI recovery allows at most 18 remaining stacked option-picker controls; found ${legacyOptionPickerCount}.`);
+if (legacyOptionPickerCount > 14) {
+  fail(`Operational UI recovery allows at most 14 remaining stacked option-picker controls; found ${legacyOptionPickerCount}.`);
 }
-if (persistentHintCount > 9) {
-  fail(`Operational UI recovery allows at most 9 remaining persistent hint controls; found ${persistentHintCount}.`);
+if (persistentHintCount > 7) {
+  fail(`Operational UI recovery allows at most 7 remaining persistent hint controls; found ${persistentHintCount}.`);
 }
 if (placeholderCount !== 0) {
   fail(`User-requested hint-free UI requires zero placeholder attributes; found ${placeholderCount}.`);
@@ -183,6 +183,9 @@ if (!routerSource.includes(`path: 'data-protection/hard-delete', element: <Navig
 if (!routerSource.includes(`path: 'outsourced', element: <OutsourcedLifecycleWorkspace />`)) {
   fail('Outsourced module root must open the lifecycle workspace.');
 }
+if (!routerSource.includes(`path: 'outsourced/supply-details/new', element: <Navigate to=\"/outsourced\" replace />`)) {
+  fail('Legacy Outsourced Supply Detail route must converge on the Outsourced workspace.');
+}
 
 const navigation = read('src/app/navigation.ts');
 if (!navigation.includes("to: '/modules',\n    icon: 'home'")) {
@@ -216,13 +219,13 @@ if (!deviceExperience.includes("new URLSearchParams(window.location.search).get(
 console.log('presentation acceptance: PASS');
 console.log('- application shell locale ownership: 3/3');
 console.log('- page-level LocaleControl component instances: 0');
-console.log(`- recovery debt: ${manualPageLocaleControls}/2 page locale controls, ${legacyOptionPickerCount}/18 legacy option-pickers, ${persistentHintCount}/9 persistent hints`);
+console.log(`- recovery debt: ${manualPageLocaleControls}/1 page locale controls, ${legacyOptionPickerCount}/14 legacy option-pickers, ${persistentHintCount}/7 persistent hints`);
 console.log('- placeholder hints: 0');
 console.log('- raw JSX domain enums: 0');
 console.log('- module registry: 13 operational / 13 localized');
 console.log('- Data Protection correspondence: 13/13 target-specific Hard Delete controls');
 console.log('- Data Protection deletion re-authentication: enforced');
-console.log('- Outsourced module root: lifecycle workspace');
+console.log('- Outsourced module root: document workspace; legacy detail route converged');
 console.log('- Nature Green tablet/mobile shell markers: present');
 console.log('- mobile primary navigation: localized home + 3 core operations');
 console.log('- deterministic desktop/tablet/mobile override: present');

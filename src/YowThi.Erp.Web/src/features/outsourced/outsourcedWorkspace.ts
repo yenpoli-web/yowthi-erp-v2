@@ -21,6 +21,8 @@ export interface OutsourcedWorkspaceDetail {
   pricingBasis: string;
   unitPrice: number;
   amountThb: number;
+  receiptStorageLocationId: string;
+  receiptStorageLocationDisplayName: string;
   rowVersion: number;
   recordedAt: string;
   deletedAt: string | null;

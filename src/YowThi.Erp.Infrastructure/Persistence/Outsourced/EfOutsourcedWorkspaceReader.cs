@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using YowThi.Erp.Application.Outsourced;
+using YowThi.Erp.Domain.Infrastructure;
+using YowThi.Erp.Domain.Inventory;
 using YowThi.Erp.Domain.Outsourced;
 using YowThi.Erp.Domain.Party;
 using YowThi.Erp.Domain.Product;
@@ -119,6 +121,29 @@ internal sealed class EfOutsourcedWorkspaceReader(ErpDbContext dbContext) : IOut
             })
             .ToListAsync(cancellationToken);
 
+        var detailIds = details.Select(detail => detail.Id).ToArray();
+        var receiptLocations = detailIds.Length == 0
+            ? []
+            : await (
+                from operation in dbContext.Set<InventoryOperation>().AsNoTracking()
+                join movement in dbContext.Set<InventoryMovement>().AsNoTracking()
+                    on operation.Id equals movement.InventoryOperationId
+                join location in dbContext.Set<StorageLocation>().AsNoTracking()
+                    on movement.StorageLocationId equals location.Id
+                where operation.OutsourcedSupplyDetailId.HasValue
+                    && detailIds.Contains(operation.OutsourcedSupplyDetailId ?? Guid.Empty)
+                    && movement.MovementType == InventoryMovementType.OUTSOURCED_RECEIPT
+                select new ReceiptLocationRow(
+                    operation.OutsourcedSupplyDetailId ?? Guid.Empty,
+                    location.Id,
+                    location.NameZhTw,
+                    location.NameThTh))
+                .ToListAsync(cancellationToken);
+
+        var receiptLocationByDetailId = receiptLocations
+            .GroupBy(location => location.DetailId)
+            .ToDictionary(group => group.Key, group => group.Single());
+
         return new OutsourcedWorkspace(
             batch.Id,
             batch.SupplyDate,
@@ -129,18 +154,34 @@ internal sealed class EfOutsourcedWorkspaceReader(ErpDbContext dbContext) : IOut
             batch.CreatedAt,
             batch.ClosedAt,
             batch.DeletedAt,
-            details.Select(detail => new OutsourcedWorkspaceDetailItem(
-                detail.Id,
-                detail.SalesProductId,
-                DisplayName(detail.ProductNameZhTw, detail.ProductNameThTh, locale, detail.SalesProductId),
-                detail.Quantity,
-                detail.PricingBasisSnapshot.ToString(),
-                detail.UnitPrice,
-                detail.AmountThb,
-                detail.RowVersion,
-                detail.RecordedAt,
-                detail.DeletedAt)).ToArray());
+            details.Select(detail =>
+            {
+                if (!receiptLocationByDetailId.TryGetValue(detail.Id, out var receiptLocation))
+                {
+                    throw new InvalidOperationException($"Outsourced Supply Detail {detail.Id} has no OUTSOURCED_RECEIPT location.");
+                }
+
+                return new OutsourcedWorkspaceDetailItem(
+                    detail.Id,
+                    detail.SalesProductId,
+                    DisplayName(detail.ProductNameZhTw, detail.ProductNameThTh, locale, detail.SalesProductId),
+                    detail.Quantity,
+                    detail.PricingBasisSnapshot.ToString(),
+                    detail.UnitPrice,
+                    detail.AmountThb,
+                    receiptLocation.StorageLocationId,
+                    DisplayName(receiptLocation.NameZhTw, receiptLocation.NameThTh, locale, receiptLocation.StorageLocationId),
+                    detail.RowVersion,
+                    detail.RecordedAt,
+                    detail.DeletedAt);
+            }).ToArray());
     }
+
+    private sealed record ReceiptLocationRow(
+        Guid DetailId,
+        Guid StorageLocationId,
+        string? NameZhTw,
+        string? NameThTh);
 
     private static string DisplayName(string? zhTw, string? thTh, string locale, Guid fallbackId) =>
         locale == LocaleZhTw

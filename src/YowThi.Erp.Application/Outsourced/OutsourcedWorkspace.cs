@@ -29,6 +29,8 @@ public sealed record OutsourcedWorkspaceDetailItem(
     string PricingBasis,
     decimal UnitPrice,
     long AmountThb,
+    Guid ReceiptStorageLocationId,
+    string ReceiptStorageLocationDisplayName,
     long RowVersion,
     DateTimeOffset RecordedAt,
     DateTimeOffset? DeletedAt);

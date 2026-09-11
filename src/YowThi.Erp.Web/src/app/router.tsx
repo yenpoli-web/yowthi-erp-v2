@@ -9,7 +9,6 @@ import { StorageLocationMasterPage } from '../features/inventory/StorageLocation
 import { WarehouseMasterPage } from '../features/inventory/WarehouseMasterPage';
 import { LaborDailyWagePage } from '../features/labor/LaborDailyWagePage';
 import { OutsourcedLifecycleWorkspace } from '../features/outsourced/OutsourcedLifecycleWorkspace';
-import { OutsourcedSupplyDetailPage } from '../features/outsourced/OutsourcedSupplyDetailPage';
 import { CustomerMasterPage } from '../features/party/CustomerMasterPage';
 import { EmployeeMasterPage } from '../features/party/EmployeeMasterPage';
 import { FarmerMasterPage } from '../features/party/FarmerMasterPage';
@@ -39,7 +38,7 @@ export const router = createBrowserRouter([
       { path: 'procurement', element: <ProcurementWorkspacePage /> },
       { path: 'procurement/entries/new', element: <Navigate to="/procurement" replace /> },
       { path: 'outsourced', element: <OutsourcedLifecycleWorkspace /> },
-      { path: 'outsourced/supply-details/new', element: <OutsourcedSupplyDetailPage /> },
+      { path: 'outsourced/supply-details/new', element: <Navigate to="/outsourced" replace /> },
       { path: 'processing/executions/new', element: <ProcessingExecutionPage /> },
       { path: 'sales', element: <SalesWorkspacePage /> },
       { path: 'sales-handling', element: <SalesPackagingWorkPage /> },
