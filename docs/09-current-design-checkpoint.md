@@ -1,6 +1,6 @@
 # Current Design Checkpoint — YowThi ERP V2
 
-Checkpoint status: **P6 / V8 backend/control baseline remains COMPLETE. P8-S1 through P8-S7 master/security slices are formally on main through closure `e3cca04bc805d12f212467db0f68424cd4c71657`. P7 command-form routes and Nature Green Desktop/Tablet/Mobile shell were historically validated, but the interpretation that the operational UI layer was complete is WITHDRAWN. Operational Document UI Architecture Recovery is ACTIVE because document Header/Detail semantics were flattened into command forms, entity search/select controls were duplicated, page-level locale controls and persistent hint UI remained, and prior presentation acceptance contained false-positive gaps. `docs/31-operational-document-ui-architecture-recovery-v0.1.md` is the active UI recovery baseline. No Business Rule is changed by this recovery.**
+Checkpoint status: **P6 / V8 backend/control baseline remains COMPLETE. P8 master/security and operational recovery work has advanced beyond S7 and is formally on main through Storage Location lifecycle checkpoint `0cd7baf8c9caf78f6caddec0307fde5a2ac6d187`. Procurement Header/Detail workspace recovery, product/inventory completion, system-wide transaction deletion controls, procurement receipt-destination header semantics, deletion re-authentication, and Storage Location Soft Delete / Restore are now included in the formal baseline. Operational Document UI Architecture Recovery remains ACTIVE for modules that have not yet been recovered to the document/workspace completeness standard. `docs/31-operational-document-ui-architecture-recovery-v0.1.md` remains the active UI recovery baseline. No Business Rule is changed by this recovery.**
 
 Purpose: recover the current architecture and implementation state if conversational context is lost.
 
@@ -161,15 +161,23 @@ P6    Business / ERP Control vertical slices             COMPLETE
 P7    React command-form system skeleton S0-S12         HISTORICALLY VALIDATED
       Nature Green adaptive shell / visual baseline     HISTORICALLY VALIDATED
       Operational Document UI Architecture              RECOVERY ACTIVE
-P8    Master-management / security runtime foundation     ACTIVE
+P8    Master-management / security / operational recovery ACTIVE
       S1 Supplier Master                                  COMPLETE / MAIN
       S2 Customer Master + iOS viewport stabilization     COMPLETE / MAIN
       Security Foundation                                 COMPLETE / MAIN
-      S3 Farmer Master                                     COMPLETE / MAIN
-      S4 Outsourced Vendor Master                          COMPLETE / MAIN
-      S5 Employee Master                                   COMPLETE / MAIN
-      S6 Sales Packaging Item Master                       COMPLETE / MAIN
-      S7 Sales Product Group Master                         COMPLETE / MAIN
+      S3 Farmer Master                                    COMPLETE / MAIN
+      S4 Outsourced Vendor Master                         COMPLETE / MAIN
+      S5 Employee Master                                  COMPLETE / MAIN
+      S6 Sales Packaging Item Master                      COMPLETE / MAIN
+      S7 Sales Product Group Master                       COMPLETE / MAIN
+      Operational UI recovery foundation                  COMPLETE / MAIN
+      Procurement document workspace recovery             COMPLETE / MAIN
+      Product + Inventory management completion           COMPLETE / MAIN
+      Transaction lifecycle + deletion controls           COMPLETE / MAIN
+      Procurement receipt destination header semantics    COMPLETE / MAIN
+      Master deletion re-authentication                   COMPLETE / MAIN
+      Storage Location Soft Delete / Restore              COMPLETE / MAIN
+      Remaining operational document UI recovery          ACTIVE
 ```
 
 P6/V8 is COMPLETE because remaining candidate control scope is now explicitly deferred or future target-specific scope; unresolved Business Facts remain governed by the Gap Register.
@@ -178,21 +186,18 @@ P6/V8 is COMPLETE because remaining candidate control scope is now explicitly de
 
 Current formal Git baseline:
 - `main = origin/main`
-- SHA: `e3cca04bc805d12f212467db0f68424cd4c71657`
-- commit: `docs: checkpoint p8 s7 sales product group master`
-- implementation validation branch: `p8-s7-sales-product-group-master-validation`
-- implementation SHA: `a01a45bebc6e874be63e3715a5170c5d4fa848f3`
-- implementation self-hosted run: `34198641030` — SUCCESS
-- closure validation branch: `p8-s7-sales-product-group-master-closure-validation`
-- closure SHA: `e3cca04bc805d12f212467db0f68424cd4c71657`
-- closure self-hosted run: `34199419321` — SUCCESS
+- SHA: `0cd7baf8c9caf78f6caddec0307fde5a2ac6d187`
+- commit: `docs: checkpoint storage location lifecycle`
+- validation branch: `p8-storage-location-lifecycle-validation`
+- exact validation SHA: `0cd7baf8c9caf78f6caddec0307fde5a2ac6d187`
+- self-hosted run: `34555047230` — SUCCESS
 - job: `build-test` on runner `YowThi-ERP-V2`
 - required labels: `self-hosted`, `yowthi-erp-v2`
 - `eligibleForMainFastForward=true`
-- promotion: ff-only; push non-force; final fetch/read-back confirmed `main = origin/main = e3cca04bc805d12f212467db0f68424cd4c71657`
-- current recovery branch: `p8-operational-ui-recovery-validation`, base `e3cca04bc805d12f212467db0f68424cd4c71657`
-- separate local-only Warehouse WIP: `p8-s8-warehouse-master-validation@6fbf8229601c7b5bedcca9a90d3536d711812fde`; not pushed, not on main, runtime acceptance pending
-- Formal r20 primary channel; P28 loopback remains independent recovery/read-back channel
+- promotion: ff-only; push non-force; final read-back confirmed `main = origin/main = 0cd7baf8c9caf78f6caddec0307fde5a2ac6d187`
+- current follow-up validation branch: `p8-system-recheck-validation`, base `0cd7baf8c9caf78f6caddec0307fde5a2ac6d187`
+- separate local-only Warehouse WIP remains historical evidence at `p8-s8-warehouse-master-validation@6fbf8229601c7b5bedcca9a90d3536d711812fde`; it was not the source of the later formal Warehouse/Product/Inventory baseline
+- Formal r21 primary channel; Bootstrap/P28 recovery/read-back channels remain independent
 
 C18 implementation validation:
 - branch: `p6-v8-farmer-hard-delete-validation`
@@ -959,7 +964,7 @@ Use ff-only promotion and non-force push.
 Do not require routine GitHub-hosted runners, paid/larger runners, Codespaces, or unconfirmed metered services.
 
 Formal/Bootstrap operational split:
-- Formal r20 is the primary formal Repository mutation/validation channel
+- Formal r21 is the primary formal Repository mutation/validation channel
 - Bootstrap r2 is an independent recovery/read-back channel
 - both currently resolve to the same healthy Agent runtime/tool catalog but through separate formal/bootstrap tunnel profiles
 - when a Formal tunnel call is ambiguous, use Bootstrap read-back before assuming whether a mutation occurred
@@ -1009,8 +1014,8 @@ main@cae5a5c0bf2f1cec7bf0ffa96dde7cbafbbe4ced
 -> P6/V8 closure hard gate confirms current Gap Register CONTROL items are satisfied
 -> remaining lifecycle / Hard Delete / Batch-control candidates are DEFERRED / future target-specific scope
 -> P6 / V8 COMPLETE
--> Formal r20 is primary; Bootstrap r2 remains independent recovery/read-back channel
--> current docs checkpoint branch: p7-presentation-closure-checkpoint-validation
+-> Formal r21 is primary; Bootstrap r2 remains independent recovery/read-back channel
+-> current docs checkpoint branch: p8-system-recheck-validation
 -> authoritative C18 supplement: docs/27-farmer-hard-delete-control-v0.1.md
 -> authoritative P6/V8 closure supplement: docs/28-p6-v8-closure-checkpoint-v0.1.md
 -> authoritative P7 system-skeleton closure supplement: docs/29-p7-system-skeleton-closure-checkpoint-v0.1.md
@@ -1076,8 +1081,14 @@ main@cae5a5c0bf2f1cec7bf0ffa96dde7cbafbbe4ced
 -> interpretation that P7 operational modules were complete is withdrawn; P7 build/layout history remains valid
 -> docs/31-operational-document-ui-architecture-recovery-v0.1.md is ACTIVE
 -> p8-operational-ui-recovery-validation created from formal main e3cca04bc805d12f212467db0f68424cd4c71657
--> Warehouse S8 preserved separately as local-only WIP p8-s8-warehouse-master-validation@6fbf8229601c7b5bedcca9a90d3536d711812fde; not formal, not pushed
--> next hard gate: strengthen acceptance, shared searchable selector, correct module roots, then Procurement Batch/Entry workspace
+-> Procurement Header/Detail workspace recovery subsequently reached formal main
+-> Product + Inventory management completion reached formal main
+-> Data Protection correspondence and Procurement/Processing/Sales transaction lifecycle deletion controls reached formal main
+-> Procurement save transport fix and Batch-header receipt destination semantics reached formal main
+-> master deletion re-authentication reached formal main
+-> Storage Location lifecycle candidate validated and promoted through main@0cd7baf8c9caf78f6caddec0307fde5a2ac6d187
+-> Warehouse S8 local-only WIP p8-s8-warehouse-master-validation@6fbf8229601c7b5bedcca9a90d3536d711812fde remains historical/non-formal evidence and does not override the later formal baseline
+-> remaining hard gate: continue Operational Document UI recovery module-by-module without inventing Business Rules
 ```
 
 ## Procurement receipt destination baseline — confirmed 2026-09-10
