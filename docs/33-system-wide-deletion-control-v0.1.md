@@ -1,6 +1,6 @@
 # System-wide Deletion Control v0.1 — YowThi ERP V2
 
-Status: **CONFIRMED BUSINESS / SECURITY DECISION — IMPLEMENTATION DEFERRED UNTIL TRANSACTION LIFECYCLE CLOSURE**
+Status: **CONFIRMED BUSINESS / SECURITY DECISION — IMPLEMENTATION IN PROGRESS**
 Confirmed: 2026-09-09
 
 ## 1. Purpose
@@ -84,3 +84,15 @@ Hard Delete must remove only the selected target and its target-owned/target-der
 9. validate each focused candidate on the YowThi ERP V2 self-hosted runner before main promotion
 
 No remaining operational module may be considered deletion-complete merely because it has a UI delete button; API capability metadata, re-authentication, persistence lifecycle, Hard Delete closure, Audit, concurrency, idempotency, and actual PostgreSQL acceptance must all correspond.
+
+## 7. Current implementation checkpoint — 2026-09-11
+
+System-wide deletion implementation is active after transaction lifecycle closure.
+
+Current evidence includes:
+- Procurement / Processing / Sales transaction lifecycle and target-specific Hard Delete controls
+- Outsourced Supply Batch / Detail lifecycle and target-specific Hard Delete controls
+- fresh deletion re-authentication enforced consistently for existing master Soft Delete endpoints
+- Storage Location Soft Delete / Restore candidate implemented with server re-authentication, idempotency, row-version concurrency, Audit, PostgreSQL integration acceptance, responsive Web controls, and deleted/current views
+
+Storage Location Hard Delete is **not** included in that Soft Delete / Restore candidate and remains separate target-specific Data Protection work. The dependency closure must be inventoried before implementation because Storage Location participates in typed/default/current Inventory and operational references. No generic cascade or history rewrite may be introduced.

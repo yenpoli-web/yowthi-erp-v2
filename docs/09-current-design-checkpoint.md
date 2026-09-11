@@ -1101,3 +1101,29 @@ Implementation architecture cross-reference:
 - EF mapping baseline: `docs/11-ef-core-mapping-architecture-v0.1.md`
 - REST contract: `docs/12-rest-api-architecture-v0.1.md`
 - command contract / gap history: `docs/05-command-contracts-v0.1.md`, `docs/06-business-rule-gap-register-v0.1.md`
+
+## Storage Location lifecycle checkpoint — implementation candidate 2026-09-11
+
+Storage Location Soft Delete / Restore is now implemented as a target-specific ERP Control candidate. This supersedes the earlier DEFERRED candidate state for the Storage Location master lifecycle itself; the older C16 dependency notes remain historical evidence of the state at that time.
+
+Implemented boundary:
+- `SoftDeleteStorageLocation` / `RestoreStorageLocation`
+- capability: `infrastructure.storage-location.manage`
+- Soft Delete requires fresh deletion re-authentication; Restore does not
+- persistent CommandId idempotency and canonical request hashing
+- explicit expected `row_version`, stale-version conflict, row lock, and transactional mutation
+- append-oriented `DATA_LIFECYCLE` Audit with subject `infrastructure.storage-location`
+- Storage Location `active` is preserved by lifecycle operations
+- Warehouse typed FK remains intact; no parent/child cascade is introduced
+- no Procurement, Processing, Sales, Inventory ledger, or Inventory Position history is rewritten by this lifecycle control
+- no relation/schema/migration change is required because deletion metadata already exists
+- Web Storage Location master exposes deleted/current views, Soft Delete, and Restore with zh-TW / th-TH presentation
+
+Acceptance evidence for the candidate:
+- Release solution build: 0 errors
+- full .NET suite: 412/412 PASS
+- TypeScript, ESLint, Vite production build: PASS
+- presentation acceptance: PASS
+- browser visual acceptance: 76/76 PASS
+
+This checkpoint does **not** declare Storage Location deletion-complete under `docs/33`: target-specific Hard Delete / Data Protection dependency closure remains separate implementation work. The prior current-use consistency observations for automatic Processing inference and Sales allocation also remain relevant and are not converted into new Business Rules by this lifecycle control.
