@@ -45,11 +45,13 @@ public sealed class ProcessingExecutionOptionsIntegrationTests
             var batches = await reader.GetBatchesAsync(
                 new ProcessingExecutionOptionsQuery("zh-TW", scenario.ProductSearchText, 0, 50),
                 cancellationToken);
-            var batch = Assert.Single(batches.Items);
-            Assert.Equal(scenario.ProcurementBatchId, batch.Id);
+            Assert.Equal(2, batches.Items.Count);
+            var batch = Assert.Single(batches.Items, item => item.Id == scenario.ProcurementBatchId);
             Assert.Equal(scenario.RouteVersionId, batch.ProcessingRouteVersionId);
             Assert.Equal(scenario.ProcurementProductZhTwName, batch.ProcurementProductDisplayName);
-            Assert.DoesNotContain(batches.Items, item => item.Id == scenario.NoRouteBatchId);
+            var unboundBatch = Assert.Single(batches.Items, item => item.Id == scenario.NoRouteBatchId);
+            Assert.Equal(scenario.RouteVersionId, unboundBatch.ProcessingRouteVersionId);
+            Assert.Equal(scenario.ProcurementProductZhTwName, unboundBatch.ProcurementProductDisplayName);
 
             var modules = await reader.GetModulesAsync(
                 scenario.ProcurementBatchId,
@@ -65,10 +67,57 @@ public sealed class ProcessingExecutionOptionsIntegrationTests
             Assert.Null(sourceModule.InputContainerId);
             Assert.Null(sourceModule.DefaultInputContainerCount);
 
-            Assert.Null(await reader.GetModulesAsync(
+            var unboundModules = await reader.GetModulesAsync(
                 scenario.NoRouteBatchId,
                 new ProcessingExecutionOptionsQuery("zh-TW", null, 0, 50),
-                cancellationToken));
+                cancellationToken);
+            Assert.NotNull(unboundModules);
+            Assert.Equal(scenario.RouteVersionId, unboundModules.ProcessingRouteVersionId);
+            Assert.Equal(3, unboundModules.Modules.Items.Count);
+
+            var competingRouteId = Guid.CreateVersion7();
+            var competingRouteVersionId = Guid.CreateVersion7();
+            await ExecuteNonQueryAsync(
+                """
+                INSERT INTO processing_config.processing_routes
+                    (id, procurement_product_id, name_zh_tw, name_th_th, active, created_at, created_by_account_id)
+                VALUES
+                    (@route_id, @procurement_product_id, 'P6V3Q1競合流程', NULL, true, @now, @actor_id);
+
+                INSERT INTO processing_config.processing_route_versions
+                    (id, processing_route_id, version_number, status)
+                VALUES
+                    (@route_version_id, @route_id, 1, 'ACTIVE');
+                """,
+                cancellationToken,
+                ("route_id", competingRouteId),
+                ("route_version_id", competingRouteVersionId),
+                ("procurement_product_id", scenario.ProcurementProductId),
+                ("actor_id", scenario.ActorAccountId),
+                ("now", DateTimeOffset.UtcNow));
+            try
+            {
+                var ambiguousBatches = await reader.GetBatchesAsync(
+                    new ProcessingExecutionOptionsQuery("zh-TW", scenario.ProductSearchText, 0, 50),
+                    cancellationToken);
+                Assert.Contains(ambiguousBatches.Items, item => item.Id == scenario.ProcurementBatchId);
+                Assert.DoesNotContain(ambiguousBatches.Items, item => item.Id == scenario.NoRouteBatchId);
+                Assert.Null(await reader.GetModulesAsync(
+                    scenario.NoRouteBatchId,
+                    new ProcessingExecutionOptionsQuery("zh-TW", null, 0, 50),
+                    cancellationToken));
+            }
+            finally
+            {
+                await ExecuteNonQueryAsync(
+                    """
+                    DELETE FROM processing_config.processing_route_versions WHERE id = @route_version_id;
+                    DELETE FROM processing_config.processing_routes WHERE id = @route_id;
+                    """,
+                    cancellationToken,
+                    ("route_version_id", competingRouteVersionId),
+                    ("route_id", competingRouteId));
+            }
 
             await InsertProcessMaterialPositionAsync(
                 scenario,

@@ -52,19 +52,39 @@ internal sealed class EfProcessingExecutionOptionsReader(ErpDbContext dbContext)
         var validated = Validate(query);
         var preferZhTw = validated.Locale == LocaleZhTw;
 
+        var activeRouteVersions =
+            from route in dbContext.Set<ProcessingRoute>().AsNoTracking()
+            join version in dbContext.Set<ProcessingRouteVersion>().AsNoTracking()
+                on route.Id equals version.ProcessingRouteId
+            where route.Active
+                  && route.DeletedAt == null
+                  && version.Status == ProcessingRouteVersionStatus.ACTIVE
+            select new
+            {
+                route.ProcurementProductId,
+                RouteVersionId = version.Id,
+            };
+
         var batches =
             from batch in dbContext.Set<ProcurementBatch>().AsNoTracking()
             join product in dbContext.Set<ProcurementProduct>().AsNoTracking()
                 on batch.ProcurementProductId equals product.Id
+            let candidateRouteCount = activeRouteVersions.Count(candidate =>
+                candidate.ProcurementProductId == batch.ProcurementProductId)
+            let candidateRouteVersionId = activeRouteVersions
+                .Where(candidate => candidate.ProcurementProductId == batch.ProcurementProductId)
+                .OrderBy(candidate => candidate.RouteVersionId)
+                .Select(candidate => (Guid?)candidate.RouteVersionId)
+                .FirstOrDefault()
             where batch.LifecycleStatus == ProcurementBatchLifecycleStatus.ACTIVE
                   && batch.DeletedAt == null
-                  && batch.ProcessingRouteVersionId != null
+                  && (batch.ProcessingRouteVersionId != null || candidateRouteCount == 1)
             select new
             {
                 batch.Id,
                 batch.ProcurementDate,
                 batch.ProcurementProductId,
-                ProcessingRouteVersionId = batch.ProcessingRouteVersionId!.Value,
+                ProcessingRouteVersionId = batch.ProcessingRouteVersionId ?? candidateRouteVersionId,
                 product.NameZhTw,
                 product.NameThTh,
             };
@@ -87,7 +107,7 @@ internal sealed class EfProcessingExecutionOptionsReader(ErpDbContext dbContext)
                     row.ProcurementDate,
                     row.ProcurementProductId,
                     row.NameZhTw ?? row.NameThTh!,
-                    row.ProcessingRouteVersionId))
+                    row.ProcessingRouteVersionId!.Value))
             : batches
                 .OrderByDescending(row => row.ProcurementDate)
                 .ThenBy(row => row.NameThTh ?? row.NameZhTw)
@@ -97,7 +117,7 @@ internal sealed class EfProcessingExecutionOptionsReader(ErpDbContext dbContext)
                     row.ProcurementDate,
                     row.ProcurementProductId,
                     row.NameThTh ?? row.NameZhTw!,
-                    row.ProcessingRouteVersionId));
+                    row.ProcessingRouteVersionId!.Value));
 
         return await MaterializePageAsync(ordered, validated, cancellationToken);
     }
@@ -442,15 +462,45 @@ internal sealed class EfProcessingExecutionOptionsReader(ErpDbContext dbContext)
         Guid procurementBatchId,
         CancellationToken cancellationToken)
     {
-        return await dbContext.Set<ProcurementBatch>()
+        var batch = await dbContext.Set<ProcurementBatch>()
             .AsNoTracking()
-            .Where(batch =>
-                batch.Id == procurementBatchId
-                && batch.LifecycleStatus == ProcurementBatchLifecycleStatus.ACTIVE
-                && batch.DeletedAt == null
-                && batch.ProcessingRouteVersionId != null)
-            .Select(batch => batch.ProcessingRouteVersionId)
+            .Where(candidate =>
+                candidate.Id == procurementBatchId
+                && candidate.LifecycleStatus == ProcurementBatchLifecycleStatus.ACTIVE
+                && candidate.DeletedAt == null)
+            .Select(candidate => new
+            {
+                candidate.ProcurementProductId,
+                candidate.ProcessingRouteVersionId,
+            })
             .SingleOrDefaultAsync(cancellationToken);
+        if (batch is null)
+        {
+            return null;
+        }
+
+        return batch.ProcessingRouteVersionId
+            ?? await GetUniqueActiveRouteVersionIdAsync(batch.ProcurementProductId, cancellationToken);
+    }
+
+    private async ValueTask<Guid?> GetUniqueActiveRouteVersionIdAsync(
+        Guid procurementProductId,
+        CancellationToken cancellationToken)
+    {
+        var candidates = await (
+            from route in dbContext.Set<ProcessingRoute>().AsNoTracking()
+            join version in dbContext.Set<ProcessingRouteVersion>().AsNoTracking()
+                on route.Id equals version.ProcessingRouteId
+            where route.ProcurementProductId == procurementProductId
+                  && route.Active
+                  && route.DeletedAt == null
+                  && version.Status == ProcessingRouteVersionStatus.ACTIVE
+            orderby version.Id
+            select version.Id)
+            .Take(2)
+            .ToListAsync(cancellationToken);
+
+        return candidates.Count == 1 ? candidates[0] : null;
     }
 
     private async ValueTask<BatchModuleContext?> GetBatchModuleContextAsync(
@@ -463,15 +513,21 @@ internal sealed class EfProcessingExecutionOptionsReader(ErpDbContext dbContext)
             .Where(candidate =>
                 candidate.Id == procurementBatchId
                 && candidate.LifecycleStatus == ProcurementBatchLifecycleStatus.ACTIVE
-                && candidate.DeletedAt == null
-                && candidate.ProcessingRouteVersionId != null)
+                && candidate.DeletedAt == null)
             .Select(candidate => new
             {
                 candidate.ProcurementProductId,
-                ProcessingRouteVersionId = candidate.ProcessingRouteVersionId!.Value,
+                candidate.ProcessingRouteVersionId,
             })
             .SingleOrDefaultAsync(cancellationToken);
         if (batch is null)
+        {
+            return null;
+        }
+
+        var routeVersionId = batch.ProcessingRouteVersionId
+            ?? await GetUniqueActiveRouteVersionIdAsync(batch.ProcurementProductId, cancellationToken);
+        if (routeVersionId is null)
         {
             return null;
         }
@@ -480,11 +536,11 @@ internal sealed class EfProcessingExecutionOptionsReader(ErpDbContext dbContext)
             .AsNoTracking()
             .SingleOrDefaultAsync(candidate =>
                 candidate.Id == processingModuleId
-                && candidate.ProcessingRouteVersionId == batch.ProcessingRouteVersionId,
+                && candidate.ProcessingRouteVersionId == routeVersionId.Value,
                 cancellationToken);
         return module is null
             ? null
-            : new BatchModuleContext(batch.ProcurementProductId, batch.ProcessingRouteVersionId, module);
+            : new BatchModuleContext(batch.ProcurementProductId, routeVersionId.Value, module);
     }
 
     private static async ValueTask<ProcessingExecutionOptionPage<T>> MaterializePageAsync<T>(

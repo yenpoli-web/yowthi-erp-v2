@@ -18,6 +18,108 @@ public sealed class ConfirmProcessingExecutionIntegrationTests
         "Host=127.0.0.1;Port=55432;Database=yowthi_dev;Username=yowthi_dev";
 
     [Fact]
+    public async Task First_processing_confirmation_binds_unbound_batch_route_transactionally()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var scenario = await SeedScenarioAsync(cancellationToken);
+        var failedCommandId = Guid.CreateVersion7();
+        var successfulCommandId = Guid.CreateVersion7();
+
+        try
+        {
+            await ExecuteNonQueryAsync(
+                """
+                UPDATE procurement.procurement_batches
+                SET processing_route_id = NULL,
+                    processing_route_version_id = NULL
+                WHERE id = @batch_id;
+                """,
+                cancellationToken,
+                ("batch_id", scenario.ProcurementBatchId));
+
+            var command = new ConfirmProcessingExecutionCommand(
+                scenario.WorkDate,
+                scenario.EmployeeId,
+                scenario.ProcurementBatchId,
+                scenario.SourceTrackedModuleId,
+                new ProcessingSourceSelection(ProcessingSourceKind.SUPPLIER, scenario.SupplierId),
+                new ProcessingScaleMeasurement(10m, null),
+                null,
+                new[]
+                {
+                    new ProcessingOutputMeasurement(
+                        scenario.SourceTrackedOutputId,
+                        8.5m,
+                        null,
+                        null,
+                        null),
+                });
+
+            var failed = await ExecuteAsync(
+                Execution(failedCommandId, scenario.ActorAccountId, Hash(34), command),
+                cancellationToken);
+            Assert.True(failed.IsFailure);
+            Assert.Equal(ProcessingApplicationErrorCodes.InputLocationRequired, failed.Error.Code);
+            Assert.Equal(
+                1L,
+                await ScalarAsync<long>(
+                    """
+                    SELECT count(*)
+                    FROM procurement.procurement_batches
+                    WHERE id = @batch_id
+                      AND processing_route_id IS NULL
+                      AND processing_route_version_id IS NULL;
+                    """,
+                    cancellationToken,
+                    ("batch_id", scenario.ProcurementBatchId)));
+            Assert.Equal(
+                0L,
+                await ScalarAsync<long>(
+                    "SELECT count(*) FROM system.command_executions WHERE command_id = @command_id;",
+                    cancellationToken,
+                    ("command_id", failedCommandId)));
+
+            await InsertProcurementProductPositionAsync(
+                scenario,
+                scenario.PrimaryLocationId,
+                100m,
+                ProcessingSourceKind.SUPPLIER,
+                scenario.SupplierId,
+                cancellationToken);
+
+            var succeeded = await ExecuteAsync(
+                Execution(successfulCommandId, scenario.ActorAccountId, Hash(35), command),
+                cancellationToken);
+            Assert.True(succeeded.IsSuccess);
+            Assert.Equal(
+                scenario.RouteId,
+                await ScalarAsync<Guid>(
+                    "SELECT processing_route_id FROM procurement.procurement_batches WHERE id = @batch_id;",
+                    cancellationToken,
+                    ("batch_id", scenario.ProcurementBatchId)));
+            Assert.Equal(
+                scenario.RouteVersionId,
+                await ScalarAsync<Guid>(
+                    "SELECT processing_route_version_id FROM procurement.procurement_batches WHERE id = @batch_id;",
+                    cancellationToken,
+                    ("batch_id", scenario.ProcurementBatchId)));
+            Assert.Equal(
+                scenario.RouteVersionId,
+                await ScalarAsync<Guid>(
+                    "SELECT processing_route_version_id FROM processing.processing_executions WHERE id = @execution_id;",
+                    cancellationToken,
+                    ("execution_id", succeeded.Value.ProcessingExecutionId)));
+        }
+        finally
+        {
+            await CleanupScenarioAsync(
+                scenario,
+                new[] { failedCommandId, successfulCommandId },
+                cancellationToken);
+        }
+    }
+
+    [Fact]
     public async Task Source_tracked_execution_replay_inventory_audit_and_outbox_are_atomic()
     {
         var cancellationToken = TestContext.Current.CancellationToken;

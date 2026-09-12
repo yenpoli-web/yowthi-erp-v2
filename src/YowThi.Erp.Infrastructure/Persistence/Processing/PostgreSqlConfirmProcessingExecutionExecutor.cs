@@ -73,22 +73,32 @@ internal sealed class PostgreSqlConfirmProcessingExecutionExecutor : IConfirmPro
                     x => x.WorkDate == command.WorkDate && x.EmployeeId == command.EmployeeId, ct))
                 return RollbackFailure(ApplicationErrorKind.Conflict, LaborApplicationErrorCodes.DailyWageAlreadyConfirmed);
 
-            var batchLock = await InventoryBatchLifecycleCommandLock.AcquireProcurementAsync(
-                _dbContext,
-                command.ProcurementBatchId,
-                ct);
-            if (!batchLock.Exists) return RollbackFailure(ApplicationErrorKind.NotFound, ProcessingApplicationErrorCodes.BatchNotFound);
-            if (!batchLock.Active || batchLock.Deleted)
+            var batch = await AcquireProcessingBatchAsync(command.ProcurementBatchId, ct);
+            if (!batch.Exists) return RollbackFailure(ApplicationErrorKind.NotFound, ProcessingApplicationErrorCodes.BatchNotFound);
+            if (!batch.Active || batch.Deleted)
                 return RollbackFailure(ApplicationErrorKind.Conflict, ProcessingApplicationErrorCodes.BatchUnavailable);
-
-            var batch = await _dbContext.Set<ProcurementBatch>().AsNoTracking().SingleAsync(x => x.Id == command.ProcurementBatchId, ct);
-            if (batch.ProcessingRouteVersionId is not Guid batchRouteVersionId)
-                return RollbackFailure(ApplicationErrorKind.Validation, ProcessingApplicationErrorCodes.BatchRouteRequired);
 
             var module = await _dbContext.Set<ProcessingModule>().AsNoTracking().SingleOrDefaultAsync(x => x.Id == command.ProcessingModuleId, ct);
             if (module is null) return RollbackFailure(ApplicationErrorKind.NotFound, ProcessingApplicationErrorCodes.ModuleNotFound);
-            if (module.ProcessingRouteVersionId != batchRouteVersionId)
-                return RollbackFailure(ApplicationErrorKind.Conflict, ProcessingApplicationErrorCodes.ModuleRouteMismatch);
+
+            Guid batchRouteVersionId;
+            if (batch.ProcessingRouteVersionId is Guid boundRouteVersionId)
+            {
+                if (module.ProcessingRouteVersionId != boundRouteVersionId)
+                    return RollbackFailure(ApplicationErrorKind.Conflict, ProcessingApplicationErrorCodes.ModuleRouteMismatch);
+                batchRouteVersionId = boundRouteVersionId;
+            }
+            else
+            {
+                var binding = await ResolveInitialRouteBindingAsync(batch.ProcurementProductId, ct);
+                if (binding is null)
+                    return RollbackFailure(ApplicationErrorKind.Validation, ProcessingApplicationErrorCodes.BatchRouteRequired);
+                if (module.ProcessingRouteVersionId != binding.RouteVersionId)
+                    return RollbackFailure(ApplicationErrorKind.Conflict, ProcessingApplicationErrorCodes.ModuleRouteMismatch);
+
+                await BindProcessingBatchRouteAsync(batch.Id, binding, ct);
+                batchRouteVersionId = binding.RouteVersionId;
+            }
 
             var sourceError = await ValidateSourceAsync(module.ExecutionMode, command.Source, ct);
             if (sourceError is not null)
@@ -162,6 +172,79 @@ internal sealed class PostgreSqlConfirmProcessingExecutionExecutor : IConfirmPro
             return CommandTransactionDecision<ApplicationResult<ConfirmProcessingExecutionResult>>.Commit(
                 ApplicationResult<ConfirmProcessingExecutionResult>.Success(result));
         }, cancellationToken);
+    }
+
+    private async ValueTask<ProcessingBatchState> AcquireProcessingBatchAsync(Guid batchId, CancellationToken ct)
+    {
+        await using var command = CreateSqlCommand(
+            """
+            SELECT procurement_product_id, lifecycle_status, deleted_at,
+                   processing_route_id, processing_route_version_id
+            FROM procurement.procurement_batches
+            WHERE id = @batch_id
+            FOR UPDATE;
+            """);
+        command.Parameters.AddWithValue("batch_id", batchId);
+
+        await using var reader = await command.ExecuteReaderAsync(ct);
+        if (!await reader.ReadAsync(ct))
+        {
+            return ProcessingBatchState.Missing();
+        }
+
+        return new ProcessingBatchState(
+            Id: batchId,
+            Exists: true,
+            Active: string.Equals(reader.GetString(1), "ACTIVE", StringComparison.Ordinal),
+            Deleted: !reader.IsDBNull(2),
+            ProcurementProductId: reader.GetGuid(0),
+            ProcessingRouteId: reader.IsDBNull(3) ? null : reader.GetGuid(3),
+            ProcessingRouteVersionId: reader.IsDBNull(4) ? null : reader.GetGuid(4));
+    }
+
+    private async ValueTask<RouteBindingCandidate?> ResolveInitialRouteBindingAsync(
+        Guid procurementProductId,
+        CancellationToken ct)
+    {
+        var candidates = await (
+            from route in _dbContext.Set<ProcessingRoute>().AsNoTracking()
+            join version in _dbContext.Set<ProcessingRouteVersion>().AsNoTracking()
+                on route.Id equals version.ProcessingRouteId
+            where route.ProcurementProductId == procurementProductId
+                  && route.Active
+                  && route.DeletedAt == null
+                  && version.Status == ProcessingRouteVersionStatus.ACTIVE
+            orderby version.Id
+            select new RouteBindingCandidate(route.Id, version.Id))
+            .Take(2)
+            .ToListAsync(ct);
+
+        return candidates.Count == 1 ? candidates[0] : null;
+    }
+
+    private async ValueTask BindProcessingBatchRouteAsync(
+        Guid batchId,
+        RouteBindingCandidate binding,
+        CancellationToken ct)
+    {
+        await using var command = CreateSqlCommand(
+            """
+            UPDATE procurement.procurement_batches
+            SET processing_route_id = @route_id,
+                processing_route_version_id = @route_version_id,
+                row_version = row_version + 1
+            WHERE id = @batch_id
+              AND processing_route_id IS NULL
+              AND processing_route_version_id IS NULL;
+            """);
+        command.Parameters.AddWithValue("route_id", binding.RouteId);
+        command.Parameters.AddWithValue("route_version_id", binding.RouteVersionId);
+        command.Parameters.AddWithValue("batch_id", batchId);
+
+        if (await command.ExecuteNonQueryAsync(ct) != 1)
+        {
+            throw new InvalidOperationException("Unbound Procurement Batch route snapshot could not be captured atomically.");
+        }
     }
 
     private async ValueTask<ApplicationError?> ValidateSourceAsync(ProcessingExecutionMode mode, ProcessingSourceSelection? source, CancellationToken ct)
@@ -398,6 +481,20 @@ internal sealed class PostgreSqlConfirmProcessingExecutionExecutor : IConfirmPro
     private static CommandTransactionDecision<ApplicationResult<ConfirmProcessingExecutionResult>> RollbackFailure(ApplicationErrorKind kind,string code)=>CommandTransactionDecision<ApplicationResult<ConfirmProcessingExecutionResult>>.Rollback(ApplicationResult<ConfirmProcessingExecutionResult>.Failure(Error(kind,code)));
     private static ApplicationError Error(ApplicationErrorKind kind,string code)=>ApplicationError.Create(kind,code);
 
+    private sealed record ProcessingBatchState(
+        Guid Id,
+        bool Exists,
+        bool Active,
+        bool Deleted,
+        Guid ProcurementProductId,
+        Guid? ProcessingRouteId,
+        Guid? ProcessingRouteVersionId)
+    {
+        public static ProcessingBatchState Missing() =>
+            new(Guid.Empty, false, false, false, Guid.Empty, null, null);
+    }
+
+    private sealed record RouteBindingCandidate(Guid RouteId, Guid RouteVersionId);
     private sealed record LocationResolution(Guid StorageLocationId, ApplicationError? Error);
     private sealed record TareResolution(decimal? TareWeight, ApplicationError? Error);
     private sealed record DerivedOutput(ProcessingExecutionOutput Entity, InventoryObjectKind ObjectKind, Guid? ProcessMaterialId, Guid? SalesProductId, Guid StorageLocationId, decimal Quantity);
