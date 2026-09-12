@@ -43,7 +43,7 @@ export const systemModules: readonly SystemModuleDefinition[] = [
   },
   {
     key: 'processing',
-    route: '/processing/executions/new',
+    route: '/processing',
     area: 'operations',
     webState: 'operational',
     label: { 'zh-TW': '生產加工', 'th-TH': 'แปรรูป' },

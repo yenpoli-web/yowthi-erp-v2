@@ -47,6 +47,38 @@ public sealed class ProcessingTransactionLifecycleEndpointContractTests
         }
     }
 
+    [Fact]
+    public async Task Processing_workspace_routes_are_read_only_and_use_existing_module_access_capability()
+    {
+        await using var app = CreateApp();
+        app.MapProcessingWorkspaceEndpoints();
+        var endpoints = GetRouteEndpoints(app);
+
+        var list = Assert.Single(
+            endpoints,
+            endpoint => endpoint.RoutePattern.RawText == "/api/v1/processing/workspace/");
+        var detail = Assert.Single(
+            endpoints,
+            endpoint => endpoint.RoutePattern.RawText == "/api/v1/processing/workspace/{processingExecutionId:guid}");
+
+        AssertRead(list);
+        AssertRead(detail);
+        Assert.Equal(
+            ProcessingWorkspaceEndpoints.ListExecutionsOperationId,
+            list.Metadata.GetMetadata<IEndpointNameMetadata>()?.EndpointName);
+        Assert.Equal(
+            ProcessingWorkspaceEndpoints.GetExecutionOperationId,
+            detail.Metadata.GetMetadata<IEndpointNameMetadata>()?.EndpointName);
+    }
+
+    private static void AssertRead(RouteEndpoint endpoint)
+    {
+        Assert.Contains(HttpMethods.Get, endpoint.Metadata.GetMetadata<IHttpMethodMetadata>()?.HttpMethods ?? []);
+        AssertPolicy(endpoint, CapabilityPolicies.ProcessingConfirm);
+        Assert.Null(endpoint.Metadata.GetMetadata<RequiresIdempotencyKeyMetadata>());
+        Assert.Null(endpoint.Metadata.GetMetadata<RequiresDeletionReauthenticationMetadata>());
+    }
+
     private static void AssertPolicy(RouteEndpoint endpoint, string policy) =>
         Assert.Contains(endpoint.Metadata.GetOrderedMetadata<IAuthorizeData>(), metadata => metadata.Policy == policy);
 

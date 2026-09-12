@@ -173,6 +173,102 @@ public sealed class ConfirmProcessingExecutionIntegrationTests
     }
 
     [Fact]
+    public async Task Persisted_processing_execution_workspace_readback_includes_input_output_and_locations()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var scenario = await SeedScenarioAsync(cancellationToken);
+        var commandId = Guid.CreateVersion7();
+
+        try
+        {
+            await InsertProcurementProductPositionAsync(
+                scenario,
+                scenario.PrimaryLocationId,
+                100m,
+                ProcessingSourceKind.SUPPLIER,
+                scenario.SupplierId,
+                cancellationToken);
+
+            var command = new ConfirmProcessingExecutionCommand(
+                scenario.WorkDate,
+                scenario.EmployeeId,
+                scenario.ProcurementBatchId,
+                scenario.SourceTrackedModuleId,
+                new ProcessingSourceSelection(ProcessingSourceKind.SUPPLIER, scenario.SupplierId),
+                new ProcessingScaleMeasurement(10m, null),
+                null,
+                new[]
+                {
+                    new ProcessingOutputMeasurement(
+                        scenario.SourceTrackedOutputId,
+                        8.5m,
+                        null,
+                        null,
+                        null),
+                });
+
+            var result = await ExecuteAsync(
+                Execution(commandId, scenario.ActorAccountId, Hash(33), command),
+                cancellationToken);
+            Assert.True(result.IsSuccess);
+
+            var services = new ServiceCollection();
+            services.AddErpPersistence(GetConnectionString());
+            await using var provider = services.BuildServiceProvider();
+            await using var scope = provider.CreateAsyncScope();
+            var reader = scope.ServiceProvider.GetRequiredService<IProcessingWorkspaceReader>();
+
+            var page = await reader.GetExecutionsAsync(
+                new ProcessingWorkspaceListQuery("zh-TW", "P6 V3 employee", 0, 50),
+                cancellationToken);
+            var listItem = Assert.Single(page.Items, item => item.Id == result.Value.ProcessingExecutionId);
+            Assert.Equal("P6 V3 employee", listItem.EmployeeDisplayName);
+            Assert.Equal("P6 V3 procurement product", listItem.ProcurementProductDisplayName);
+            Assert.Equal("P6 V3 source tracked", listItem.ProcessingModuleDisplayName);
+            Assert.Equal("SOURCE_TRACKED", listItem.ExecutionMode);
+
+            var workspace = await reader.GetExecutionAsync(
+                result.Value.ProcessingExecutionId,
+                "zh-TW",
+                cancellationToken);
+
+            Assert.NotNull(workspace);
+            Assert.Equal(scenario.EmployeeId, workspace.EmployeeId);
+            Assert.Equal("P6 V3 employee", workspace.EmployeeDisplayName);
+            Assert.Equal(scenario.ProcurementProductId, workspace.ProcurementProductId);
+            Assert.Equal("P6 V3 procurement product", workspace.ProcurementProductDisplayName);
+            Assert.Equal(scenario.SourceTrackedModuleId, workspace.ProcessingModuleId);
+            Assert.Equal("P6 V3 source tracked", workspace.ProcessingModuleDisplayName);
+            Assert.Equal("SOURCE_TRACKED", workspace.ExecutionMode);
+            Assert.Equal("SUPPLIER", workspace.SourceKind);
+            Assert.Equal(scenario.SupplierId, workspace.SupplierId);
+            Assert.Equal("P6 V3 supplier", workspace.SupplierDisplayName);
+
+            Assert.NotNull(workspace.Input);
+            Assert.Equal("SCALE_NET", workspace.Input.ConsumptionBasis);
+            Assert.Equal(10m, workspace.Input.ConsumedQuantity);
+            Assert.Equal("PROCUREMENT_PRODUCT", workspace.Input.InventoryObjectKind);
+            Assert.Equal(scenario.ProcurementProductId, workspace.Input.InventoryObjectId);
+            Assert.Equal("P6 V3 procurement product", workspace.Input.InventoryObjectDisplayName);
+            Assert.Equal(scenario.PrimaryLocationId, workspace.Input.StorageLocationId);
+            Assert.Equal("P6 V3 primary location", workspace.Input.StorageLocationDisplayName);
+
+            var output = Assert.Single(workspace.Outputs);
+            Assert.Equal(scenario.SourceTrackedOutputId, output.ProcessingModuleOutputId);
+            Assert.Equal("PROCESS_MATERIAL", output.OutputKind);
+            Assert.Equal(scenario.MaterialAId, output.TargetId);
+            Assert.Equal("P6 V3 material A", output.TargetDisplayName);
+            Assert.Equal(8.5m, output.DerivedNetQuantity);
+            Assert.Equal(scenario.PrimaryLocationId, output.StorageLocationId);
+            Assert.Equal("P6 V3 primary location", output.StorageLocationDisplayName);
+        }
+        finally
+        {
+            await CleanupScenarioAsync(scenario, new[] { commandId }, cancellationToken);
+        }
+    }
+
+    [Fact]
     public async Task Pooled_output_consumes_the_sum_of_output_quantity_without_source_selection()
     {
         var cancellationToken = TestContext.Current.CancellationToken;

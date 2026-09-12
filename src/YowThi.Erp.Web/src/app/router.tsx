@@ -16,6 +16,7 @@ import { OutsourcedVendorMasterPage } from '../features/party/OutsourcedVendorMa
 import { PartyLifecyclePage } from '../features/party/PartyLifecyclePage';
 import { SupplierMasterPage } from '../features/party/SupplierMasterPage';
 import { ProcessingExecutionPage } from '../features/processing/ProcessingExecutionPage';
+import { ProcessingWorkspacePage } from '../features/processing/ProcessingWorkspacePage';
 import { ProcurementWorkspacePage } from '../features/procurement/ProcurementWorkspacePage';
 import { ProcurementProductMasterPage } from '../features/product/ProcurementProductMasterPage';
 import { SalesProductGroupLifecyclePage } from '../features/product/SalesProductGroupLifecyclePage';
@@ -39,6 +40,7 @@ export const router = createBrowserRouter([
       { path: 'procurement/entries/new', element: <Navigate to="/procurement" replace /> },
       { path: 'outsourced', element: <OutsourcedLifecycleWorkspace /> },
       { path: 'outsourced/supply-details/new', element: <Navigate to="/outsourced" replace /> },
+      { path: 'processing', element: <ProcessingWorkspacePage /> },
       { path: 'processing/executions/new', element: <ProcessingExecutionPage /> },
       { path: 'sales', element: <SalesWorkspacePage /> },
       { path: 'sales-handling', element: <SalesPackagingWorkPage /> },

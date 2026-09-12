@@ -76,7 +76,7 @@ export const mobileQuickNavigation: readonly QuickNavigationItem[] = [
     label: { 'zh-TW': '採購', 'th-TH': 'จัดซื้อ' },
   },
   {
-    to: '/processing/executions/new',
+    to: '/processing',
     icon: 'processing',
     label: { 'zh-TW': '加工', 'th-TH': 'แปรรูป' },
   },

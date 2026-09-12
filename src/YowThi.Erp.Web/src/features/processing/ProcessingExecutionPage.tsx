@@ -2,11 +2,14 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import {
   type FormEvent,
   useDeferredValue,
+  useEffect,
   useMemo,
   useRef,
   useState,
 } from 'react';
+import { useNavigate } from 'react-router';
 
+import { SearchableSelect } from '../../app/forms/SearchableSelect';
 import { type OperationalLocale, useOperationalLocale } from '../../app/i18n/locale';
 import {
   ApiProblemError,
@@ -213,7 +216,8 @@ const copy = {
 } as const;
 
 export function ProcessingExecutionPage() {
-  const { locale, setLocale } = useOperationalLocale();
+  const { locale } = useOperationalLocale();
+  const navigate = useNavigate();
   const [employeeSearch, setEmployeeSearch] = useState('');
   const [batchSearch, setBatchSearch] = useState('');
   const [moduleSearch, setModuleSearch] = useState('');
@@ -358,6 +362,11 @@ export function ProcessingExecutionPage() {
       }),
   });
 
+  useEffect(() => {
+    if (mutation.data === undefined) return;
+    navigate(`/processing?execution=${encodeURIComponent(mutation.data.processingExecutionId)}`, { replace: true });
+  }, [mutation.data, navigate]);
+
   const apiProblem = mutation.error instanceof ApiProblemError ? mutation.error : null;
   const problemMessage = useMemo(() => {
     if (apiProblem === null) {
@@ -410,9 +419,6 @@ export function ProcessingExecutionPage() {
   const outputs = moduleOutputsQuery.data?.outputs ?? [];
   const isSourceTracked = selectedModule?.executionMode === 'SOURCE_TRACKED';
   const inputConfigurationUnavailable = isSourceTracked && selectedModule?.inputUsesContainer === null;
-  const autoInputLocation = inputLocationQuery.data?.autoSelectionLocationId
-    ? inputLocationItems.find((item) => item.id === inputLocationQuery.data?.autoSelectionLocationId) ?? null
-    : null;
   const requiresExplicitInputLocation =
     selectedModule !== null
     && inputLocationQuery.isSuccess
@@ -433,11 +439,6 @@ export function ProcessingExecutionPage() {
     return [...visible, ...retainedById.values()];
   }, [outputDrafts, outputLocationQuery.data?.items]);
 
-  const missingExplicitOutputLocation = outputs.some((output) =>
-    !output.defaultStorageLocationAvailable
-    && (outputDrafts[output.id]?.outputStorageLocationId ?? '') === '',
-  );
-
   function resetDependentSelection() {
     setSelectedModule(null);
     setModuleSearch('');
@@ -450,17 +451,6 @@ export function ProcessingExecutionPage() {
     setInputContainerCount('');
     setOutputLocationSearch('');
     setOutputDrafts({});
-  }
-
-  function handleLocaleChange(next: OperationalLocale) {
-    setLocale(next);
-    setEmployeeSearch('');
-    setBatchSearch('');
-    setSelectedEmployee(null);
-    setSelectedBatch(null);
-    resetDependentSelection();
-    mutation.reset();
-    setLocalError(null);
   }
 
   function handleBatchChange(batchId: string) {
@@ -610,22 +600,14 @@ export function ProcessingExecutionPage() {
 
   const submitDisabled =
     mutation.isPending
-    || selectedEmployee === null
-    || selectedBatch === null
-    || selectedModule === null
-    || moduleQuery.isPending
-    || inputLocationQuery.isPending
-    || moduleOutputsQuery.isPending
-    || moduleOutputsQuery.isError
-    || outputLocationQuery.isPending
-    || outputLocationQuery.isError
-    || inputConfigurationUnavailable
-    || outputDefinitionUnavailable
-    || outputs.length === 0
-    || (isSourceTracked && sourceKind === '')
-    || (isSourceTracked && sourceKind === 'SUPPLIER' && selectedSupplier === null)
-    || (requiresExplicitInputLocation && selectedInputLocation === null)
-    || missingExplicitOutputLocation;
+    || (selectedModule !== null
+      && (moduleQuery.isPending
+        || inputLocationQuery.isPending
+        || inputLocationQuery.isError
+        || moduleOutputsQuery.isPending
+        || moduleOutputsQuery.isError
+        || outputLocationQuery.isPending
+        || outputLocationQuery.isError));
 
   return (
     <section className="procurement-page" aria-labelledby="processing-execution-title">
@@ -634,14 +616,6 @@ export function ProcessingExecutionPage() {
           <p className="eyebrow">{labels.eyebrow}</p>
           <h1 id="processing-execution-title">{labels.title}</h1>
         </div>
-
-        <label className="locale-control">
-          <span>{labels.locale}</span>
-          <select value={locale} onChange={(event) => handleLocaleChange(event.target.value as OperationalLocale)}>
-            <option value="zh-TW">繁體中文</option>
-            <option value="th-TH">ไทย</option>
-          </select>
-        </label>
       </header>
 
       <div className="procurement-grid">
@@ -652,75 +626,60 @@ export function ProcessingExecutionPage() {
               <input type="date" name="workDate" required />
             </label>
 
-            <div className="option-picker">
-              <span className="field-label">{labels.employee}</span>
-              <input
-                value={employeeSearch}
-                onChange={(event) => setEmployeeSearch(event.target.value)}
-                aria-label={labels.employeeSearch}
+            <SearchableSelect
+              label={labels.employee}
+              value={selectedEmployee?.id ?? ''}
+              options={employeeItems.map((item) => ({ id: item.id, label: item.displayName }))}
+              onChange={(employeeId) => {
+                setSelectedEmployee(employeeItems.find((item) => item.id === employeeId) ?? null);
+                mutation.reset();
+                setLocalError(null);
+              }}
+              searchValue={employeeSearch}
+              onSearchChange={setEmployeeSearch}
+              searchLabel={labels.employeeSearch}
+              chooseLabel={labels.employeeSelect}
+              loadingLabel={labels.loading}
+              loading={employeeQuery.isPending}
+            />
+
+            <div className="full-width">
+              <SearchableSelect
+                label={labels.batch}
+                value={selectedBatch?.id ?? ''}
+                options={batchItems.map((item) => ({
+                  id: item.id,
+                  label: item.procurementProductDisplayName,
+                  secondaryLabel: item.procurementDate,
+                }))}
+                onChange={handleBatchChange}
+                searchValue={batchSearch}
+                onSearchChange={setBatchSearch}
+                searchLabel={labels.batchSearch}
+                chooseLabel={labels.batchSelect}
+                loadingLabel={labels.loading}
+                loading={batchQuery.isPending}
               />
-              <select
-                value={selectedEmployee?.id ?? ''}
-                onChange={(event) => {
-                  setSelectedEmployee(employeeItems.find((item) => item.id === event.target.value) ?? null);
-                  mutation.reset();
-                  setLocalError(null);
-                }}
-                required
-              >
-                <option value="">{employeeQuery.isPending ? labels.loading : labels.employeeSelect}</option>
-                {employeeItems.map((item) => (
-                  <option key={item.id} value={item.id}>{item.displayName}</option>
-                ))}
-              </select>
             </div>
 
-            <div className="option-picker full-width">
-              <span className="field-label">{labels.batch}</span>
-              <input
-                value={batchSearch}
-                onChange={(event) => setBatchSearch(event.target.value)}
-                aria-label={labels.batchSearch}
-              />
-              <select value={selectedBatch?.id ?? ''} onChange={(event) => handleBatchChange(event.target.value)} required>
-                <option value="">{batchQuery.isPending ? labels.loading : labels.batchSelect}</option>
-                {batchItems.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.procurementDate} · {item.procurementProductDisplayName}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="option-picker full-width">
-              <span className="field-label">{labels.module}</span>
-              <input
-                value={moduleSearch}
-                onChange={(event) => setModuleSearch(event.target.value)}
-                aria-label={labels.moduleSearch}
-                disabled={selectedBatch === null}
-              />
-              <select
+            <div className="full-width">
+              <SearchableSelect
+                label={labels.module}
                 value={selectedModule?.id ?? ''}
-                onChange={(event) => handleModuleChange(event.target.value)}
-                disabled={selectedBatch === null || moduleQuery.isPending}
-                required
-              >
-                <option value="">{moduleQuery.isPending ? labels.loading : labels.moduleSelect}</option>
-                {moduleItems.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.displayName} · {executionModeLabel(item.executionMode, labels)}
-                  </option>
-                ))}
-              </select>
-              {selectedModule && (
-                <small className="default-hint">
-                  {labels.executionMode}: {executionModeLabel(selectedModule.executionMode, labels)}
-                </small>
-              )}
-              {inputConfigurationUnavailable && (
-                <small className="required-hint">{labels.inputConfigUnavailable}</small>
-              )}
+                options={moduleItems.map((item) => ({
+                  id: item.id,
+                  label: item.displayName,
+                  secondaryLabel: executionModeLabel(item.executionMode, labels),
+                }))}
+                onChange={handleModuleChange}
+                searchValue={moduleSearch}
+                onSearchChange={setModuleSearch}
+                searchLabel={labels.moduleSearch}
+                chooseLabel={labels.moduleSelect}
+                loadingLabel={labels.loading}
+                disabled={selectedBatch === null}
+                loading={moduleQuery.isPending}
+              />
             </div>
 
             {isSourceTracked && (
@@ -735,28 +694,22 @@ export function ProcessingExecutionPage() {
                 </label>
 
                 {sourceKind === 'SUPPLIER' && (
-                  <div className="option-picker">
-                    <span className="field-label">{labels.supplier}</span>
-                    <input
-                      value={supplierSearch}
-                      onChange={(event) => setSupplierSearch(event.target.value)}
-                      aria-label={labels.supplierSearch}
-                    />
-                    <select
-                      value={selectedSupplier?.id ?? ''}
-                      onChange={(event) => {
-                        setSelectedSupplier(supplierItems.find((item) => item.id === event.target.value) ?? null);
-                        mutation.reset();
-                        setLocalError(null);
-                      }}
-                      required
-                    >
-                      <option value="">{supplierQuery.isPending ? labels.loading : labels.supplierSelect}</option>
-                      {supplierItems.map((item) => (
-                        <option key={item.id} value={item.id}>{item.displayName}</option>
-                      ))}
-                    </select>
-                  </div>
+                  <SearchableSelect
+                    label={labels.supplier}
+                    value={selectedSupplier?.id ?? ''}
+                    options={supplierItems.map((item) => ({ id: item.id, label: item.displayName }))}
+                    onChange={(supplierId) => {
+                      setSelectedSupplier(supplierItems.find((item) => item.id === supplierId) ?? null);
+                      mutation.reset();
+                      setLocalError(null);
+                    }}
+                    searchValue={supplierSearch}
+                    onSearchChange={setSupplierSearch}
+                    searchLabel={labels.supplierSearch}
+                    chooseLabel={labels.supplierSelect}
+                    loadingLabel={labels.loading}
+                    loading={supplierQuery.isPending}
+                  />
                 )}
 
                 <label>
@@ -784,69 +737,40 @@ export function ProcessingExecutionPage() {
                       onChange={(event) => setInputContainerCount(event.target.value)}
                       required
                     />
-                    {selectedModule.defaultInputContainerCount !== null && (
-                      <small>{labels.inputContainerDefault}: {selectedModule.defaultInputContainerCount}</small>
-                    )}
                   </label>
                 )}
               </>
             )}
 
-            <div className="option-picker full-width">
-              <span className="field-label">{labels.inputLocation}</span>
-              <input
-                value={inputLocationSearch}
-                onChange={(event) => setInputLocationSearch(event.target.value)}
-                aria-label={labels.inputLocationSearch}
-                disabled={selectedModule === null}
-              />
-              <select
+            <div className="full-width">
+              <SearchableSelect
+                label={labels.inputLocation}
                 value={selectedInputLocation?.id ?? ''}
-                onChange={(event) => {
-                  setSelectedInputLocation(inputLocationItems.find((item) => item.id === event.target.value) ?? null);
+                options={inputLocationItems.map((item) => ({
+                  id: item.id,
+                  label: item.displayName,
+                  secondaryLabel: item.code,
+                }))}
+                onChange={(locationId) => {
+                  setSelectedInputLocation(inputLocationItems.find((item) => item.id === locationId) ?? null);
                   mutation.reset();
                   setLocalError(null);
                 }}
-                disabled={selectedModule === null || inputLocationQuery.isPending}
-                required={requiresExplicitInputLocation}
-              >
-                <option value="">
-                  {inputLocationQuery.isPending
-                    ? labels.loading
-                    : inputLocationQuery.data?.autoSelectionLocationId
-                      ? labels.inputLocationAuto
-                      : labels.inputLocationSelect}
-                </option>
-                {inputLocationItems.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.displayName}{item.code ? ` · ${item.code}` : ''}
-                  </option>
-                ))}
-              </select>
-              {autoInputLocation && selectedInputLocation === null && (
-                <small className="default-hint">
-                  {labels.inputLocationAuto}: {autoInputLocation.displayName}
-                </small>
-              )}
-              {requiresExplicitInputLocation && inputLocationItems.length > 0 && selectedInputLocation === null && (
-                <small className="required-hint">{labels.inputLocationRequired}</small>
-              )}
-              {requiresExplicitInputLocation && inputLocationItems.length === 0 && (
-                <small className="required-hint">{labels.inputLocationNone}</small>
-              )}
+                searchValue={inputLocationSearch}
+                onSearchChange={setInputLocationSearch}
+                searchLabel={labels.inputLocationSearch}
+                chooseLabel={labels.inputLocationSelect}
+                loadingLabel={labels.loading}
+                emptyOptionLabel={inputLocationQuery.data?.autoSelectionLocationId ? labels.inputLocationAuto : undefined}
+                disabled={selectedModule === null}
+                loading={inputLocationQuery.isPending}
+              />
             </div>
 
             {selectedModule && (
               <div className="processing-outputs full-width">
                 <div className="processing-section-heading">
-                  <div>
-                    <span className="field-label">{labels.outputs}</span>
-                  </div>
-                  <input
-                    value={outputLocationSearch}
-                    onChange={(event) => setOutputLocationSearch(event.target.value)}
-                    aria-label={labels.outputLocationSearch}
-                  />
+                  <span className="field-label">{labels.outputs}</span>
                 </div>
 
                 {moduleOutputsQuery.isPending && <p className="muted-copy">{labels.loading}</p>}
@@ -871,7 +795,7 @@ export function ProcessingExecutionPage() {
                       </div>
 
                       {!output.targetAvailable && (
-                        <p className="required-hint">{labels.targetUnavailable}</p>
+                        <p className="problem-banner">{labels.targetUnavailable}</p>
                       )}
 
                       <div className="field-grid processing-output-fields">
@@ -919,35 +843,35 @@ export function ProcessingExecutionPage() {
                           </label>
                         )}
 
-                        <label className="full-width">
-                          <span>{labels.outputLocation}</span>
-                          <select
+                        <div className="full-width">
+                          <SearchableSelect
+                            label={labels.outputLocation}
                             value={draft.outputStorageLocationId}
-                            onChange={(event) => {
-                              const locationId = event.target.value;
+                            options={outputLocationItems.map((item) => ({
+                              id: item.id,
+                              label: item.displayName,
+                              secondaryLabel: item.code,
+                            }))}
+                            onChange={(locationId) => {
                               patchOutputDraft(output.id, {
                                 outputStorageLocationId: locationId,
                                 outputStorageLocation:
                                   outputLocationItems.find((item) => item.id === locationId) ?? null,
                               });
                             }}
-                            required={!output.defaultStorageLocationAvailable}
-                          >
-                            <option value="">
-                              {output.defaultStorageLocationAvailable
-                                ? labels.outputLocationDefault
-                                : labels.outputLocationSelect}
-                            </option>
-                            {outputLocationItems.map((item) => (
-                              <option key={item.id} value={item.id}>
-                                {item.displayName}{item.code ? ` · ${item.code}` : ''}
-                              </option>
-                            ))}
-                          </select>
-                          {!output.defaultStorageLocationAvailable && draft.outputStorageLocationId === '' && (
-                            <small className="required-hint">{labels.outputLocationRequired}</small>
-                          )}
-                        </label>
+                            searchValue={outputLocationSearch}
+                            onSearchChange={setOutputLocationSearch}
+                            searchLabel={labels.outputLocationSearch}
+                            chooseLabel={output.defaultStorageLocationAvailable
+                              ? labels.outputLocationDefault
+                              : labels.outputLocationSelect}
+                            loadingLabel={labels.loading}
+                            emptyOptionLabel={output.defaultStorageLocationAvailable
+                              ? labels.outputLocationDefault
+                              : undefined}
+                            loading={outputLocationQuery.isPending}
+                          />
+                        </div>
                       </div>
                     </article>
                   );
@@ -967,21 +891,10 @@ export function ProcessingExecutionPage() {
           </button>
         </form>
 
-        <aside className="result-panel" aria-live="polite">
-          {mutation.data ? (
-            <>
-              <p className="eyebrow">{labels.success}</p>
-              <dl>
-                <ResultRow label={labels.executionId} value={mutation.data.processingExecutionId} />
-                <ResultRow label={labels.inventoryOperationId} value={mutation.data.inventoryOperationId} />
-                <ResultRow label={labels.rowVersion} value={String(mutation.data.processingExecutionRowVersion)} />
-              </dl>
-            </>
-          ) : (
-            <div className="result-placeholder" aria-hidden="true">
-              <span>YowThi ERP V2</span>
-            </div>
-          )}
+        <aside className="result-panel" aria-hidden="true">
+          <div className="result-placeholder">
+            <span>YowThi ERP V2</span>
+          </div>
         </aside>
       </div>
     </section>
@@ -999,15 +912,6 @@ function resolveOutputDraft(
         ? String(output.defaultContainerCount)
         : '',
   };
-}
-
-function ResultRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="result-row">
-      <dt>{label}</dt>
-      <dd>{value}</dd>
-    </div>
-  );
 }
 
 function executionModeLabel(mode: ProcessingModuleOption['executionMode'], labels: typeof copy[OperationalLocale]) {

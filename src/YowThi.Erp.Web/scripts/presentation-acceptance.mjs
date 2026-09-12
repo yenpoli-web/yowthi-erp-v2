@@ -186,6 +186,15 @@ if (!routerSource.includes(`path: 'outsourced', element: <OutsourcedLifecycleWor
 if (!routerSource.includes(`path: 'outsourced/supply-details/new', element: <Navigate to=\"/outsourced\" replace />`)) {
   fail('Legacy Outsourced Supply Detail route must converge on the Outsourced workspace.');
 }
+if (!routerSource.includes(`path: 'processing', element: <ProcessingWorkspacePage />`)) {
+  fail('Processing module root must open the execution workspace.');
+}
+if (!routerSource.includes(`path: 'processing/executions/new', element: <ProcessingExecutionPage />`)) {
+  fail('Processing execution registration must remain available from the workspace.');
+}
+if (!moduleRegistry.includes("route: '/processing'")) {
+  fail('Processing module registry route must target the workspace root.');
+}
 
 const navigation = read('src/app/navigation.ts');
 if (!navigation.includes("to: '/modules',\n    icon: 'home'")) {
@@ -226,6 +235,7 @@ console.log('- module registry: 13 operational / 13 localized');
 console.log('- Data Protection correspondence: 13/13 target-specific Hard Delete controls');
 console.log('- Data Protection deletion re-authentication: enforced');
 console.log('- Outsourced module root: document workspace; legacy detail route converged');
+console.log('- Processing module root: execution workspace; new execution route retained');
 console.log('- Nature Green tablet/mobile shell markers: present');
 console.log('- mobile primary navigation: localized home + 3 core operations');
 console.log('- deterministic desktop/tablet/mobile override: present');

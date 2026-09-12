@@ -65,6 +65,7 @@ public static class PersistenceServiceCollectionExtensions
         services.AddScoped<IProcessingTransactionLifecycleExecutor, PostgreSqlProcessingTransactionLifecycleExecutor>();
         services.AddScoped<IHardDeleteProcessingTransactionExecutor, PostgreSqlHardDeleteProcessingTransactionExecutor>();
         services.AddScoped<IProcessingExecutionOptionsReader, EfProcessingExecutionOptionsReader>();
+        services.AddScoped<IProcessingWorkspaceReader, EfProcessingWorkspaceReader>();
         services.AddScoped<IConfirmSalesExecutor, PostgreSqlConfirmSalesExecutor>();
         services.AddScoped<ISalesTransactionLifecycleExecutor, PostgreSqlSalesTransactionLifecycleExecutor>();
         services.AddScoped<IHardDeleteSalesTransactionExecutor, PostgreSqlHardDeleteSalesTransactionExecutor>();

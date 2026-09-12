@@ -45,6 +45,7 @@ app.MapProcurementWorkspaceEndpoints();
 app.MapProcessingEndpoints();
 app.MapProcessingTransactionLifecycleEndpoints();
 app.MapProcessingExecutionOptionEndpoints();
+app.MapProcessingWorkspaceEndpoints();
 app.MapInventoryEndpoints();
 app.MapInventoryOperationOptionEndpoints();
 app.MapInventoryPositionEndpoints();
