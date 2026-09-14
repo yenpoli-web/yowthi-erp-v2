@@ -321,7 +321,7 @@ public sealed class ConfirmProcessingExecutionIntegrationTests
             var reader = scope.ServiceProvider.GetRequiredService<IProcessingWorkspaceReader>();
 
             var page = await reader.GetExecutionsAsync(
-                new ProcessingWorkspaceListQuery("zh-TW", "P6 V3 employee", 0, 50),
+                new ProcessingWorkspaceListQuery("zh-TW", "P6 V3 employee", ProcessingWorkspaceStatusFilter.All, 0, 50),
                 cancellationToken);
             var listItem = Assert.Single(page.Items, item => item.Id == result.Value.ProcessingExecutionId);
             Assert.Equal("P6 V3 employee", listItem.EmployeeDisplayName);

@@ -41,6 +41,7 @@ public static class ProcessingWorkspaceEndpoints
         [FromServices] IApiLocaleResolver localeResolver,
         [FromServices] IProcessingWorkspaceReader reader,
         string? search = null,
+        string? status = null,
         int offset = 0,
         int limit = 50,
         CancellationToken cancellationToken = default)
@@ -55,10 +56,21 @@ public static class ProcessingWorkspaceEndpoints
                 "offset must be non-negative and limit must be between 1 and 100.");
         }
 
+        if (!TryParseStatus(status, out var statusFilter))
+        {
+            return ApiProblemResults.Create(
+                context,
+                StatusCodes.Status400BadRequest,
+                ApiErrorCodes.RequestValidationFailed,
+                "Request validation failed.",
+                "status must be one of: active, deleted.");
+        }
+
         var page = await reader.GetExecutionsAsync(
             new ProcessingWorkspaceListQuery(
                 localeResolver.Resolve(context.Request),
                 string.IsNullOrWhiteSpace(search) ? null : search.Trim(),
+                statusFilter,
                 offset,
                 limit),
             cancellationToken);
@@ -89,6 +101,28 @@ public static class ProcessingWorkspaceEndpoints
         }
 
         return TypedResults.Ok(ToResponse(workspace));
+    }
+
+    private static bool TryParseStatus(string? status, out ProcessingWorkspaceStatusFilter value)
+    {
+        if (string.IsNullOrWhiteSpace(status))
+        {
+            value = ProcessingWorkspaceStatusFilter.All;
+            return true;
+        }
+
+        switch (status.Trim().ToLowerInvariant())
+        {
+            case "active":
+                value = ProcessingWorkspaceStatusFilter.Active;
+                return true;
+            case "deleted":
+                value = ProcessingWorkspaceStatusFilter.Deleted;
+                return true;
+            default:
+                value = ProcessingWorkspaceStatusFilter.All;
+                return false;
+        }
     }
 
     private static ProcessingWorkspaceListItemResponse ToResponse(ProcessingWorkspaceListItem item) =>

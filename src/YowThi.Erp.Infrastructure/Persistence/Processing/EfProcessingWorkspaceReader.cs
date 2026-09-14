@@ -52,6 +52,14 @@ internal sealed class EfProcessingWorkspaceReader(ErpDbContext dbContext) : IPro
                 ModuleNameThTh = module.NameThTh,
             };
 
+        source = query.Status switch
+        {
+            ProcessingWorkspaceStatusFilter.Active => source.Where(item => item.DeletedAt == null),
+            ProcessingWorkspaceStatusFilter.Deleted => source.Where(item => item.DeletedAt != null),
+            ProcessingWorkspaceStatusFilter.All => source,
+            _ => throw new ArgumentOutOfRangeException(nameof(query)),
+        };
+
         if (!string.IsNullOrWhiteSpace(query.Search))
         {
             var search = query.Search.Trim();

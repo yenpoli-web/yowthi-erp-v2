@@ -196,6 +196,39 @@ if (!moduleRegistry.includes("route: '/processing'")) {
   fail('Processing module registry route must target the workspace root.');
 }
 
+const processingWorkspacePage = read('src/features/processing/ProcessingWorkspacePage.tsx');
+const processingWorkspaceClient = read('src/features/processing/processingWorkspace.ts');
+const processingLifecycleClient = read('src/features/processing/processingTransactionLifecycle.ts');
+if (!processingWorkspacePage.includes('useInfiniteQuery')) {
+  fail('Processing workspace list must consume API pagination instead of loading a fixed first page.');
+}
+if (!processingWorkspacePage.includes('getNextPageParam: (lastPage) => lastPage.nextOffset ?? undefined')) {
+  fail('Processing workspace pagination must follow the API nextOffset contract.');
+}
+if (!processingWorkspaceClient.includes("parameters.set('status', query.status)")) {
+  fail('Processing workspace status filtering must be sent to the target-specific API query.');
+}
+if (!processingWorkspacePage.includes('prepareDeletionReauthentication')) {
+  fail('Processing deletion lifecycle must reuse the canonical deletion re-authentication flow.');
+}
+if (!processingWorkspacePage.includes("capabilities.includes('data-protection.hard-delete')")) {
+  fail('Processing Hard Delete presentation must be gated by the canonical capability.');
+}
+for (const routeMarker of [
+  '/api/v1/processing/executions/${encodedId}/${action}',
+  '/api/v1/processing/executions/${encodedId}/input/${action}',
+  '/api/v1/processing/execution-outputs/${encodedId}/${action}',
+]) {
+  if (!processingLifecycleClient.includes(routeMarker)) {
+    fail(`Processing target-specific lifecycle client is missing route marker: ${routeMarker}.`);
+  }
+}
+for (const targetMarker of ["target: 'execution'", "target: 'input'", "target: 'output'"]) {
+  if (!processingWorkspacePage.includes(targetMarker)) {
+    fail(`Processing workspace is missing target-specific lifecycle UI wiring: ${targetMarker}.`);
+  }
+}
+
 const navigation = read('src/app/navigation.ts');
 if (!navigation.includes("to: '/modules',\n    icon: 'home'")) {
   fail('Mobile quick navigation must begin with the localized home workspace entry.');
@@ -236,6 +269,8 @@ console.log('- Data Protection correspondence: 13/13 target-specific Hard Delete
 console.log('- Data Protection deletion re-authentication: enforced');
 console.log('- Outsourced module root: document workspace; legacy detail route converged');
 console.log('- Processing module root: execution workspace; new execution route retained');
+console.log('- Processing lifecycle: execution/input/output target-specific actions with re-auth/capability gating');
+console.log('- Processing list completeness: status-aware API pagination via nextOffset');
 console.log('- Nature Green tablet/mobile shell markers: present');
 console.log('- mobile primary navigation: localized home + 3 core operations');
 console.log('- deterministic desktop/tablet/mobile override: present');

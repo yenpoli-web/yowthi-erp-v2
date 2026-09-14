@@ -79,9 +79,12 @@ export interface ProcessingWorkspace {
   outputs: ProcessingWorkspaceOutput[];
 }
 
+export type ProcessingWorkspaceStatusFilter = 'all' | 'active' | 'deleted';
+
 interface ProcessingWorkspaceListQuery {
   locale: OperationalLocale;
   search?: string;
+  status?: ProcessingWorkspaceStatusFilter;
   offset?: number;
   limit?: number;
   signal?: AbortSignal;
@@ -98,6 +101,7 @@ export function listProcessingWorkspace(
   const parameters = new URLSearchParams();
   const search = query.search?.trim();
   if (search) parameters.set('search', search);
+  if (query.status !== undefined && query.status !== 'all') parameters.set('status', query.status);
   if (query.offset !== undefined) parameters.set('offset', String(query.offset));
   if (query.limit !== undefined) parameters.set('limit', String(query.limit));
   const suffix = parameters.size === 0 ? '' : `?${parameters.toString()}`;

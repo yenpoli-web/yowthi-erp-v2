@@ -1,8 +1,16 @@
 namespace YowThi.Erp.Application.Processing;
 
+public enum ProcessingWorkspaceStatusFilter
+{
+    All = 0,
+    Active = 1,
+    Deleted = 2,
+}
+
 public sealed record ProcessingWorkspaceListQuery(
     string Locale,
     string? Search,
+    ProcessingWorkspaceStatusFilter Status,
     int Offset,
     int Limit);
 
