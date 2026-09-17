@@ -20,6 +20,11 @@ const masterQueryKeys: Record<HardDeleteTargetKind, string> = {
   customers: 'customer-master',
   'outsourced-vendors': 'outsourced-vendor-master',
   farmers: 'farmer-master',
+  employees: 'employee-master',
+  'sales-packaging-items': 'sales-packaging-item-master',
+  warehouses: 'warehouse-master',
+  'storage-locations': 'storage-location-master',
+  containers: 'infrastructure-lifecycle-options',
   'procurement-products': 'procurement-product-master',
   'sales-products': 'sales-product-master',
   'sales-product-groups': 'sales-product-group-master',
@@ -90,6 +95,7 @@ export function DataProtectionPage() {
         queryClient.invalidateQueries({ queryKey: [masterKey] }),
         queryClient.invalidateQueries({ queryKey: ['hard-delete-options', targetKind] }),
         queryClient.invalidateQueries({ queryKey: ['party-lifecycle-options', targetKind] }),
+        queryClient.invalidateQueries({ queryKey: ['infrastructure-lifecycle-options'] }),
       ]);
     },
   });

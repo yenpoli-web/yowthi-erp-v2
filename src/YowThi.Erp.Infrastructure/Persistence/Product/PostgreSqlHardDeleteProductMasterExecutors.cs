@@ -30,3 +30,31 @@ internal sealed class PostgreSqlHardDeleteSalesProductGroupExecutor(ErpDbContext
             "SELECT EXISTS (SELECT 1 FROM product.sales_products WHERE sales_product_group_id = @id);",
             ProductMasterHardDeleteErrorCodes.SalesProductGroupNotFound, ProductMasterHardDeleteErrorCodes.SalesProductGroupDependencyBlocked, cancellationToken);
 }
+
+internal sealed class PostgreSqlHardDeleteEmployeeExecutor(ErpDbContext db, ICommandTransactionRunner tx, TimeProvider time) : IHardDeleteEmployeeExecutor
+{
+    private readonly PostgreSqlHardDeleteProductMasterSupport _support = new(db, tx, time);
+
+    public async ValueTask<ApplicationResult<HardDeleteOperationalMasterResult>> ExecuteAsync(
+        HardDeleteOperationalMasterExecution execution,
+        CancellationToken cancellationToken)
+    {
+        var mapped = new HardDeleteProductMasterExecution(
+            execution.CommandId,
+            execution.RequestHash,
+            execution.ActorAccountId,
+            new HardDeleteProductMasterCommand(execution.Command.Id, execution.Command.ExpectedRowVersion));
+        var result = await _support.ExecuteAsync(
+            mapped,
+            "HardDeleteEmployee",
+            "party.employees",
+            "party.employee",
+            "SELECT EXISTS (SELECT 1 FROM labor.employee_daily_wages WHERE employee_id = @id) OR EXISTS (SELECT 1 FROM processing.processing_executions WHERE employee_id = @id) OR EXISTS (SELECT 1 FROM sales_handling.sales_packaging_work_records WHERE employee_id = @id);",
+            OperationalMasterHardDeleteErrorCodes.EmployeeNotFound,
+            OperationalMasterHardDeleteErrorCodes.EmployeeDependencyBlocked,
+            cancellationToken);
+        return result.IsSuccess
+            ? ApplicationResult<HardDeleteOperationalMasterResult>.Success(new HardDeleteOperationalMasterResult(result.Value.Id))
+            : ApplicationResult<HardDeleteOperationalMasterResult>.Failure(result.Error);
+    }
+}

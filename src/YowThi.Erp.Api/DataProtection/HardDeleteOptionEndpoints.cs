@@ -15,6 +15,11 @@ public static class HardDeleteOptionEndpoints
     public const string CustomersOperationId = "DataProtection_ListHardDeleteCustomers";
     public const string OutsourcedVendorsOperationId = "DataProtection_ListHardDeleteOutsourcedVendors";
     public const string FarmersOperationId = "DataProtection_ListHardDeleteFarmers";
+    public const string EmployeesOperationId = "DataProtection_ListHardDeleteEmployees";
+    public const string SalesPackagingItemsOperationId = "DataProtection_ListHardDeleteSalesPackagingItems";
+    public const string WarehousesOperationId = "DataProtection_ListHardDeleteWarehouses";
+    public const string StorageLocationsOperationId = "DataProtection_ListHardDeleteStorageLocations";
+    public const string ContainersOperationId = "DataProtection_ListHardDeleteContainers";
     public const string OutsourcedSupplyBatchesOperationId = "DataProtection_ListHardDeleteOutsourcedSupplyBatches";
     public const string OutsourcedSupplyDetailsOperationId = "DataProtection_ListHardDeleteOutsourcedSupplyDetails";
     public const string ProcurementBatchesOperationId = "DataProtection_ListHardDeleteProcurementBatches";
@@ -41,6 +46,16 @@ public static class HardDeleteOptionEndpoints
             (reader, query, ct) => reader.GetOutsourcedVendorsAsync(query, ct));
         Map(group, "/farmers", FarmersOperationId,
             (reader, query, ct) => reader.GetFarmersAsync(query, ct));
+        Map(group, "/employees", EmployeesOperationId,
+            (reader, query, ct) => reader.GetEmployeesAsync(query, ct));
+        Map(group, "/sales-packaging-items", SalesPackagingItemsOperationId,
+            (reader, query, ct) => reader.GetSalesPackagingItemsAsync(query, ct));
+        Map(group, "/warehouses", WarehousesOperationId,
+            (reader, query, ct) => reader.GetWarehousesAsync(query, ct));
+        Map(group, "/storage-locations", StorageLocationsOperationId,
+            (reader, query, ct) => reader.GetStorageLocationsAsync(query, ct));
+        Map(group, "/containers", ContainersOperationId,
+            (reader, query, ct) => reader.GetContainersAsync(query, ct));
         Map(group, "/outsourced-supply-batches", OutsourcedSupplyBatchesOperationId,
             (reader, query, ct) => reader.GetOutsourcedSupplyBatchesAsync(query, ct));
         Map(group, "/outsourced-supply-details", OutsourcedSupplyDetailsOperationId,

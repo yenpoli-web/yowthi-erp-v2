@@ -82,6 +82,7 @@ app.MapFinanceSettlementOptionEndpoints();
 app.MapDataProtectionEndpoints();
 app.MapHardDeleteOptionEndpoints();
 app.MapProductMasterDataProtectionEndpoints();
+app.MapOperationalMasterDataProtectionEndpoints();
 
 app.Run();
 

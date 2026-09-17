@@ -11,6 +11,11 @@ public static class ProductDeletionServiceCollectionExtensions
         services.AddScoped<IHardDeleteProcurementProductExecutor, PostgreSqlHardDeleteProcurementProductExecutor>();
         services.AddScoped<IHardDeleteSalesProductExecutor, PostgreSqlHardDeleteSalesProductExecutor>();
         services.AddScoped<IHardDeleteSalesProductGroupExecutor, PostgreSqlHardDeleteSalesProductGroupExecutor>();
+        services.AddScoped<IHardDeleteEmployeeExecutor, PostgreSqlHardDeleteEmployeeExecutor>();
+        services.AddScoped<IHardDeleteSalesPackagingItemExecutor, PostgreSqlHardDeleteSalesPackagingItemExecutor>();
+        services.AddScoped<IHardDeleteWarehouseExecutor, PostgreSqlHardDeleteWarehouseExecutor>();
+        services.AddScoped<IHardDeleteStorageLocationExecutor, PostgreSqlHardDeleteStorageLocationExecutor>();
+        services.AddScoped<IHardDeleteContainerExecutor, PostgreSqlHardDeleteContainerExecutor>();
         services.AddScoped<IProductHardDeleteOptionsReader, EfProductHardDeleteOptionsReader>();
         return services;
     }
