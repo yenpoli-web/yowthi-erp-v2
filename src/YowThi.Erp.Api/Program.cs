@@ -22,6 +22,7 @@ builder.AddYowThiApi();
 var connectionString = builder.Configuration.GetConnectionString("Erp")
     ?? throw new InvalidOperationException("ConnectionStrings:Erp is required.");
 builder.Services.AddErpPersistence(connectionString);
+builder.Services.AddProductDeletionPersistence();
 
 var app = builder.Build();
 
@@ -65,6 +66,7 @@ app.MapProcurementProductMasterEndpoints();
 app.MapProcurementProductOptionEndpoints();
 app.MapSalesProductMasterEndpoints();
 app.MapSalesProductOptionEndpoints();
+app.MapProductMasterLifecycleEndpoints();
 app.MapSalesProductGroupMasterEndpoints();
 app.MapSalesProductGroupLifecycleEndpoints();
 app.MapSalesProductGroupLifecycleOptionEndpoints();
@@ -79,6 +81,7 @@ app.MapFinanceEndpoints();
 app.MapFinanceSettlementOptionEndpoints();
 app.MapDataProtectionEndpoints();
 app.MapHardDeleteOptionEndpoints();
+app.MapProductMasterDataProtectionEndpoints();
 
 app.Run();
 

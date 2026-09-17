@@ -33,6 +33,7 @@ public sealed class MasterDeletionReauthenticationEndpointContractTests
         app.MapEmployeeLifecycleEndpoints();
         app.MapContainerLifecycleEndpoints();
         app.MapWarehouseLifecycleEndpoints();
+        app.MapProductMasterLifecycleEndpoints();
         app.MapSalesProductGroupLifecycleEndpoints();
         app.MapSalesPackagingItemLifecycleEndpoints();
 
@@ -45,6 +46,8 @@ public sealed class MasterDeletionReauthenticationEndpointContractTests
             ("/api/v1/party/employees/{employeeId:guid}/soft-delete", "/api/v1/party/employees/{employeeId:guid}/restore"),
             ("/api/v1/infrastructure/containers/{containerId:guid}/soft-delete", "/api/v1/infrastructure/containers/{containerId:guid}/restore"),
             ("/api/v1/infrastructure/warehouses/{warehouseId:guid}/soft-delete", "/api/v1/infrastructure/warehouses/{warehouseId:guid}/restore"),
+            ("/api/v1/product/procurement-products/{procurementProductId:guid}/soft-delete", "/api/v1/product/procurement-products/{procurementProductId:guid}/restore"),
+            ("/api/v1/product/sales-products/{salesProductId:guid}/soft-delete", "/api/v1/product/sales-products/{salesProductId:guid}/restore"),
             ("/api/v1/product/sales-product-groups/{salesProductGroupId:guid}/soft-delete", "/api/v1/product/sales-product-groups/{salesProductGroupId:guid}/restore"),
             ("/api/v1/sales-handling/packaging-items/{salesPackagingItemId:guid}/soft-delete", "/api/v1/sales-handling/packaging-items/{salesPackagingItemId:guid}/restore"),
         };

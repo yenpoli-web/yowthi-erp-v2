@@ -4,6 +4,7 @@ import { ApiProblemError } from '../../app/api/apiTransport';
 import { useOperationalLocale } from '../../app/i18n/locale';
 import { ModuleSubnav, type ModuleSubnavItem } from '../../app/modules/ModuleSubnav';
 import {
+  changeProcurementProductLifecycle,
   createProcurementProduct,
   listProcurementProducts,
   listProductStorageLocations,
@@ -11,6 +12,7 @@ import {
   type MasterStatus,
   type ProcurementProductDraft,
   type ProcurementProductItem,
+  type ProductMasterLifecycleAction,
 } from './productMasters';
 import '../party/supplierMasterPrototype.css';
 
@@ -29,19 +31,21 @@ const copy = {
     nav: '產品管理', eyebrow: '產品管理', title: '採購產品', newItem: '新增產品', search: '搜尋產品名稱或單位',
     all: '全部', active: '使用中', inactive: '停用', deleted: '已刪除', records: '筆資料', basicInfo: '基本資料',
     nameZhTw: '中文名稱', nameThTh: '泰文名稱', unitCode: '單位', storage: '預設儲位', noStorage: '未指定',
-    activeState: '啟用狀態', edit: '編輯', activate: '啟用', deactivate: '停用', save: '儲存', saving: '儲存中…', cancel: '取消',
-    createTitle: '新增採購產品', editTitle: '編輯採購產品', noResult: '沒有符合條件的採購產品。', required: '名稱至少填寫一種語言，且單位不可空白。',
+    activeState: '啟用狀態', edit: '編輯', activate: '啟用', deactivate: '停用', softDelete: '刪除', restore: '恢復', save: '儲存', saving: '儲存中…', cancel: '取消',
+    createTitle: '新增採購產品', editTitle: '編輯採購產品', deleteTitle: '刪除採購產品', deleteMessage: '這會將資料設為軟刪除；之後可從「已刪除」恢復。', confirmDelete: '確認刪除',
+    noResult: '沒有符合條件的採購產品。', required: '名稱至少填寫一種語言，且單位不可空白。',
     queryFailed: '無法載入採購產品', unexpected: '操作失敗，請重新整理後再試。', stale: '資料已被其他操作更新，請重新整理後再試。',
-    notFound: '採購產品不存在。', deletedConflict: '這筆產品已刪除，不能修改。', notProvided: '—',
+    notFound: '採購產品不存在。', deletedConflict: '這筆產品已刪除，不能修改。', idempotency: '相同操作識別已被其他內容使用。', reauth: '刪除前必須重新驗證登入身分。', notProvided: '—',
   },
   'th-TH': {
     nav: 'การตั้งค่าสินค้า', eyebrow: 'การตั้งค่าสินค้า', title: 'สินค้าจัดซื้อ', newItem: 'เพิ่มสินค้า', search: 'ค้นหาชื่อสินค้าหรือหน่วย',
     all: 'ทั้งหมด', active: 'ใช้งาน', inactive: 'ไม่ใช้งาน', deleted: 'ลบแล้ว', records: 'รายการ', basicInfo: 'ข้อมูลพื้นฐาน',
     nameZhTw: 'ชื่อภาษาจีน', nameThTh: 'ชื่อภาษาไทย', unitCode: 'หน่วย', storage: 'ตำแหน่งจัดเก็บเริ่มต้น', noStorage: 'ไม่ระบุ',
-    activeState: 'สถานะการใช้งาน', edit: 'แก้ไข', activate: 'เปิดใช้งาน', deactivate: 'ปิดใช้งาน', save: 'บันทึก', saving: 'กำลังบันทึก…', cancel: 'ยกเลิก',
-    createTitle: 'เพิ่มสินค้าจัดซื้อ', editTitle: 'แก้ไขสินค้าจัดซื้อ', noResult: 'ไม่พบสินค้าจัดซื้อที่ตรงกับเงื่อนไข', required: 'ต้องระบุชื่ออย่างน้อยหนึ่งภาษาและต้องระบุหน่วย',
+    activeState: 'สถานะการใช้งาน', edit: 'แก้ไข', activate: 'เปิดใช้งาน', deactivate: 'ปิดใช้งาน', softDelete: 'ลบ', restore: 'กู้คืน', save: 'บันทึก', saving: 'กำลังบันทึก…', cancel: 'ยกเลิก',
+    createTitle: 'เพิ่มสินค้าจัดซื้อ', editTitle: 'แก้ไขสินค้าจัดซื้อ', deleteTitle: 'ลบสินค้าจัดซื้อ', deleteMessage: 'รายการจะถูกลบแบบเก็บประวัติ และสามารถกู้คืนได้ภายหลัง', confirmDelete: 'ยืนยันการลบ',
+    noResult: 'ไม่พบสินค้าจัดซื้อที่ตรงกับเงื่อนไข', required: 'ต้องระบุชื่ออย่างน้อยหนึ่งภาษาและต้องระบุหน่วย',
     queryFailed: 'ไม่สามารถโหลดสินค้าจัดซื้อได้', unexpected: 'ดำเนินการไม่สำเร็จ กรุณารีเฟรชแล้วลองใหม่', stale: 'ข้อมูลถูกแก้ไขแล้ว กรุณารีเฟรชแล้วลองใหม่',
-    notFound: 'ไม่พบสินค้าจัดซื้อ', deletedConflict: 'สินค้านี้ถูกลบแล้วและไม่สามารถแก้ไขได้', notProvided: '—',
+    notFound: 'ไม่พบสินค้าจัดซื้อ', deletedConflict: 'สินค้านี้ถูกลบแล้วและไม่สามารถแก้ไขได้', idempotency: 'รหัสการทำงานเดียวกันถูกใช้กับข้อมูลอื่นแล้ว', reauth: 'ต้องยืนยันตัวตนในการเข้าสู่ระบบอีกครั้งก่อนลบ', notProvided: '—',
   },
 } as const;
 
@@ -69,7 +73,9 @@ export function ProcurementProductMasterPage() {
   const [search, setSearch] = useState('');
   const deferredSearch = useDeferredValue(search);
   const [formError, setFormError] = useState<string | null>(null);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const writeIdentity = useRef<SubmissionIdentity | null>(null);
+  const lifecycleIdentity = useRef<SubmissionIdentity | null>(null);
 
   const itemsQuery = useQuery({ queryKey: ['procurement-product-master', locale, deferredSearch, filter], queryFn: ({ signal }) => listProcurementProducts({ locale, search: deferredSearch, status: filter, limit: 200, signal }), staleTime: 2_000 });
   const storageQuery = useQuery({ queryKey: ['product-storage-options', locale], queryFn: ({ signal }) => listProductStorageLocations(locale, signal), staleTime: 10_000 });
@@ -78,22 +84,25 @@ export function ProcurementProductMasterPage() {
 
   const createMutation = useMutation({ mutationFn: (input: { request: ProcurementProductDraft; idempotencyKey: string }) => createProcurementProduct(input.request, { locale, idempotencyKey: input.idempotencyKey }), onSuccess: async (result) => { setFilter('all'); setSelectedId(result.procurementProductId); setMode('detail'); writeIdentity.current = null; await invalidate(); } });
   const updateMutation = useMutation({ mutationFn: (input: { id: string; rowVersion: number; request: ProcurementProductDraft; idempotencyKey: string }) => updateProcurementProduct(input.id, { ...input.request, expectedRowVersion: input.rowVersion }, { locale, idempotencyKey: input.idempotencyKey }), onSuccess: async (result) => { setSelectedId(result.procurementProductId); setMode('detail'); writeIdentity.current = null; await invalidate(); } });
-  async function invalidate() { await Promise.all([queryClient.invalidateQueries({ queryKey: ['procurement-product-master'] }), queryClient.invalidateQueries({ queryKey: ['procurement-entry-options', 'products'] })]); }
+  const lifecycleMutation = useMutation({ mutationFn: (input: { id: string; action: ProductMasterLifecycleAction; rowVersion: number; idempotencyKey: string }) => changeProcurementProductLifecycle(input.id, input.action, input.rowVersion, { locale, idempotencyKey: input.idempotencyKey }), onSuccess: async (_, input) => { setFilter(input.action === 'soft-delete' ? 'deleted' : 'all'); setDeleteOpen(false); lifecycleIdentity.current = null; await invalidate(); } });
+  async function invalidate() { await Promise.all([queryClient.invalidateQueries({ queryKey: ['procurement-product-master'] }), queryClient.invalidateQueries({ queryKey: ['procurement-entry-options', 'products'] }), queryClient.invalidateQueries({ queryKey: ['hard-delete-options', 'procurement-products'] })]); }
 
-  const activeError = createMutation.error ?? updateMutation.error ?? itemsQuery.error ?? storageQuery.error;
+  const activeError = createMutation.error ?? updateMutation.error ?? lifecycleMutation.error ?? itemsQuery.error ?? storageQuery.error;
   const problemMessage = useMemo(() => {
     if (!activeError) return null;
     if (!(activeError instanceof ApiProblemError)) return itemsQuery.error ? labels.queryFailed : labels.unexpected;
     if (activeError.code.includes('stale-row-version')) return labels.stale;
     if (activeError.code.includes('not-found')) return labels.notFound;
-    if (activeError.code.includes('.deleted')) return labels.deletedConflict;
+    if (activeError.code.includes('.deleted') || activeError.code.includes('already-deleted')) return labels.deletedConflict;
+    if (activeError.code === 'idempotency.key-reused') return labels.idempotency;
+    if (activeError.code === 'security.deletion-reauth-required') return labels.reauth;
     return `${activeError.code}${activeError.problem.traceId ? ` · ${activeError.problem.traceId}` : ''}`;
   }, [activeError, itemsQuery.error, labels]);
 
   const displayName = (item: ProcurementProductItem) => (locale === 'zh-TW' ? item.nameZhTw : item.nameThTh)?.trim() || (locale === 'zh-TW' ? item.nameThTh : item.nameZhTw)?.trim() || labels.notProvided;
-  const busy = createMutation.isPending || updateMutation.isPending;
-  function select(item: ProcurementProductItem) { setSelectedId(item.id); setDraft(toDraft(item)); setMode('detail'); setFormError(null); writeIdentity.current = null; }
-  function beginCreate() { setSelectedId(''); setDraft(emptyDraft()); setMode('create'); setFormError(null); writeIdentity.current = null; }
+  const busy = createMutation.isPending || updateMutation.isPending || lifecycleMutation.isPending;
+  function select(item: ProcurementProductItem) { setSelectedId(item.id); setDraft(toDraft(item)); setMode('detail'); setFormError(null); setDeleteOpen(false); writeIdentity.current = null; lifecycleIdentity.current = null; }
+  function beginCreate() { setSelectedId(''); setDraft(emptyDraft()); setMode('create'); setFormError(null); setDeleteOpen(false); writeIdentity.current = null; lifecycleIdentity.current = null; }
   function beginEdit() { if (selected && !selected.deletedAt) { setDraft(toDraft(selected)); setMode('edit'); setFormError(null); writeIdentity.current = null; } }
   function cancel() { setMode('detail'); setFormError(null); writeIdentity.current = null; }
   function submit(event: FormEvent<HTMLFormElement>) {
@@ -105,13 +114,15 @@ export function ProcurementProductMasterPage() {
     else if (mode === 'edit' && selected) updateMutation.mutate({ id: selected.id, rowVersion: selected.rowVersion, request, idempotencyKey: writeIdentity.current.idempotencyKey });
   }
   function toggleActive() { if (!selected || selected.deletedAt) return; updateMutation.mutate({ id: selected.id, rowVersion: selected.rowVersion, request: { ...toRequest(toDraft(selected)), active: !selected.active }, idempotencyKey: crypto.randomUUID() }); }
+  function submitLifecycle(action: ProductMasterLifecycleAction) { if (!selected) return; const fingerprint = JSON.stringify({ id: selected.id, action, rowVersion: selected.rowVersion }); if (lifecycleIdentity.current?.fingerprint !== fingerprint) lifecycleIdentity.current = { fingerprint, idempotencyKey: crypto.randomUUID() }; lifecycleMutation.mutate({ id: selected.id, action, rowVersion: selected.rowVersion, idempotencyKey: lifecycleIdentity.current.idempotencyKey }); }
 
   return <section className="supplier-master-prototype" aria-labelledby="procurement-product-title">
     <ModuleSubnav locale={locale} items={navItems} ariaLabel={labels.nav} />
     <header className="supplier-master-header"><div><p className="eyebrow">{labels.eyebrow}</p><h1 id="procurement-product-title">{labels.title}</h1></div><button className="supplier-primary-action" type="button" onClick={beginCreate} disabled={busy}>＋{labels.newItem}</button></header>
-    <div className="supplier-master-toolbar"><label className="supplier-search"><input type="search" value={search} aria-label={labels.search} onChange={(e) => setSearch(e.target.value)} /></label><div className="supplier-filter-tabs">{(['all','active','inactive','deleted'] as const).map((candidate) => <button key={candidate} type="button" className={filter === candidate ? 'is-active' : ''} onClick={() => { setFilter(candidate); setSelectedId(''); setMode('detail'); }}>{labels[candidate]}</button>)}</div></div>
+    <div className="supplier-master-toolbar"><label className="supplier-search"><input type="search" value={search} aria-label={labels.search} onChange={(e) => setSearch(e.target.value)} /></label><div className="supplier-filter-tabs">{(['all','active','inactive','deleted'] as const).map((candidate) => <button key={candidate} type="button" className={filter === candidate ? 'is-active' : ''} onClick={() => { setFilter(candidate); setSelectedId(''); setMode('detail'); setDeleteOpen(false); lifecycleIdentity.current = null; }}>{labels[candidate]}</button>)}</div></div>
     <div className="supplier-master-grid"><aside className="supplier-list-panel"><div className="supplier-list-meta"><strong>{labels.title}</strong><span>{items.length} {labels.records}</span></div><div className="supplier-list-body">{items.map((item) => <button type="button" key={item.id} className={`supplier-list-item${selected?.id === item.id ? ' is-selected' : ''}`} onClick={() => select(item)}><span className="supplier-list-name"><strong>{displayName(item)}</strong><small>{item.unitCode}</small></span><StatusPill item={item} labels={labels} /></button>)}{!itemsQuery.isPending && items.length === 0 && <p className="supplier-list-empty">{labels.noResult}</p>}</div></aside>
-      <article className="supplier-detail-panel">{mode !== 'detail' ? <form className="supplier-editor" onSubmit={submit}><header className="supplier-detail-header supplier-editor-header"><h2>{mode === 'create' ? labels.createTitle : labels.editTitle}</h2></header><section className="supplier-detail-section"><h3>{labels.basicInfo}</h3><div className="supplier-form-grid"><TextField label={labels.nameZhTw} value={draft.nameZhTw} onChange={(value) => setDraft({ ...draft, nameZhTw: value })} /><TextField label={labels.nameThTh} value={draft.nameThTh} onChange={(value) => setDraft({ ...draft, nameThTh: value })} /><TextField label={labels.unitCode} value={draft.unitCode} onChange={(value) => setDraft({ ...draft, unitCode: value })} /><label><span className="field-label">{labels.storage}</span><select value={draft.defaultStorageLocationId} onChange={(e) => setDraft({ ...draft, defaultStorageLocationId: e.target.value })}><option value="">{labels.noStorage}</option>{storageQuery.data?.items.map((item) => <option key={item.id} value={item.id}>{item.code ? `${item.code} · ` : ''}{item.displayName}</option>)}</select></label><fieldset className="supplier-state-fieldset supplier-form-wide"><legend className="field-label">{labels.activeState}</legend><label className={draft.active ? 'is-selected' : ''}><input type="radio" checked={draft.active} onChange={() => setDraft({ ...draft, active: true })} />{labels.active}</label><label className={!draft.active ? 'is-selected' : ''}><input type="radio" checked={!draft.active} onChange={() => setDraft({ ...draft, active: false })} />{labels.inactive}</label></fieldset></div></section>{(formError ?? problemMessage) && <div className="problem-banner" role="alert">{formError ?? problemMessage}</div>}<footer className="supplier-editor-footer"><button type="button" className="supplier-secondary-action" onClick={cancel}>{labels.cancel}</button><button className="supplier-primary-action" type="submit" disabled={busy}>{busy ? labels.saving : labels.save}</button></footer></form> : selected ? <><header className="supplier-detail-header"><div><div className="supplier-detail-title-row"><h2>{displayName(selected)}</h2><StatusPill item={selected} labels={labels} /></div></div>{!selected.deletedAt && <div className="supplier-detail-actions"><button className="supplier-secondary-action" type="button" onClick={beginEdit}>{labels.edit}</button><button className="supplier-secondary-action" type="button" onClick={toggleActive}>{selected.active ? labels.deactivate : labels.activate}</button></div>}</header><section className="supplier-detail-section"><h3>{labels.basicInfo}</h3><dl className="supplier-detail-fields"><Detail label={labels.nameZhTw} value={selected.nameZhTw || labels.notProvided} /><Detail label={labels.nameThTh} value={selected.nameThTh || labels.notProvided} /><Detail label={labels.unitCode} value={selected.unitCode} /><Detail label={labels.storage} value={selected.defaultStorageLocationDisplayName || labels.noStorage} /></dl></section>{problemMessage && <div className="problem-banner" role="alert">{problemMessage}</div>}</> : <p className="supplier-list-empty">{itemsQuery.isPending ? '…' : labels.noResult}</p>}</article></div>
+      <article className="supplier-detail-panel">{mode !== 'detail' ? <form className="supplier-editor" onSubmit={submit}><header className="supplier-detail-header supplier-editor-header"><h2>{mode === 'create' ? labels.createTitle : labels.editTitle}</h2></header><section className="supplier-detail-section"><h3>{labels.basicInfo}</h3><div className="supplier-form-grid"><TextField label={labels.nameZhTw} value={draft.nameZhTw} onChange={(value) => setDraft({ ...draft, nameZhTw: value })} /><TextField label={labels.nameThTh} value={draft.nameThTh} onChange={(value) => setDraft({ ...draft, nameThTh: value })} /><TextField label={labels.unitCode} value={draft.unitCode} onChange={(value) => setDraft({ ...draft, unitCode: value })} /><label><span className="field-label">{labels.storage}</span><select value={draft.defaultStorageLocationId} onChange={(e) => setDraft({ ...draft, defaultStorageLocationId: e.target.value })}><option value="">{labels.noStorage}</option>{storageQuery.data?.items.map((item) => <option key={item.id} value={item.id}>{item.code ? `${item.code} · ` : ''}{item.displayName}</option>)}</select></label><fieldset className="supplier-state-fieldset supplier-form-wide"><legend className="field-label">{labels.activeState}</legend><label className={draft.active ? 'is-selected' : ''}><input type="radio" checked={draft.active} onChange={() => setDraft({ ...draft, active: true })} />{labels.active}</label><label className={!draft.active ? 'is-selected' : ''}><input type="radio" checked={!draft.active} onChange={() => setDraft({ ...draft, active: false })} />{labels.inactive}</label></fieldset></div></section>{(formError ?? problemMessage) && <div className="problem-banner" role="alert">{formError ?? problemMessage}</div>}<footer className="supplier-editor-footer"><button type="button" className="supplier-secondary-action" onClick={cancel}>{labels.cancel}</button><button className="supplier-primary-action" type="submit" disabled={busy}>{busy ? labels.saving : labels.save}</button></footer></form> : selected ? <><header className="supplier-detail-header"><div><div className="supplier-detail-title-row"><h2>{displayName(selected)}</h2><StatusPill item={selected} labels={labels} /></div></div><div className="supplier-detail-actions">{selected.deletedAt ? <button className="supplier-primary-action" type="button" disabled={busy} onClick={() => submitLifecycle('restore')}>{labels.restore}</button> : <><button className="supplier-secondary-action" type="button" disabled={busy} onClick={beginEdit}>{labels.edit}</button><button className="supplier-secondary-action" type="button" disabled={busy} onClick={toggleActive}>{selected.active ? labels.deactivate : labels.activate}</button><button className="supplier-danger-ghost-action" type="button" disabled={busy} onClick={() => setDeleteOpen(true)}>{labels.softDelete}</button></>}</div></header><section className="supplier-detail-section"><h3>{labels.basicInfo}</h3><dl className="supplier-detail-fields"><Detail label={labels.nameZhTw} value={selected.nameZhTw || labels.notProvided} /><Detail label={labels.nameThTh} value={selected.nameThTh || labels.notProvided} /><Detail label={labels.unitCode} value={selected.unitCode} /><Detail label={labels.storage} value={selected.defaultStorageLocationDisplayName || labels.noStorage} /></dl></section>{problemMessage && <div className="problem-banner" role="alert">{problemMessage}</div>}</> : <p className="supplier-list-empty">{itemsQuery.isPending ? '…' : labels.noResult}</p>}</article></div>
+    {deleteOpen && selected && <div className="supplier-dialog-backdrop" role="presentation" onMouseDown={() => setDeleteOpen(false)}><div className="supplier-dialog" role="dialog" aria-modal="true" aria-labelledby="procurement-product-delete-title" onMouseDown={(event) => event.stopPropagation()}><div className="supplier-dialog-icon" aria-hidden="true">!</div><div><h2 id="procurement-product-delete-title">{labels.deleteTitle}</h2><p>{displayName(selected)}</p><p className="supplier-dialog-message">{labels.deleteMessage}</p></div><div className="supplier-dialog-actions"><button type="button" className="supplier-secondary-action" onClick={() => setDeleteOpen(false)}>{labels.cancel}</button><button type="button" className="supplier-danger-action" disabled={busy} onClick={() => submitLifecycle('soft-delete')}>{labels.confirmDelete}</button></div></div></div>}
   </section>;
 }
 

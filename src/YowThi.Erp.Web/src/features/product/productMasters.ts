@@ -1,7 +1,9 @@
 import { getApiJson, postApiCommand } from '../../app/api/apiTransport';
 import type { OperationalLocale } from '../../app/i18n/locale';
+import { prepareDeletionReauthentication } from '../../app/security/authSession';
 
 export type MasterStatus = 'all' | 'active' | 'inactive' | 'deleted';
+export type ProductMasterLifecycleAction = 'soft-delete' | 'restore';
 
 interface QueryOptions {
   locale: OperationalLocale;
@@ -34,6 +36,7 @@ export interface ProcurementProductItem {
 export interface ProcurementProductPage { items: ProcurementProductItem[]; nextOffset: number | null }
 export interface ProcurementProductDraft { nameZhTw: string | null; nameThTh: string | null; unitCode: string; defaultStorageLocationId: string | null; active: boolean }
 export interface ProcurementProductWriteResult { procurementProductId: string; rowVersion: number }
+export interface ProcurementProductLifecycleResult { procurementProductId: string; rowVersion: number; deleted: boolean }
 
 export interface StorageLocationOption {
   id: string;
@@ -52,6 +55,19 @@ export function createProcurementProduct(request: ProcurementProductDraft, optio
 }
 export function updateProcurementProduct(id: string, request: ProcurementProductDraft & { expectedRowVersion: number }, options: CommandOptions): Promise<ProcurementProductWriteResult> {
   return postApiCommand(`/api/v1/product/procurement-products/${id}/update`, request, options);
+}
+export async function changeProcurementProductLifecycle(
+  id: string,
+  action: ProductMasterLifecycleAction,
+  expectedRowVersion: number,
+  options: CommandOptions,
+): Promise<ProcurementProductLifecycleResult> {
+  if (action === 'soft-delete') await prepareDeletionReauthentication();
+  return postApiCommand<{ expectedRowVersion: number }, ProcurementProductLifecycleResult>(
+    `/api/v1/product/procurement-products/${id}/${action}`,
+    { expectedRowVersion },
+    options,
+  );
 }
 export function listProductStorageLocations(locale: OperationalLocale, signal?: AbortSignal): Promise<StorageLocationOptions> {
   return getApiJson('/api/v1/product/procurement-products/storage-location-options?limit=200', { locale, signal });
@@ -85,6 +101,7 @@ export interface SalesProductDraft {
   active: boolean;
 }
 export interface SalesProductWriteResult { salesProductId: string; rowVersion: number }
+export interface SalesProductLifecycleResult { salesProductId: string; rowVersion: number; deleted: boolean }
 export interface SalesProductGroupOption { id: string; displayName: string }
 export interface SalesProductGroupOptions { items: SalesProductGroupOption[] }
 
@@ -96,6 +113,19 @@ export function createSalesProduct(request: SalesProductDraft, options: CommandO
 }
 export function updateSalesProduct(id: string, request: SalesProductDraft & { expectedRowVersion: number }, options: CommandOptions): Promise<SalesProductWriteResult> {
   return postApiCommand(`/api/v1/product/sales-products/${id}/update`, request, options);
+}
+export async function changeSalesProductLifecycle(
+  id: string,
+  action: ProductMasterLifecycleAction,
+  expectedRowVersion: number,
+  options: CommandOptions,
+): Promise<SalesProductLifecycleResult> {
+  if (action === 'soft-delete') await prepareDeletionReauthentication();
+  return postApiCommand<{ expectedRowVersion: number }, SalesProductLifecycleResult>(
+    `/api/v1/product/sales-products/${id}/${action}`,
+    { expectedRowVersion },
+    options,
+  );
 }
 export function listSalesProductGroupsForMaster(locale: OperationalLocale, signal?: AbortSignal): Promise<SalesProductGroupOptions> {
   return getApiJson('/api/v1/product/sales-products/group-options?limit=200', { locale, signal });

@@ -83,8 +83,10 @@ public static class PersistenceServiceCollectionExtensions
         services.AddScoped<ISalesProductGroupLifecycleOptionsReader, EfSalesProductGroupLifecycleOptionsReader>();
         services.AddScoped<IProcurementProductMasterExecutor, PostgreSqlProcurementProductMasterExecutor>();
         services.AddScoped<IProcurementProductMasterReader, EfProcurementProductMasterReader>();
+        services.AddScoped<IProcurementProductLifecycleExecutor, PostgreSqlProcurementProductLifecycleExecutor>();
         services.AddScoped<ISalesProductMasterExecutor, PostgreSqlSalesProductMasterExecutor>();
         services.AddScoped<ISalesProductMasterReader, EfSalesProductMasterReader>();
+        services.AddScoped<ISalesProductLifecycleExecutor, PostgreSqlSalesProductLifecycleExecutor>();
         services.AddScoped<IProductMasterOptionsReader, EfProductMasterOptionsReader>();
         services.AddScoped<ISalesProductMasterOptionsReader, EfSalesProductMasterOptionsReader>();
         services.AddScoped<IContainerLifecycleExecutor, PostgreSqlContainerLifecycleExecutor>();
